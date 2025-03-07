@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-container
+    restart: always
+    env_file:
+      - .env  # .env 파일 로드
+    environment:
+      - MYSQL_DATABASE=dolai
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}  # 루트 비밀번호
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${DOLAI_PASSWORD}  # dolai DB 전용 사용자 비밀번호
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  arangodb:
+    image: arangodb:latest
+    container_name: arangodb-container
+    restart: always
+    env_file:
+      - .env  # .env 파일 로드
+    environment:
+      - ARANGO_DATABASE=dolai
+      - ARANGO_ROOT_PASSWORD=${ARANGO_PASSWORD}  # ArangoDB 루트 비밀번호
+    ports:
+      - "8529:8529"
+    volumes:
+      - arangodb_data:/var/lib/arangodb3
+
+volumes:
+  mysql_data:
+  arangodb_data:
