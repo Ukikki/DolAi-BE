@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -11,11 +9,13 @@ services:
       - MYSQL_DATABASE=dolai
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}  # 루트 비밀번호
       - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${DOLAI_PASSWORD}  # dolai DB 전용 사용자 비밀번호
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}  # dolai DB 전용 사용자 비밀번호
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - backend_network  # MySQL 네트워크 설정
 
   arangodb:
     image: arangodb:latest
@@ -30,6 +30,26 @@ services:
       - "8529:8529"
     volumes:
       - arangodb_data:/var/lib/arangodb3
+    networks:
+      - backend_network  # ArangoDB 네트워크 설정
+
+  backend:
+    build: ./build/test-results  # 백엔드 애플리케이션 빌드 위치
+    container_name: backend-container
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/dolai  # MySQL 컨테이너의 호스트 이름
+    depends_on:
+      - mysql
+      - arangodb
+    networks:
+      - backend_network  # 백엔드 네트워크 설정
+    ports:
+      - "8081:8080"  # Spring Boot 포트 매핑
+
+networks:
+  backend_network:
+    driver: bridge  # Docker 브리지 네트워크 설정
 
 volumes:
   mysql_data:

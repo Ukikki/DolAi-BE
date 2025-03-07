@@ -20,7 +20,8 @@ configurations {
 }
 
 repositories {
-	mavenCentral()
+	mavenCentral() // Maven Central에 의존성 검색
+	maven { url 'https://maven.arangodb.com' } // ArangoDB Spring Data의 공식 저장소 추가
 }
 
 dependencies {
@@ -34,11 +35,15 @@ dependencies {
 	// .env 파일 로드를 위한 dotenv-java 추가
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 
-	// ✅ MySQL JDBC 드라이버 추가
+	// MySQL JDBC 드라이버
 	implementation 'mysql:mysql-connector-java:8.0.33'
 
-	// ✅ ArangoDB Spring Boot Starter 추가
-	implementation 'com.arangodb:arangodb-spring-data:4.5.0'
+	// ArangoDB Spring Data
+//	implementation 'com.arangodb.springdata:arangodb-spring-data:4.3.0'
+	implementation group: 'com.arangodb', name: 'arangodb-spring-data', version: '4.3.0'
+
+	// ArangoDB Java Driver 의존성 추가
+	implementation 'com.arangodb:arangodb-java-driver:7.15.0'  // ArangoDB Java Driver
 
 	// Lombok (코드 간소화)
 	compileOnly 'org.projectlombok:lombok'
