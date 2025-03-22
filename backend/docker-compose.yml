@@ -34,8 +34,8 @@ services:
       - backend_network  # ArangoDB 네트워크 설정
 
   backend:
-    build: ./build/test-results  # 백엔드 애플리케이션 빌드 위치
-    container_name: backend-container
+    build: . # 백엔드 애플리케이션 빌드 위치
+    container_name: Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/dolai  # MySQL 컨테이너의 호스트 이름
