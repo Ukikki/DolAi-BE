@@ -1,41 +1,62 @@
 // Spring Security를 활용한 OAuth2 로그인 및 보안 설정을 정의하는 클래스
 package com.dolai.backend.config;
 
-import com.dolai.backend.oauth.service.CustomOAuth2UserService;
-import com.dolai.backend.user.domain.enums.Role;
+import com.dolai.backend.oauth.jwt.filter.TokenAuthenticationFilter;
+import com.dolai.backend.oauth.jwt.filter.TokenExceptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
+@RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
-    private final CustomOAuth2UserService customOAuth2UserService;
+    private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/h2-console/**").permitAll()
-                        .requestMatchers("/api/v1/**").hasRole(Role.USER.name())
-                        .anyRequest().authenticated()
+                .httpBasic(AbstractHttpConfigurer::disable) // 기본 인증 로그인 비활성화
+                .csrf(AbstractHttpConfigurer::disable) // csrf 비활성화
+                .cors(c -> c.configurationSource(corsConfigurationSource())) // 명시적 적용
+                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용하지 않음
+                .authorizeHttpRequests(request ->
+                        request.requestMatchers("/**").permitAll() // 모든 요청을 허용
                 )
-                .logout(logout -> logout.logoutSuccessUrl("/"))
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler((request, response, authentication) -> {
-                            //로그인 성공 후 사용자 정보 JSON으로 반환
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"message\": \"로그인 성공\", \"user\": \""
-                                    + authentication.getName() + "\"}");
-                        })
-                );
+                .formLogin(AbstractHttpConfigurer::disable)
+                //.oauth2Login(oauth -> oauth
+                 //       .userInfoEndpoint(c -> c.userService(customOAuth2UserService))
+                //)
+                .addFilterBefore(new TokenExceptionFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // React 프론트엔드 주소
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
 }

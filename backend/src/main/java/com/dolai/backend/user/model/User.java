@@ -1,14 +1,19 @@
 // MySQL - USER 테이블
-package com.dolai.backend.user.domain;
+package com.dolai.backend.user.model;
 
-import com.dolai.backend.common.entity.BaseTimeEntity;
-import com.dolai.backend.user.domain.enums.Provider;
-import com.dolai.backend.user.domain.enums.Role;
+import com.dolai.backend.common.model.BaseTimeEntity;
+import com.dolai.backend.user.model.enums.Provider;
+import com.dolai.backend.user.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.Collection;
+import java.util.Collections;
 
 @Getter
 @Setter
@@ -17,8 +22,7 @@ import lombok.Setter;
 @Table(name = "user")
 public class User extends BaseTimeEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
-    private Long id;
+    private String id;  // Google/Kakao에서 받은 고유 sub 값
 
     @Column(nullable = false, unique = true)
     private String email; // 사용자 이메일 (unique)
@@ -38,7 +42,8 @@ public class User extends BaseTimeEntity {
     private Role role = Role.USER; // 기본값 'user'
 
     @Builder
-    public User(String email, String name, String profileImageUrl, Provider provider, Role role) {
+    public User(String id, String email, String name, String profileImageUrl, Provider provider, Role role) {
+        this.id = id;
         this.email = email;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
@@ -50,6 +55,9 @@ public class User extends BaseTimeEntity {
         this.name = name;
         this.profileImageUrl = profileImageUrl;
         return this;
+    }
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
     public String getRoleKey() {
         return this.role.name(); // USER -> "USER", ADMIN -> "ADMIN"

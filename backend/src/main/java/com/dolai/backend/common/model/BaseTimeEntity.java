@@ -1,5 +1,5 @@
 // 생성일, 수정일 자동 설정 기본 엔티티
-package com.dolai.backend.common.entity;
+package com.dolai.backend.common.model;
 
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
