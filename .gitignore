@@ -1,5 +1,5 @@
 HELP.md
-.gradle
+backend/.gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -37,6 +37,8 @@ out/
 .vscode/
 
 # 보안 관련 파일 무시
+backend/.env
 .env
 
 backend/src/main/resources/secret-application.properties
+
