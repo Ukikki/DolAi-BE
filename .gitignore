@@ -39,3 +39,6 @@ out/
 # 보안 관련 파일 무시
 backend/.env
 .env
+
+backend/src/main/resources/secret-application.properties
+
