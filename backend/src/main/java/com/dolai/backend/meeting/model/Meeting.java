@@ -1,20 +1,21 @@
 package com.dolai.backend.meeting.model;
 
+import com.dolai.backend.common.model.BaseTimeEntity;
+import com.dolai.backend.todo.model.enums.Status;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "meeting", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "invite_url")
-})
+@Table(name = "meeting")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Meeting {
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Meeting extends BaseTimeEntity {
 
     @Id
     @Column(columnDefinition = "CHAR(36)")
@@ -33,31 +34,20 @@ public class Meeting {
     private String inviteUrl;
 
     @Column(name = "host_user_id", nullable = false)
-    private String hostUserId;
+    private String hostUserId;  // String → Long 변경 (BIGINT 대응)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     public static Meeting create(String title, LocalDateTime startTime, String hostUserId) {
-        Meeting meeting = new Meeting();
-        meeting.id = UUID.randomUUID().toString();
-        meeting.title = title;
-        meeting.startTime = startTime;
-        meeting.hostUserId = hostUserId;
-        meeting.status = Status.SCHEDULED;
-        meeting.createdAt = LocalDateTime.now();
-        meeting.inviteUrl = "https://example.com/meetings/" + meeting.id;
-        return meeting;
-    }
-
-    public enum Status {
-        SCHEDULED, ONGOING, ENDED
+        return Meeting.builder()
+                .id(UUID.randomUUID().toString())  // UUID 자동 생성
+                .title(title)
+                .startTime(startTime)
+                .hostUserId(hostUserId)
+                .inviteUrl("https://example.com/meetings/" + UUID.randomUUID()) // 초대 URL 자동 생성
+                .status(Status.PENDING) // 기본 상태: 대기 중
+                .build();
     }
 }
