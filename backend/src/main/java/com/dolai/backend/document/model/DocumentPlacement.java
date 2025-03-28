@@ -1,6 +1,7 @@
 package com.dolai.backend.document.model;
 
 import com.dolai.backend.directory.model.Directory;
+import com.dolai.backend.user.model.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,9 +21,10 @@ public class DocumentPlacement {
     private Directory directory;  // 폴더 ID (Directory 엔티티와 관계)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id")
+    @JoinColumn(name = "document_id", nullable = false)
     private Document document;  // 문서 ID (Document 엔티티와 관계)
 
-    @Column(nullable = false)
-    private String userId;  // 사용자 고유 ID (User 엔티티와 관계)
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }

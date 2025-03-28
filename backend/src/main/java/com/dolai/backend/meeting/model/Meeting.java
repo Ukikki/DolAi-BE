@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "meeting")
@@ -39,6 +41,9 @@ public class Meeting extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status;
+
+    @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Participant> participants = new ArrayList<>();
 
     public static Meeting create(String title, LocalDateTime startTime, String hostUserId) {
         return Meeting.builder()

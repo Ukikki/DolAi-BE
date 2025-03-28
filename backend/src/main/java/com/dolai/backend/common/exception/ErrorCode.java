@@ -22,8 +22,12 @@ public enum ErrorCode {
     INVALID_AUTHENTICATION(HttpStatus.UNAUTHORIZED, "유효하지 않은 인증 정보입니다."),
 
     // Directory
-    DIRECTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "부모 디렉터리를 찾을 수 없습니다."),
+    DIRECTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "디렉터리를 찾을 수 없습니다."),
     MEETING_ID_REQUIRED(HttpStatus.BAD_REQUEST, "공유 디렉터리는 meetingId가 필요합니다."),
+    MEETING_ID_SHOULD_BE_NULL(HttpStatus.BAD_REQUEST, "개인 디렉터리에는 meetingId를 포함할 수 없습니다."),
+
+    // Document
+    DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의에 연결된 문서를 찾을 수 없습니다."),
 
     // Meeting
     MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의를 찾을 수 없습니다.");
