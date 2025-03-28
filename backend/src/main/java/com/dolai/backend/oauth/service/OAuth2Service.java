@@ -25,7 +25,7 @@ public class OAuth2Service {
     private final UserService userService;
     private final OAuth2Properties properties;
 
-    public AuthResponse authenticate(String provider, String code) {
+    public UserDto authenticate(String provider, String code) {
         log.info("🔹 OAuth2 로그인 시도: provider={}, code={}", provider, code);
         log.info("✅ OAuth2Properties 확인: {}", properties); // properties가 null인지 확인
 
@@ -56,7 +56,6 @@ public class OAuth2Service {
         String jwtRefreshToken = tokenProvider.generateRefreshToken(authentication, jwtAccessToken);
 
         // UserDto 생성 후 반환
-        UserDto userDto = new UserDto(user.getId(), user.getEmail(), user.getName(), user.getProfileImageUrl(), jwtAccessToken);
-        return new AuthResponse("success", userDto);
+        return new UserDto(user.getId(), user.getEmail(), user.getName(), user.getProfileImageUrl(), jwtAccessToken);
     }
 }

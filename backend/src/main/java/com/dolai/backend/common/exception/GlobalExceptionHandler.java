@@ -13,7 +13,6 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     //CustomException 예외 처리 (dolAi에서 직접 정의한 예외들)
     @ExceptionHandler(CustomException.class)
     protected ResponseEntity<ErrorResponse> handleCustomException(CustomException e){
@@ -47,7 +46,7 @@ public class GlobalExceptionHandler {
 
     // 공통 에러 응답을 생성하는 메서드
     private static ResponseEntity<ErrorResponse> toResponse(ErrorCode errorCode, String message) {
-        return ResponseEntity.status(errorCode.getHttpStatus())
+        return ResponseEntity.status(errorCode.getStatus())
                 .body(new ErrorResponse("error", message));
     }
 }
