@@ -49,6 +49,8 @@ dependencies {
 	// ArangoDB Java Driver 의존성 추가
 	implementation 'com.arangodb:arangodb-java-driver:7.15.0'  // ArangoDB Java Driver
 
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 	//OAuth
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 

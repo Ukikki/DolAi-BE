@@ -1,4 +1,18 @@
 services:
+  redis:
+    image: redis:6.0.9
+    container_name: redis-container
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_DATABASE=dolai
+      - REDIS_HOST=redis-container  # 변경된 부분
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=ukikki1212
+    networks:
+      - backend_network
   mysql:
     image: mysql:8.0
     container_name: mysql-container
@@ -42,6 +56,7 @@ services:
     depends_on:
       - mysql
       - arangodb
+      - redis
     networks:
       - backend_network  # 백엔드 네트워크 설정
     ports:

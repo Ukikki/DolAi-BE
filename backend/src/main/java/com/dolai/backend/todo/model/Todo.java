@@ -2,6 +2,7 @@ package com.dolai.backend.todo.model;
 
 import com.dolai.backend.todo.model.enums.Status;
 import com.dolai.backend.user.model.User;
+import com.dolai.backend.meeting.model.Meeting;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -31,6 +32,10 @@ public class Todo {
     private String description;  // To-Do 내용
 
     private LocalDateTime dueDate;  // To-Do 기한
+
+    @ManyToOne
+    @JoinColumn(name = "meeting_id")
+    private Meeting meeting;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -37,4 +37,8 @@ public class UserService {
             return userRepository.save(newUser);
         }
     }
+
+    public Optional<User> getUserById(String sub) {
+        return userRepository.findById(sub);
+    }
 }

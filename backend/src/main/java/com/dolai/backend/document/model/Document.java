@@ -15,7 +15,6 @@ import lombok.*;
 public class Document extends BaseTimeEntity {
 
     @Id
-    @Column(nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;  // 기본키 (Primary Key)
 
@@ -23,7 +22,11 @@ public class Document extends BaseTimeEntity {
     @JoinColumn(name = "meeting_id", nullable = false)  // FK 설정
     private Meeting meeting;
 
-    @Column(nullable = false, name = "file_url", length = 2083)  // DB 컬럼 이름을 snake_case 유지
+    // 문서 버전
+    @Column(nullable = false)
+    private int version;
+
+    @Column(nullable = false, name = "file_url", length = 2083)
     private String fileUrl; // S3 파일 저장 경로
 
     @Column(nullable = false)
@@ -31,4 +34,8 @@ public class Document extends BaseTimeEntity {
 
     @Column(columnDefinition = "TEXT")
     private String summary;  // 요약 내용
+
+    // private String detailedJsonUrl;
+    // private String graphImageUrl;
+    // private String notesUrl;
 }

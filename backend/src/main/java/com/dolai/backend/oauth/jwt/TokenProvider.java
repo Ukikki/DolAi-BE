@@ -67,7 +67,7 @@ public class TokenProvider {
         log.info("🔹 RefreshToken 생성 요청 - 사용자: {}", authentication.getName());
         User user = (User) authentication.getPrincipal();
         String refreshToken = generateToken(authentication, REFRESH_TOKEN_EXPIRE_TIME);
-        tokenService.saveOrUpdate(user, refreshToken, accessToken);
+        tokenService.saveOrUpdate(authentication.getName(), refreshToken, accessToken);
         return refreshToken;
     }
 
@@ -99,20 +99,18 @@ public class TokenProvider {
     }
 
     // AccessToken 재발급 (RefreshToken 검증 후)
-    public String reissueAccessToken(String accessToken) {
+    public String reissueAccessToken(String refreshToken) {
         log.info("🔄 AccessToken 재발급 요청");
 
-        if (StringUtils.hasText(accessToken)) {
-            Token token = tokenService.findByAccessTokenOrThrow(accessToken);
-            String refreshToken = token.getRefreshToken();
-
-            if (validateToken(refreshToken)) {
-                String reissuedAccessToken = generateAccessToken(getAuthentication(refreshToken));
-                tokenService.updateToken(reissuedAccessToken, token);
-                log.info("✅ AccessToken 재발급 완료: {}", reissuedAccessToken);
-                return reissuedAccessToken;
-            }
+        if (StringUtils.hasText(refreshToken) && validateToken(refreshToken)) {
+            String userId = parseClaims(refreshToken).getSubject();
+            Authentication authentication = getAuthentication(refreshToken);
+            String reissuedAccessToken = generateAccessToken(authentication);
+            tokenService.updateToken(userId, reissuedAccessToken);
+            log.info("✅ AccessToken 재발급 완료: {}", reissuedAccessToken);
+            return reissuedAccessToken;
         }
+
         log.warn("⚠️ AccessToken 재발급 실패");
         return null;
     }
@@ -179,4 +177,10 @@ public class TokenProvider {
     private List<SimpleGrantedAuthority> getAuthorities(Claims claims) {
         return Collections.singletonList(new SimpleGrantedAuthority(claims.get(KEY_ROLE).toString()));
     }
+
+    public long getExpiration(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getExpiration().getTime() - System.currentTimeMillis(); // 만료 시간 - 현재 시간
+    }
+
 }

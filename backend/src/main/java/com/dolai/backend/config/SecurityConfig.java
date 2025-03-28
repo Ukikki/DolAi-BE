@@ -33,12 +33,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // csrf 비활성화
                 .cors(c -> c.configurationSource(corsConfigurationSource())) // 명시적 적용
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용하지 않음
-                .authorizeHttpRequests(request ->
-                        request.requestMatchers("/**").permitAll() // 모든 요청을 허용
-                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/social", "/auth/social/**").permitAll()  // 👈 소셜 로그인 요청은 인증 없이 허용
+                        .requestMatchers("/auth/**").authenticated()                     // 👈 나머지 /auth는 인증 필요 (/auth/logout 등)
+                        .anyRequest().permitAll())
                 .formLogin(AbstractHttpConfigurer::disable)
                 //.oauth2Login(oauth -> oauth
-                 //       .userInfoEndpoint(c -> c.userService(customOAuth2UserService))
+                //       .userInfoEndpoint(c -> c.userService(customOAuth2UserService))
                 //)
                 .addFilterBefore(new TokenExceptionFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
