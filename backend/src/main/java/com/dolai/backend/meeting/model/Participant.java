@@ -30,6 +30,7 @@ public class Participant extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Role role = Role.PARTICIPANT;
 
     public enum Role {
