@@ -1,6 +1,7 @@
 package com.dolai.backend.document.model;
 
 import com.dolai.backend.common.model.BaseTimeEntity;
+import com.dolai.backend.document.model.enums.FileType;
 import com.dolai.backend.meeting.model.Meeting;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,6 +35,10 @@ public class Document extends BaseTimeEntity {
 
     @Column(columnDefinition = "TEXT")
     private String summary;  // 요약 내용
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "file_type", nullable = false)
+    private FileType fileType;
 
     // private String detailedJsonUrl;
     // private String graphImageUrl;
