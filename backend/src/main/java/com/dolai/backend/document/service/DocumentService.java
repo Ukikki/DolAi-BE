@@ -4,7 +4,9 @@ import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.document.model.Document;
 import com.dolai.backend.document.model.DocumentResponseDto;
+import com.dolai.backend.document.repository.DocumentPlacementRepository;
 import com.dolai.backend.document.repository.DocumentRepository;
+import com.dolai.backend.document.repository.MetaDataRepository;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.repository.MeetingRepository;
 import com.dolai.backend.todo.service.TodoService;
@@ -19,9 +21,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DocumentService {
     private final MeetingRepository meetingRepository;
-    private final TodoService todoService;
     private final DocumentRepository documentRepository;
+    private final DocumentPlacementRepository documentPlacementRepository;
+    private final MetaDataRepository metaDataRepository;
     private final S3ServiceStub s3Service;
+    private final TodoService todoService;
 
     @Transactional(readOnly = true)
     public DocumentResponseDto getDocumentByMeetingId(String meetingId) {
@@ -54,5 +58,18 @@ public class DocumentService {
                 .todoList(todoService.getTodosByMeeting(meetingId))
                 .documentUrl(document.getFileUrl()) // PDF 다운로드 링크
                 .build();
+    }
+
+    @Transactional
+    public void deleteDocument(Long documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        // 관련 엔티티 먼저 삭제
+        documentPlacementRepository.deleteAllByDocumentId(documentId);
+        metaDataRepository.deleteByDocumentId(documentId);
+
+        // 마지막으로 문서 삭제
+        documentRepository.delete(document);
     }
 }

@@ -33,27 +33,24 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String accessToken = resolveToken(request);
 
-        if (accessToken != null && tokenProvider.validateToken(accessToken)) {
-            // 블랙리스트 체크
+        // 1. AccessToken이 있고, 유효하면 인증 처리
+        if (StringUtils.hasText(accessToken) && tokenProvider.validateToken(accessToken)) {
+
+            // 1-1. 블랙리스트 검사 (로그아웃된 토큰인지 확인)
             if (redisTemplate.opsForValue().get("blacklist:" + accessToken) != null) {
                 log.warn("❌ 로그아웃된 토큰으로 요청이 들어옴: {}", accessToken);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Unauthorized");
-                return;  // 블랙리스트에 있는 토큰은 인증되지 않음
+                return;
             }
-
+            // 1-2. 인증 객체 설정
             setAuthentication(accessToken);
-        } else {
-            String reissueAccessToken = tokenProvider.reissueAccessToken(accessToken);
-
-            if (StringUtils.hasText(reissueAccessToken)) {
-                setAuthentication(reissueAccessToken);
-                response.setHeader(AUTHORIZATION, TokenKey.TOKEN_PREFIX + reissueAccessToken);
-            }
         }
 
+        // 2. 그 외 (토큰이 없거나 만료됨): 인증 없이 통과 (익명 사용자로 처리)
         filterChain.doFilter(request, response);
     }
+
 
     private void setAuthentication(String accessToken) {
         Authentication authentication = tokenProvider.getAuthentication(accessToken);

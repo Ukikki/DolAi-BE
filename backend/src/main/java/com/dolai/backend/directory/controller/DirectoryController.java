@@ -1,6 +1,7 @@
 package com.dolai.backend.directory.controller;
 
-import com.dolai.backend.common.success.SuccessResponse;
+import com.dolai.backend.common.success.SuccessDataResponse;
+import com.dolai.backend.common.success.SuccessMessageResponse;
 import com.dolai.backend.directory.model.DirectoryListResponseDto;
 import com.dolai.backend.directory.model.DirectoryRequestDto;
 import com.dolai.backend.directory.model.DirectoryResponseDto;
@@ -33,19 +34,15 @@ public class DirectoryController {
     @GetMapping
     public ResponseEntity<?> getChildDirectories(@RequestParam(name = "parentDirectoryId", required = false) String parentDirectoryId) {
         List<DirectoryListResponseDto> directories = directoryService.getChildDirectories(parentDirectoryId);
-        return ResponseEntity.ok(new SuccessResponse<>(directories));
+        return ResponseEntity.ok(new SuccessDataResponse<>(directories));
     }
 
     @DeleteMapping("/{directoryId}")
-    public ResponseEntity<?> deleteDirectory(
+    public ResponseEntity<SuccessMessageResponse> deleteDirectory(
             @PathVariable(name = "directoryId") Long directoryId,
             @AuthenticationPrincipal User user
     ) {
         directoryService.deleteDirectory(directoryId, user);
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Directory and all documents deleted successfully"
-        ));
+        return ResponseEntity.ok(new SuccessMessageResponse("Document deleted successfully"));
     }
 }
-

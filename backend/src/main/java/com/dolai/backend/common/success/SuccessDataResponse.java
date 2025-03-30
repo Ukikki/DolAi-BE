@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class SuccessResponse<T> {
+public class SuccessDataResponse<T> {
     private final String status = "success";
     private final T data;
 }

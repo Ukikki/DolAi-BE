@@ -1,6 +1,6 @@
 package com.dolai.backend.user.controller;
 
-import com.dolai.backend.common.success.SuccessResponse;
+import com.dolai.backend.common.success.SuccessDataResponse;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.model.UserDto;
 import org.springframework.http.ResponseEntity;
@@ -13,14 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/user")
 public class UserController {
     @GetMapping("/me")
-    public ResponseEntity<SuccessResponse<UserDto>> getMyInfo(@AuthenticationPrincipal User user) {
+    public ResponseEntity<SuccessDataResponse<UserDto>> getMyInfo(@AuthenticationPrincipal User user) {
         UserDto userDto = new UserDto(
                 user.getId(),
                 user.getEmail(),
                 user.getName(),
-                user.getProfileImageUrl(),
-                null
+                user.getProfileImageUrl()
         );
-        return ResponseEntity.ok(new SuccessResponse<>(userDto));
+        return ResponseEntity.ok(new SuccessDataResponse<>(userDto));
     }
 }
