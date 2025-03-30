@@ -18,8 +18,7 @@ public class UserController {
                 user.getId(),
                 user.getEmail(),
                 user.getName(),
-                user.getProfileImageUrl(),
-                null
+                user.getProfileImageUrl()
         );
         return ResponseEntity.ok(new SuccessResponse<>(userDto));
     }

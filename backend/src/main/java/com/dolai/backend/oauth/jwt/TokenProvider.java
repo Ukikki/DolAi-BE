@@ -67,7 +67,7 @@ public class TokenProvider {
         log.info("🔹 RefreshToken 생성 요청 - 사용자: {}", authentication.getName());
         User user = (User) authentication.getPrincipal();
         String refreshToken = generateToken(authentication, REFRESH_TOKEN_EXPIRE_TIME);
-        tokenService.saveOrUpdate(authentication.getName(), refreshToken, accessToken);
+        tokenService.saveOrUpdate(user.getId(), refreshToken, accessToken);
         return refreshToken;
     }
 
@@ -104,9 +104,17 @@ public class TokenProvider {
 
         if (StringUtils.hasText(refreshToken) && validateToken(refreshToken)) {
             String userId = parseClaims(refreshToken).getSubject();
+
+            // ✅ Redis에서 저장된 리프레시 토큰이 맞는지 확인
+            String storedRefreshToken = tokenService.findRefreshTokenByUserId(userId);
+            if (!refreshToken.equals(storedRefreshToken)) {
+                log.warn("❌ 저장된 RefreshToken과 일치하지 않음");
+                throw new CustomException(ErrorCode.INVALID_JWT);
+            }
+
             Authentication authentication = getAuthentication(refreshToken);
             String reissuedAccessToken = generateAccessToken(authentication);
-            tokenService.updateToken(userId, reissuedAccessToken);
+
             log.info("✅ AccessToken 재발급 완료: {}", reissuedAccessToken);
             return reissuedAccessToken;
         }
@@ -114,6 +122,7 @@ public class TokenProvider {
         log.warn("⚠️ AccessToken 재발급 실패");
         return null;
     }
+
 
     // 토큰 유효성 검사
     public boolean validateToken(String token) {

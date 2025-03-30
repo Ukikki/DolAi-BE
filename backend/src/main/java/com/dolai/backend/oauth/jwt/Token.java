@@ -1,27 +1,45 @@
 package com.dolai.backend.oauth.jwt;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
 @Getter
-@AllArgsConstructor
+@NoArgsConstructor
 @RedisHash(value = "jwt", timeToLive = 60 * 60 * 24 * 7)
 public class Token {
 
     @Id
-    private String id; // userId (ex: authentication.getName())
-
+    private String id;
     private String refreshToken;
     private String accessToken;
+
+    public Token(String id, String refreshToken, String accessToken) {
+        this.id = id;
+        this.refreshToken = refreshToken;
+        this.accessToken = accessToken;
+    }
+
+    public void updateAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
 
     public Token updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
         return this;
     }
 
-    public void updateAccessToken(String accessToken) {
+    // 👉 Setter 직접 넣거나, Lombok의 @Setter 써도 됨 (필드에 붙이지 말고 메서드로!)
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
     }
 }
