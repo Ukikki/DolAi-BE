@@ -1,29 +1,21 @@
 {
   "name": "mediasoup-sfu",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "",
+  "main": "server.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "npx webpack-dev-server --config webpack.config.js",
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "mediasoup": "^3.15.7",
     "mediasoup-client": "^3.9.5",
     "ws": "^8.18.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.26.10",
-    "@babel/preset-env": "^7.26.9",
-    "babel-loader": "^10.0.0",
     "webpack": "^5.98.0",
-    "webpack-cli": "^6.0.1",
+    "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.2.1"
   }
 }

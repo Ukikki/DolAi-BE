@@ -1,31 +1,16 @@
+<!-- public/index.html -->
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mediasoup WebRTC 회의</title>
-    <!-- Webpack에서 번들된 자바스크립트 파일을 로드 -->
-    <script src="bundle.js"></script>  <!-- Webpack이 생성한 번들 파일 -->
+    <title>Mediasoup SFU 데모</title>
 </head>
 <body>
-<h1>Mediasoup WebRTC 회의</h1>
+<h1>📹 Mediasoup SFU 회의</h1>
+<video id="localVideo" autoplay muted playsinline></video>
+<video id="remoteVideo" autoplay playsinline></video>
 
-<label for="roomIdInput">회의방 ID 입력:</label>
-<input type="text" id="roomIdInput" placeholder="방 이름 입력">
-<button id="joinButton">회의 참여</button>
-
-<h2>내 영상</h2>
-<video id="localVideo" autoplay playsinline muted style="width: 300px; height: 200px; border: 2px solid black;"></video>
-
-<script>
-    document.getElementById("joinButton").addEventListener("click", () => {
-        const roomId = document.getElementById("roomIdInput").value;
-        if (!roomId) {
-            alert("회의방 ID를 입력하세요!");
-            return;
-        }
-        window.location.href = `/?roomId=${roomId}`;
-    });
-</script>
+<script src="./bundle.js"></script>
 </body>
 </html>
