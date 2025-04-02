@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.env
+.venv/
+env/
+venv/
+
+# 모델 및 캐시
+*.bin
+*.pt
+*.onnx
+*.wav
+*.mp3
+*.m4a
+*.srt
+*.json
+.cache/
