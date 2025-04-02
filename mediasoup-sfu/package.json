@@ -1,21 +1,25 @@
 {
-  "name": "mediasoup-sfu",
+  "name": "example1",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "description": "mediasoup tutorials",
+  "main": "app.js",
   "scripts": {
-    "dev": "npx webpack-dev-server --config webpack.config.js",
-    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js",
+    "watch": "watchify public/index.js -o public/bundle.js -v"
   },
+  "author": "amir eshaq",
+  "license": "ISC",
+  "type": "module",
   "dependencies": {
-    "express": "^4.21.2",
+    "express": "^4.17.1",
+    "httpolyglot": "^0.1.2",
     "mediasoup": "^3.15.7",
-    "mediasoup-client": "^3.9.5",
-    "ws": "^8.18.1"
+    "mediasoup-client": "^3.6.37",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.2.0"
   },
   "devDependencies": {
-    "webpack": "^5.98.0",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.2.1"
+    "nodemon": "^2.0.12"
   }
 }
