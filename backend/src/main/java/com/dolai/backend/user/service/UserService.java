@@ -16,7 +16,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     public User saveOrUpdate(OAuth2UserInfo userInfo) {
-        Optional<User> optionalUser = userRepository.findByEmail(userInfo.getEmail());
+        Optional<User> optionalUser = userRepository.findById(userInfo.getSub());
 
         if (optionalUser.isPresent()) {
             // 기존 유저 정보 업데이트
