@@ -29,10 +29,6 @@ public class MeetingService {
             throw new IllegalArgumentException("회의 제목(title)과 시작 시간(startTime)은 필수 입력값입니다.");
         }
 
-        // 회의 정보 DB 저장
-        Meeting meeting = Meeting.create(request.getTitle(), request.getStartTime(), userId);
-        meetingRepository.save(meeting);
-
         // roomId 생성 (timestamp_userId)
         String roomId = System.currentTimeMillis() + "_" + userId;
 
@@ -50,6 +46,13 @@ public class MeetingService {
 
         // 초대 링크 생성
         String inviteUrl = "https://223.194.137.95:3000/sfu/" + roomId;
+
+        // 회의 정보 DB 저장
+        Meeting meeting = Meeting.create(request.getTitle(), request.getStartTime(), userId, inviteUrl);
+        meetingRepository.save(meeting);
+
+        log.info("회의 생성 완료: {}", meeting);
+
         return new MeetingResponseDto(meeting.getId(), meeting.getTitle(), meeting.getStartTime(), inviteUrl);
     }
 
