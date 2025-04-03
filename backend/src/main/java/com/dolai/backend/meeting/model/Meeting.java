@@ -39,7 +39,7 @@ public class Meeting extends BaseTimeEntity {
     private String hostUserId;  // String → Long 변경 (BIGINT 대응)
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Status status;
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)

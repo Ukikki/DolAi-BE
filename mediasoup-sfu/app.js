@@ -15,6 +15,15 @@ const __dirname = path.resolve()
 import { Server } from 'socket.io'
 import mediasoup from 'mediasoup'
 
+// rest.js 등록
+import restRoutes from './routes/rest.js'
+
+app.use(express.json()) // JSON 바디 파서 등록
+app.use('/api', restRoutes)
+
+// roomManager.js 등록
+import { createWorker, rooms } from './roomManager.js'
+
 app.get('*', (req, res, next) => {
   const path = '/sfu/'
 
@@ -50,13 +59,13 @@ const connections = io.of('/mediasoup')
  *         |-> Consumer 
  **/
 let worker
-let rooms = {}          // { roomName1: { Router, rooms: [ sicketId1, ... ] }, ...}
+//let rooms = {}          // { roomName1: { Router, rooms: [ sicketId1, ... ] }, ...}
 let peers = {}          // { socketId1: { roomName1, socket, transports = [id1, id2,] }, producers = [id1, id2,] }, consumers = [id1, id2,], peerDetails }, ...}
 let transports = []     // [ { socketId1, roomName1, transport, consumer }, ... ]
 let producers = []      // [ { socketId1, roomName1, producer, }, ... ]
 let consumers = []      // [ { socketId1, roomName1, consumer, }, ... ]
 
-const createWorker = async () => {
+/*const createWorker = async () => {
   worker = await mediasoup.createWorker({
     rtcMinPort: 10000, // 넓은 범위로 설정
     rtcMaxPort: 20000,
@@ -70,10 +79,10 @@ const createWorker = async () => {
   })
 
   return worker
-}
+}*/
 
 // We create a Worker as soon as our application starts
-worker = createWorker()
+worker = await createWorker()
 
 // This is an Array of RtpCapabilities
 // https://mediasoup.org/documentation/v3/mediasoup/rtp-parameters-and-capabilities/#RtpCodecCapability
@@ -434,7 +443,7 @@ const createWebRtcTransport = async (router) => {
         listenIps: [
           {
             ip: '0.0.0.0', // replace with relevant IP address // 서버 내부용
-            announcedIp: '223.194.136.113', // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
+            announcedIp: '223.194.137.95', // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
           }
         ],
         enableUdp: true,
