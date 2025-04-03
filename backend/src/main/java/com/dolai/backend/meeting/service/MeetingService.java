@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -103,4 +104,23 @@ public class MeetingService {
     }
 
     // 3. 화상회의 종료
+    public void endMeeting(String meetingId, User user) {
+        // 1. 회의 조회
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "회의를 찾을 수 없습니다."));
+
+        // 2. 현재 유저가 호스트인지 확인
+        if (!meeting.getHostUserId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "회의 주최자만 회의를 종료할 수 있습니다.");
+        }
+
+        // 3. 회의 상태 종료로 변경 + 종료 시각 기록
+        meeting.setStatus(ENDED);
+        meeting.setEndTime(LocalDateTime.now());
+
+        // DB에 회의 정보 업데이트
+        meetingRepository.save(meeting);
+
+        log.info("✅ 회의 종료 처리 완료: meetingId={}, host={}", meetingId, user.getEmail());
+    }
 }
