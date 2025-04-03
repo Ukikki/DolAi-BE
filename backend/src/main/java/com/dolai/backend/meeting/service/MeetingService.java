@@ -6,12 +6,16 @@ import com.dolai.backend.meeting.repository.ParticipantsRepository;
 import com.dolai.backend.user.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.UUID;
+
+import static com.dolai.backend.meeting.model.Participant.Role.PARTICIPANT;
+import static com.dolai.backend.meeting.model.enums.Status.ENDED;
 
 @Slf4j
 @Service
@@ -21,7 +25,7 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final ParticipantsRepository participantsRepository;
 
-    private final WebClient webClient; // <- 반드시 이걸 사용해야 신뢰 무시됨
+    private final WebClient webClient; // 반드시 사용해야 신뢰 무시됨
 
     // 1. 새 화상회의 생성
     public MeetingResponseDto createMeeting(MeetingCreateRequestDto request, String userId) {
@@ -56,33 +60,47 @@ public class MeetingService {
         return new MeetingResponseDto(meeting.getId(), meeting.getTitle(), meeting.getStartTime(), inviteUrl);
     }
 
-        // 2. 화상회의 참여
-    /*public JoinResponseDto joinMeeting(User user, JoinRequestDto requestDto) {
-        String meetingId = requestDto.getMeetingId();
+    // 2. 화상회의 참여
+    public MeetingResponseDto joinMeeting(User currentUser, JoinMeetingRequestDto request) {
+        String inviteUrl = request.getInviteUrl();
 
-        // 1. 회의 찾기
-        Meeting meeting = meetingRepository.findById(meetingId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회의입니다."));
+        // inviteUrl로 meeting 조회
+        Meeting meeting = meetingRepository.findByInviteUrl(inviteUrl)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "회의 없음"));
 
-        // 2. 중복 참여 방지
-        if (participantsRepository.existsByMeetingIdAndUserId(meetingId.toString(), user.getId())) {
-            throw new IllegalStateException("이미 회의에 참가 중입니다.");
+        log.info("✅ 미팅 조회 성공: {}", meeting.getId());
+
+        // 회의 상태 검사
+        if (meeting.getStatus() == ENDED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "종료된 회의입니다.");
         }
 
-        // 3. 기본적으로 참가자로 등록
-        Participant participant = Participant.builder()
-                .user(user)
-                .meeting(meeting)
-                .role(Participant.Role.PARTICIPANT)
-                .build();
-        participantsRepository.save(participant);
+        // participants가 null일 수 있음 → 이건 엔티티에서 기본값으로 초기화 되어야 함
+        if (meeting.getParticipants() == null) {
+            log.warn("⚠️ participants 리스트가 null입니다. 초기화합니다.");
+            meeting.setParticipants(new ArrayList<>());
+        }
 
-        // 4. 성공 응답 반환
-        return new JoinResponseDto(
-                meeting.getId().toString(),  // meetingId
-                user.getId().toString(),     // userId
-                "success"                    // status
+        // 이미 등록된 참가자인지 확인
+        boolean alreadyJoined = meeting.getParticipants().stream()
+                .anyMatch(p -> p.getUser().getId().equals(currentUser.getId()));
+
+        if (!alreadyJoined) {
+            Participant participant = Participant.builder()
+                    .meeting(meeting)
+                    .user(currentUser)
+                    .role(PARTICIPANT)
+                    .build();
+            participantsRepository.save(participant);
+        }
+
+        return new MeetingResponseDto(
+                meeting.getId(),
+                meeting.getTitle(),
+                meeting.getStartTime(),
+                meeting.getInviteUrl()
         );
-    }*/
+    }
 
+    // 3. 화상회의 종료
 }
