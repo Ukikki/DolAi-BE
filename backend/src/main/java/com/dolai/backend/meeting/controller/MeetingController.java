@@ -1,12 +1,10 @@
 package com.dolai.backend.meeting.controller;
 
 import com.dolai.backend.meeting.model.*;
-import com.dolai.backend.meeting.service.MediasoupWebSocketClient;
 import com.dolai.backend.meeting.service.MeetingService;
 import com.dolai.backend.user.model.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,16 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-import java.util.UUID;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping
 public class MeetingController {
 
     private final MeetingService meetingService;
-    private final MediasoupWebSocketClient mediasoupClient;
 
     // 1. 새 화상회의 생성
     @PostMapping("/meetings")
@@ -31,17 +25,12 @@ public class MeetingController {
             @RequestBody @Valid MeetingCreateRequestDto request,
             @AuthenticationPrincipal User user) {
 
-        // 1. 화상회의 생성(DB에 저장)
         MeetingResponseDto response = meetingService.createMeeting(request, user.getId());
-
-        // 2. Medisoup-sfu에 새로운 Router 생성 요청
-        mediasoupClient.createRouter(response.getId());
-
         return ResponseEntity.ok(response);
     }
 
     // 2. 화상회의 참여
-    @PostMapping("/join")
+    /*@PostMapping("/join")
     public ResponseEntity<?> joinMeeting(
             @AuthenticationPrincipal User user,
             @RequestBody @Valid JoinRequestDto requestDto) {
@@ -52,5 +41,5 @@ public class MeetingController {
         mediasoupClient.createTransport(response.getMeetingId(), response.getUserId());
 
         return ResponseEntity.ok("success");
-    }
+    }*/
 }

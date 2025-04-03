@@ -39,19 +39,19 @@ public class Meeting extends BaseTimeEntity {
     private String hostUserId;  // String → Long 변경 (BIGINT 대응)
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Status status;
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participant> participants = new ArrayList<>();
 
-    public static Meeting create(String title, LocalDateTime startTime, String hostUserId) {
+    public static Meeting create(String title, LocalDateTime startTime, String hostUserId, String inviteUrl) {
         return Meeting.builder()
                 .id(UUID.randomUUID().toString())  // UUID 자동 생성
                 .title(title)
                 .startTime(startTime)
                 .hostUserId(hostUserId)
-                .inviteUrl("https://example.com/meetings/" + UUID.randomUUID()) // 초대 URL 자동 생성
+                .inviteUrl(inviteUrl) // 초대 URL 자동 생성
                 .status(Status.PENDING) // 기본 상태: 대기 중
                 .build();
     }
