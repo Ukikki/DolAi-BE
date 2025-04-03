@@ -25,7 +25,6 @@ public class MeetingController {
             @RequestBody @Valid MeetingCreateRequestDto request,
             @AuthenticationPrincipal User user) {
 
-        // 1. 화상회의 생성(DB에 저장)
         MeetingResponseDto response = meetingService.createMeeting(request, user.getId());
         return ResponseEntity.ok(response);
     }
