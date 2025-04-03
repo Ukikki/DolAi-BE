@@ -1,7 +1,7 @@
 package com.dolai.backend.meeting.model;
 
 import com.dolai.backend.common.model.BaseTimeEntity;
-import com.dolai.backend.todo.model.enums.Status;
+import com.dolai.backend.meeting.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -52,7 +52,7 @@ public class Meeting extends BaseTimeEntity {
                 .startTime(startTime)
                 .hostUserId(hostUserId)
                 .inviteUrl(inviteUrl) // 초대 URL 자동 생성
-                .status(Status.PENDING) // 기본 상태: 대기 중
+                .status(Status.SCHEDULED) // 기본 상태: 예약됨
                 .build();
     }
 }
