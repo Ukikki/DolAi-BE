@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class DirectoryListResponseDto {
-    private String directoryId;
+    private Long directoryId;
     private String name;
     private String parentDirectoryId;
 }

@@ -138,7 +138,7 @@ public class DirectoryService {
 
         return children.stream()
                 .map(dir -> DirectoryListResponseDto.builder()
-                        .directoryId(String.valueOf(dir.getId()))
+                        .directoryId(dir.getId())
                         .name(dir.getName())
                         .parentDirectoryId(dir.getParent() != null ? String.valueOf(dir.getParent().getId()) : null)
                         .build())

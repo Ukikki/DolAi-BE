@@ -3,10 +3,14 @@ package com.dolai.backend.directory.service;
 import com.dolai.backend.directory.model.DirectoryUser;
 import com.dolai.backend.directory.model.enums.DirectoryColor;
 import com.dolai.backend.directory.repository.DirectoryUserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+@Service
+@RequiredArgsConstructor
 public class DirectoryUserService {
 
-    private DirectoryUserRepository directoryUserRepository;
+    private final DirectoryUserRepository directoryUserRepository;
 
     public void updateColor(Long directoryId, String userId, String newColor) {
         DirectoryUser du = directoryUserRepository
