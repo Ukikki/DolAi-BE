@@ -15,7 +15,7 @@ public enum ErrorCode {
     // Auth
     OAUTH_PROVIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "OAuth provider not found"),
     TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 AccessToken을 찾을 수 없습니다."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
     EXPIRED_JWT(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
     INVALID_JWT(HttpStatus.UNAUTHORIZED, "유효하지 않은 JWT입니다."),
     INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "JWT 서명이 유효하지 않습니다."),
@@ -30,7 +30,15 @@ public enum ErrorCode {
     DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의에 연결된 문서를 찾을 수 없습니다."),
 
     // Meeting
-    MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의를 찾을 수 없습니다.");
+    MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의를 찾을 수 없습니다."),
+
+    //Friends
+    FRIEND_ALREADY_REQUESTED(HttpStatus.CONFLICT, "이미 친구 요청이 존재합니다."),
+    FRIEND_ALREADY_ACCEPTED(HttpStatus.CONFLICT, "이미 친구 상태입니다."),
+    FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, "친구 관계가 존재하지 않습니다."),
+    FRIEND_REQUEST_NOT_YOURS(HttpStatus.FORBIDDEN, "본인에게 온 요청만 수락 또는 거절할 수 있습니다."),
+    FRIEND_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "친구 요청이 존재하지 않습니다."),
+    USER_RECEIVER_NOT_FOUND(HttpStatus.NOT_FOUND, "친구 요청 받을 사용자를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;
