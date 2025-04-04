@@ -1,4 +1,3 @@
-// MySQL - USER 테이블
 package com.dolai.backend.user.model;
 
 import com.dolai.backend.common.model.BaseTimeEntity;
@@ -59,8 +58,4 @@ public class User extends BaseTimeEntity {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
-    public String getRoleKey() {
-        return this.role.name(); // USER -> "USER", ADMIN -> "ADMIN"
-    }
-
 }

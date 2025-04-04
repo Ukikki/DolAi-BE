@@ -55,7 +55,7 @@ public class OAuth2Service {
         String jwtAccessToken = tokenProvider.generateAccessToken(authentication);
         String jwtRefreshToken = tokenProvider.generateRefreshToken(authentication, jwtAccessToken);
 
-        UserDto userDto = new UserDto(user.getId(), user.getEmail(), user.getName(), user.getProfileImageUrl());
+        UserDto userDto = UserDto.create(user);
 
         return new LoginResponseDto(userDto, jwtAccessToken, jwtRefreshToken);
     }

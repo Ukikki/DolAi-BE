@@ -1,7 +1,10 @@
 package com.dolai.backend.user.service;
 
+import com.dolai.backend.common.exception.CustomException;
+import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.oauth.model.OAuth2UserInfo;
 import com.dolai.backend.user.model.User;
+import com.dolai.backend.user.model.UserDto;
 import com.dolai.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +41,9 @@ public class UserService {
         }
     }
 
-    public Optional<User> getUserById(String sub) {
-        return userRepository.findById(sub);
-    }
-}
+    public UserDto findUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserDto userDto = UserDto.create(user);
+        return userDto;
+    }}
