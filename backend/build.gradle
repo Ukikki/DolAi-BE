@@ -22,7 +22,7 @@ configurations {
 
 repositories {
 	mavenCentral() // Maven Central에 의존성 검색
-	maven { url 'https://maven.arangodb.com' } // ArangoDB Spring Data의 공식 저장소 추가
+	maven { url 'https://maven.arangodb.org' }
 }
 
 dependencies {
@@ -43,11 +43,10 @@ dependencies {
 	implementation 'mysql:mysql-connector-java:8.0.33'
 
 	// ArangoDB Spring Data
-//	implementation 'com.arangodb.springdata:arangodb-spring-data:4.3.0'
-	implementation group: 'com.arangodb', name: 'arangodb-spring-data', version: '4.3.0'
+	implementation 'com.arangodb:arangodb-spring-data:4.3.0'
 
 	// ArangoDB Java driver
-	implementation 'com.arangodb:arangodb-spring-boot-starter:3.5.0'
+	//implementation 'com.arangodb:arangodb-spring-boot-starter:3.5.0'
 
 	// JSON 직렬화/역직렬화 지원 (Jackson)
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
