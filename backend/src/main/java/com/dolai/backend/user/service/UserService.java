@@ -24,8 +24,21 @@ public class UserService {
         if (optionalUser.isPresent()) {
             // 기존 유저 정보 업데이트
             User existingUser = optionalUser.get();
-            existingUser.update(userInfo.getName(), userInfo.getProfileImageUrl());
-            log.info("🔄 기존 사용자 업데이트: {}", existingUser);
+            String updateProfileImage = existingUser.getProfileImageUrl();
+            String socialProfileImage = userInfo.getProfileImageUrl();
+
+            boolean isUsingSocialImage =
+                    updateProfileImage == null ||
+                            updateProfileImage.contains("kakao") ||
+                            updateProfileImage.contains("google") ||
+                            updateProfileImage.startsWith("http");
+
+            String updateName = existingUser.getName(); // 기존 이름 유지
+            String imageToUpdate = isUsingSocialImage ? socialProfileImage : updateProfileImage;
+
+            existingUser.update(updateName, imageToUpdate);
+
+            log.info("🔄 기존 사용자 프로필이미지만 업데이트: {}", existingUser);
             return userRepository.save(existingUser);
         } else {
             // 신규 유저 저장
