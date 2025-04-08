@@ -42,3 +42,4 @@ backend/.env
 
 backend/src/main/resources/secret-application.properties
 
+.gradle/
