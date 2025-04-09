@@ -135,7 +135,7 @@ const createDevice = async () => {
     const turnCreds = await generateTurnCredentials(secret);
 
     turnIceServer = {
-      urls: 'turn:223.194.137.95:3478?transport=udp',
+      urls: 'turn:223.194.138.231:3478?transport=udp',
       username: turnCreds.username,
       credential: turnCreds.credential,
     };

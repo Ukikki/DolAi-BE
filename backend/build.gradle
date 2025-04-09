@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.3'
-	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.springframework.boot' version '3.2.4'
+	id 'io.spring.dependency-management' version '1.1.4'
 }
 
 group = 'com.dolai'
@@ -20,9 +20,15 @@ configurations {
 	}
 }
 
+configurations.all {
+	resolutionStrategy {
+		force 'com.arangodb:arangodb-spring-data:3.6.0'
+		force 'com.arangodb:arangodb-java-driver:6.7.2'
+	}
+}
+
 repositories {
 	mavenCentral() // Maven Central에 의존성 검색
-	maven { url 'https://maven.arangodb.org' }
 }
 
 dependencies {
@@ -43,10 +49,8 @@ dependencies {
 	implementation 'mysql:mysql-connector-java:8.0.33'
 
 	// ArangoDB Spring Data
-	implementation 'com.arangodb:arangodb-spring-data:4.3.0'
-
-	// ArangoDB Java driver
-	//implementation 'com.arangodb:arangodb-spring-boot-starter:3.5.0'
+	implementation 'com.arangodb:arangodb-spring-data:4.2.0'
+	implementation 'com.arangodb:arangodb-java-driver:7.7.0'
 
 	// JSON 직렬화/역직렬화 지원 (Jackson)
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
