@@ -74,4 +74,32 @@ public class FriendsController {
                 )
         );
     }
+
+    // 보낸 친구 요청 목록 조회
+    @GetMapping("/requests/sent")
+    public ResponseEntity<?> getSentRequests(@AuthenticationPrincipal User user) {
+        List<FriendInfoDto> sentRequests = friendsService.getSentFriendRequests(user.getId());
+        return ResponseEntity.ok(
+                new SuccessDataResponse<>(Map.of("sentRequests", sentRequests))
+        );
+    }
+
+    // 보낸 친구 요청 취소
+    @DeleteMapping("/requests/{friendId}")
+    public ResponseEntity<?> cancelSentRequest(@PathVariable("friendId") String friendId,
+                                               @AuthenticationPrincipal User user) {
+        friendsService.cancelSentFriendRequest(user.getId(), friendId);
+        return ResponseEntity.ok(
+                new SuccessMessageResponse("Friend request cancelled successfully")
+        );
+    }
+
+
+    // 친구 name 또는 email로 검색
+    @GetMapping("/search")
+    public ResponseEntity<?> searchMyFriends(@AuthenticationPrincipal User user,
+                                             @RequestParam(name = "keyword") String keyword) {
+        List<FriendInfoDto> response = friendsService.searchFriendsByKeyword(user.getId(), keyword);
+        return ResponseEntity.ok(new SuccessDataResponse<>(response));
+    }
 }
