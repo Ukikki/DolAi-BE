@@ -116,7 +116,7 @@ public class FriendsService {
         }
 
         Friends friends = friendsOpt
-                .orElseThrow(() -> new CustomException(ErrorCode.FRIEND_NOT_FOUND));  // 여기에 FRIEND_NOT_FOUND 추가!
+                .orElseThrow(() -> new CustomException(ErrorCode.FRIEND_NOT_FOUND));
 
         friendsRepository.delete(friends);
     }
