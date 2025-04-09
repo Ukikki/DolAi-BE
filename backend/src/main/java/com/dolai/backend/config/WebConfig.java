@@ -10,6 +10,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/static/**")
-                .addResourceLocations("file:uploads/"); // 실제 서버 경로
+                .addResourceLocations("file:" + System.getProperty("user.dir") + "/backend/uploads/"); // 실행 중인 Java 애플리케이션의 루트 경로
     }
 }
