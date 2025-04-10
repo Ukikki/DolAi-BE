@@ -1,6 +1,6 @@
 package com.dolai.backend.document.model;
 
-import com.dolai.backend.todo.model.TodoDto;
+import com.dolai.backend.todo.model.TodoRequestDto;
 import lombok.*;
 
 import java.util.List;
@@ -18,6 +18,6 @@ public class DocumentResponseDto {
     private String detailedContent;
     private String graphs;
     private String notes;
-    private List<TodoDto> todoList;
+    private List<TodoRequestDto> todoList;
     private String documentUrl;
 }

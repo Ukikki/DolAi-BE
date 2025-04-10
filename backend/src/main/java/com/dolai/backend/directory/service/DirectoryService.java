@@ -7,8 +7,6 @@ import com.dolai.backend.directory.model.enums.DirectoryColor;
 import com.dolai.backend.directory.model.enums.DirectoryType;
 import com.dolai.backend.directory.repository.DirectoryRepository;
 import com.dolai.backend.directory.repository.DirectoryUserRepository;
-import com.dolai.backend.document.model.Document;
-import com.dolai.backend.document.model.DocumentPlacement;
 import com.dolai.backend.document.repository.DocumentPlacementRepository;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.model.Participant;
@@ -33,7 +31,6 @@ public class DirectoryService {
     public DirectoryResponseDto createDirectory(DirectoryRequestDto request, User user) {
 
         DirectoryType type = DirectoryType.valueOf(request.getType().toUpperCase());
-        // 명세 위반 검사 추가
         if (type == DirectoryType.PERSONAL && request.getMeetingId() != null) {
             throw new CustomException(ErrorCode.MEETING_ID_SHOULD_BE_NULL);
         }
@@ -150,12 +147,15 @@ public class DirectoryService {
         Directory directory = directoryRepository.findById(directoryId)
                 .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
 
-        //해당 디렉터리에 연결된 문서 배치 삭제
         documentPlacementRepository.deleteByDirectory(directory);
-
-        // 2. directory_user 등 관련 정보 삭제 (cascade 또는 수동)
-
-        //디렉터리 자체 삭제
         directoryRepository.delete(directory);
+    }
+
+    @Transactional
+    public void updateDirectoryName(Long directoryId, String newName) {
+        Directory directory = directoryRepository.findById(directoryId)
+                .orElseThrow(() -> new IllegalArgumentException("디렉터리를 찾을 수 없습니다."));
+        directory.setName(newName);
+        directoryRepository.save(directory);
     }
 }

@@ -59,17 +59,24 @@ public class DirectoryController {
             @AuthenticationPrincipal User user
     ) {
         String newColor = request.get("color");
-        String userId = user.getId(); // ⚠️ 타입 맞게 필요 시 Long userId = user.getId();
-
-        log.info("[색상 변경 요청] 디렉터리 ID: {}, 유저 ID: {}, 변경 색상: {}", directoryId, userId, newColor);
+        String userId = user.getId();
 
         try {
             directoryUserService.updateColor(directoryId, userId, newColor);
-            log.info("[색상 변경 완료] 디렉터리 ID: {}", directoryId);
             return ResponseEntity.ok().body(new SuccessMessageResponse("디렉터리 색상 변경 완료"));
         } catch (Exception e) {
-            log.error("[색상 변경 실패] 에러: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(new SuccessMessageResponse("색상 변경 실패: " + e.getMessage()));
         }
+    }
+
+    @PatchMapping("/{directoryId}/name")
+    public ResponseEntity<?> updateDirectoryName(
+            @PathVariable Long directoryId,
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal User user
+    ) {
+        String newName = request.get("name");
+        directoryService.updateDirectoryName(directoryId, newName);
+        return ResponseEntity.ok().body(new SuccessMessageResponse("디렉터리 이름 변경 완료"));
     }
 }

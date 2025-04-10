@@ -40,6 +40,9 @@ out/
 backend/.env
 .env
 
+#mediasoup
+/mediasoup-sfu/node_modules
+
 backend/src/main/resources/secret-application.properties
 
 # macOS 시스템 파일
