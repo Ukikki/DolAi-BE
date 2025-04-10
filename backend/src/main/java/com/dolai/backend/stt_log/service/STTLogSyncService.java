@@ -22,19 +22,21 @@ public class STTLogSyncService {
     public void syncToArango() {
         List<STTLog> logsToSync = sttLogRepository.findTop10BySyncedFalseOrderByTimestampAsc();
 
-        for (STTLog log : logsToSync) {
+        for (STTLog sttLog : logsToSync) {
             try {
+                log.info("💬 Syncing: [{}] {} - {}", sttLog.getMeeting().getId(), sttLog.getSpeakerName(), sttLog.getText());
                 graphService.saveUtterance(
-                        log.getMeeting().getId().toString(),
-                        log.getSpeakerName(),
-                        log.getText()
+                        sttLog.getMeeting().getId().toString(),
+                        sttLog.getSpeakerName(),
+                        sttLog.getText()
                 );
 
-                log.setSynced(true);
-                sttLogRepository.save(log);
+                sttLog.setSynced(true);
+                sttLogRepository.save(sttLog);
             } catch (Exception e) {
-//                log.error("❌ Failed to sync log: {}", log, e);
+                log.error("❌ Failed to sync STTLog", e);
             }
         }
+
     }
 }
