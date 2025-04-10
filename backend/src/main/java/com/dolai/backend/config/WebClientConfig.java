@@ -38,7 +38,7 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("https://223.194.158.104:3000") // ✅ 실제 Mediasoup 서버 IP로 맞게 설정!
+                .baseUrl("https://223.194.136.216:3000") // Mediasoup 기본 주소 지정
                 .build();
     }
 }

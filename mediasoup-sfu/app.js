@@ -443,7 +443,7 @@ const createWebRtcTransport = async (router) => {
         listenIps: [
           {
             ip: '0.0.0.0', // replace with relevant IP address // 서버 내부용
-            announcedIp: '223.194.138.231', // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
+            announcedIp: '223.194.136.216', // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
           }
         ],
         enableUdp: true,
