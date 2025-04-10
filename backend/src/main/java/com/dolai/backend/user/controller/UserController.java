@@ -8,6 +8,7 @@ import com.dolai.backend.user.model.UserDto;
 import com.dolai.backend.user.repository.UserRepository;
 import com.dolai.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,10 +58,24 @@ public class UserController {
     @PatchMapping("/profile")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal User user, @RequestPart("image") MultipartFile imageFile) {
 
+        // backend/uploads 폴더로 절대 경로 지정
         try {
             String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-            Path path = Paths.get("uploads/" + fileName);
-            Files.copy(imageFile.getInputStream(), path);
+
+            String currentDir = System.getProperty("user.dir");
+            String uploadDir;
+
+            if (currentDir.endsWith("backend")) {
+                uploadDir = currentDir + "/uploads";
+            } else {
+                uploadDir = currentDir + "/backend/uploads";
+            }
+
+            Path uploadPath = Paths.get(uploadDir);
+            Files.createDirectories(uploadPath);
+
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             String imageUrl = "/static/" + fileName;
             user.setProfileImageUrl(imageUrl);

@@ -50,7 +50,7 @@ public class MeetingService {
         }
 
         // 초대 링크 생성
-        String inviteUrl = "https://223.194.137.95:3000/sfu/" + roomId;
+        String inviteUrl = "https://223.194.136.216%:3000/sfu/" + roomId;
 
         // 회의 정보 DB 저장
         Meeting meeting = Meeting.create(request.getTitle(), request.getStartTime(), userId, inviteUrl);
