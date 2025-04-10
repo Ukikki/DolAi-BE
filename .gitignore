@@ -50,3 +50,5 @@ backend/src/main/resources/secret-application.properties
 
 # Gradle 빌드 캐시
 .gradle/
+
+gradle

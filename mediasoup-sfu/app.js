@@ -2,6 +2,8 @@
  * integrating mediasoup server with a node.js application
  */
 
+const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+
 /* Please follow mediasoup installation requirements */
 /* https://mediasoup.org/documentation/v3/mediasoup/installation/ */
 import express from 'express'
@@ -443,7 +445,7 @@ const createWebRtcTransport = async (router) => {
         listenIps: [
           {
             ip: '0.0.0.0', // replace with relevant IP address // 서버 내부용
-            announcedIp: '223.194.136.216', // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
+            announcedIp: PUBLIC_IP, // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
           }
         ],
         enableUdp: true,
@@ -472,3 +474,21 @@ const createWebRtcTransport = async (router) => {
     }
   })
 }
+
+app.get('/sfu/:room', (req, res) => {
+  const htmlPath = path.join(__dirname, 'public', 'index.html');
+  let html = fs.readFileSync(htmlPath, 'utf-8');
+
+  const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+
+  // IP 삽입 스크립트 추가
+  html = html.replace(
+      '</head>',
+      `<script>window.__PUBLIC_IP__ = "${PUBLIC_IP}";</script></head>`
+  );
+
+  res.send(html);
+});
+
+// 정적 리소스(js, css 등)는 여전히 static으로 서비스
+app.use('/sfu/:room', express.static(path.join(__dirname, 'public')));
