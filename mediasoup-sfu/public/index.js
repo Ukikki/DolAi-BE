@@ -1,3 +1,5 @@
+const PUBLIC_IP = window.__PUBLIC_IP__ || '127.0.0.1';
+
 //index.js
 const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
