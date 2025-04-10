@@ -43,8 +43,8 @@ const options = {
 }
 
 const httpsServer = https.createServer(options, app)
-httpsServer.listen(3000, () => {
-  console.log('listening on port: ' + 3000)
+httpsServer.listen(3000, '0.0.0.0', () => {
+  console.log('Mediasoup 서버가 모든 IP에서 수신 대기 중 port: ' + 3000)
 })
 
 const io = new Server(httpsServer)
