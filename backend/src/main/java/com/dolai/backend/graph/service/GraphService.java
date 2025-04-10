@@ -8,9 +8,6 @@ import com.dolai.backend.graph.entity.TopicNode;
 import com.dolai.backend.graph.entity.UtteranceNode;
 import com.dolai.backend.graph.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,6 +21,7 @@ public class GraphService {
     private final KeywordNodeRepository keywordRepo;
     private final UtteranceToTopicEdgeRepository topicEdgeRepo;
     private final UtteranceToKeywordEdgeRepository keywordEdgeRepo;
+    private final UtteranceNodeRepository utteranceNodeRepository;
 
     public void linkUtteranceToTopic(String utteranceText, String topicName) {
         UtteranceNode utterance = new UtteranceNode();
@@ -55,5 +53,24 @@ public class GraphService {
         edge.setTimestamp(Instant.now());
 
         keywordEdgeRepo.save(edge);
+    }
+
+    // 저장
+    public void saveUtterance(String meetingId, String speakerName, String text) {
+        // 중복 체크
+        boolean exists = utteranceRepo.existsByMeetingIdAndSpeakerNameAndText(meetingId, speakerName, text);
+        if (exists) {
+//            log.debug("⏭️ Already exists in ArangoDB: [{} - {} - {}]", meetingId, speakerName, text);
+            return;
+        }
+
+        // 새로운 Utterance 생성 및 저장
+        UtteranceNode node = UtteranceNode.builder()
+                .meetingId(meetingId)
+                .speakerName(speakerName)
+                .text(text)
+                .build();
+
+        utteranceRepo.save(node);
     }
 }

@@ -22,4 +22,7 @@ public class STTLog {
     private String speakerName;
     private String text;
     private LocalDateTime timestamp;
+
+    @Column(name = "synced")
+    private Boolean synced = false; // ArangoDB에 데이터를 옮긴 후 true로 바꿔 중복 저장 방지
 }

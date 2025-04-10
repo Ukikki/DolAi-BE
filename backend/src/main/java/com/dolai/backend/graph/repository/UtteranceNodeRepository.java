@@ -11,4 +11,6 @@ public interface UtteranceNodeRepository extends ArangoRepository<UtteranceNode,
     Optional<UtteranceNode> findById(String id);
 
     UtteranceNode save(UtteranceNode utterance);
+
+    boolean existsByMeetingIdAndSpeakerNameAndText(String meetingId, String speakerName, String text);
 }
