@@ -1,7 +1,9 @@
 package com.dolai.backend.config;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -16,6 +18,10 @@ public class WebClientConfig {
 
     @Bean
     public WebClient webClient() {
+
+        Dotenv dotenv = Dotenv.load(); // .env 파일 읽기
+        String publicIp = dotenv.get("PUBLIC_IP");
+
         X509TrustManager trustAllCerts = new X509TrustManager() {
             @Override public void checkClientTrusted(X509Certificate[] xcs, String string) {}
             @Override public void checkServerTrusted(X509Certificate[] xcs, String string) {}
@@ -38,7 +44,7 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("https://223.194.136.216:3000") // Mediasoup 기본 주소 지정
+                .baseUrl("https://" + publicIp + ":3000") // Mediasoup 기본 주소 지정
                 .build();
     }
 }
