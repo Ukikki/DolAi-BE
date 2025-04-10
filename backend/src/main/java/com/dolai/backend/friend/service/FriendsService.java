@@ -14,6 +14,7 @@ import com.dolai.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,11 @@ public class FriendsService {
     @Transactional(readOnly = true)
     public List<FriendInfoDto> getFriends(String userId) {
         List<Friends> friendsList = friendsRepository
-                .findAllByRequesterIdOrReceiverIdAndStatus(userId, userId, FriendsStatus.ACCEPTED);
+                .findAllByStatusAndRequesterIdOrStatusAndReceiverId(
+                        FriendsStatus.ACCEPTED, userId,
+                        FriendsStatus.ACCEPTED, userId
+                );
+
         return friendsList.stream()
                 .map(friends -> {
                     User friend = friends.getRequester().getId().equals(userId)
@@ -40,6 +45,7 @@ public class FriendsService {
                 })
                 .collect(Collectors.toList());
     }
+
 
     // 친구 요청
     @Transactional
@@ -123,13 +129,8 @@ public class FriendsService {
 
     // 받은 친구 요청 목록
     @Transactional(readOnly = true)
-    public List<FriendInfoDto> getReceivedFriendRequests(String userId) {
-        List<Friends> requests = friendsRepository
-                .findAllByReceiverIdAndStatus(userId, FriendsStatus.REQUESTED);
-
-        return requests.stream()
-                .map(friends -> FriendInfoDto.create(friends.getRequester()))
-                .collect(Collectors.toList());
+    public List<Friends> getReceivedFriendRequests(String userId) {
+        return friendsRepository.findAllByReceiverIdAndStatus(userId, FriendsStatus.REQUESTED);
     }
 
     // 내가 보낸 요청 목록

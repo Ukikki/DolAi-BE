@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface FriendsRepository extends JpaRepository<Friends, Long> {
     Optional<Friends> findByRequesterIdAndReceiverId(String requesterId, String receiverId);
-    List<Friends> findAllByRequesterIdOrReceiverIdAndStatus(String userId1, String userId2, FriendsStatus status);
+    List<Friends> findAllByStatusAndRequesterIdOrStatusAndReceiverId(FriendsStatus status1, String requesterId, FriendsStatus status2, String receiverId);
     List<Friends> findAllByRequesterIdAndStatus(String requesterId, FriendsStatus status);
     List<Friends> findAllByReceiverIdAndStatus(String receiverId, FriendsStatus status);
     @Query("""
