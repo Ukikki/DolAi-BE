@@ -20,7 +20,7 @@ public class FriendInfoDto {
         this.name = name;
     }
 
-    public static FriendInfoDto create(User user) {
+    public static FriendInfoDto from(User user) {
         return FriendInfoDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())

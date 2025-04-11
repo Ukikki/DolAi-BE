@@ -41,7 +41,7 @@ public class FriendsService {
                     User friend = friends.getRequester().getId().equals(userId)
                             ? friends.getReceiver()
                             : friends.getRequester();
-                    return FriendInfoDto.create(friend);
+                    return FriendInfoDto.from(friend);
                 })
                 .collect(Collectors.toList());
     }
@@ -137,7 +137,7 @@ public class FriendsService {
     public List<FriendInfoDto> getSentFriendRequests(String userId) {
         List<Friends> requests = friendsRepository.findAllByRequesterIdAndStatus(userId, FriendsStatus.REQUESTED);
         return requests.stream()
-                .map(f -> FriendInfoDto.create(f.getReceiver()))
+                .map(f -> FriendInfoDto.from(f.getReceiver()))
                 .toList();
     }
 

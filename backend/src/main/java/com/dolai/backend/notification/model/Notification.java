@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @Getter
@@ -20,13 +21,24 @@ public class Notification {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private Type type;  // FRIEND, MEETING, SCHEDULE
+    private Type type;
+
     private String title;
+
     private String receiverId;
+
     private LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public static Notification create(Type type, String receiverId, Map<String, String> params) {
+        return Notification.builder()
+                .type(type)
+                .receiverId(receiverId)
+                .title(type.format(params))
+                .build();
     }
 }
