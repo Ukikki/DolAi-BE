@@ -32,7 +32,6 @@ public class Friends extends BaseTimeEntity {
     @Column(nullable = false)
     private FriendsStatus status;
 
-    // Friends.java
     public static Friends create(User requester, User receiver) {
         return Friends.builder()
                 .requester(requester)
