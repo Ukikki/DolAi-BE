@@ -96,6 +96,15 @@ public class FriendsService {
 
         friends.setStatus(FriendsStatus.ACCEPTED);
         friendsRepository.save(friends);
+
+        User requester = friends.getRequester();
+        User receiver = friends.getReceiver();
+
+        notificationService.notify(
+                requester.getId(),
+                Type.FRIEND_ACCEPT,
+                Map.of("sender", receiver.getName())
+        );
     }
 
     // 친구 거절
@@ -110,6 +119,16 @@ public class FriendsService {
 
         friends.setStatus(FriendsStatus.REJECTED);
         friendsRepository.save(friends);
+
+        User requester = friends.getRequester();
+        User receiver = friends.getReceiver();
+
+        notificationService.notify(
+                requester.getId(),
+                Type.FRIEND_REJECT,
+                Map.of("sender", receiver.getName())
+        );
+
     }
 
     // 친구 삭제
