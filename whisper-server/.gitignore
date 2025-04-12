@@ -8,6 +8,7 @@ __pycache__/
 .venv/
 env/
 venv/
+.idea/
 
 # 모델 및 캐시
 *.bin

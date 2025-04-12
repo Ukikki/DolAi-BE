@@ -86,6 +86,18 @@ services:
     networks:
       - backend_network
 
+  whisper:
+    build:
+      context: ../whisper-server
+      dockerfile: Dockerfile
+    container_name: whisper-server
+    stdin_open: true
+    tty: true
+    ports:
+      - "5001:5001"
+    networks:
+      - backend_network
+
 networks:
   backend_network:
     driver: bridge  # Docker 브리지 네트워크 설정

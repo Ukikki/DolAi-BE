@@ -25,6 +25,7 @@ app.use('/api', restRoutes)
 
 // roomManager.js 등록
 import { createWorker, rooms } from './roomManager.js'
+import FfmpegStream from './server/whisper/ffmpegStream.js';
 
 app.get('*', (req, res, next) => {
   const path = '/sfu/'
@@ -94,6 +95,7 @@ const mediaCodecs = [
   {
     kind: 'audio',
     mimeType: 'audio/opus',
+    preferredPayloadType: 111,
     clockRate: 48000,
     channels: 2,
   },
@@ -342,6 +344,55 @@ connections.on('connection', async socket => {
 
     // add producer to the producers array
     const { roomName } = peers[socket.id]
+    const router = rooms[roomName].router;
+
+    if (kind === 'audio') {
+      const codec = producer.rtpParameters.codecs[0];
+      console.log("🎧 Producer Codec Info:", codec); // << 여기!
+      // RTP 스트림을 Whisper로 보내기 위한 FFmpeg 실행
+      const plainTransport = await rooms[roomName].router.createPlainTransport({
+        listenIp: { ip: '0.0.0.0', announcedIp: PUBLIC_IP },
+        rtcpMux: false,  // Changed to false
+        comedia: false   // Changed to false
+      });
+
+      // ✅ RTP 패킷 들어오는지 확인 로그
+      plainTransport.on('rtp', packet => {
+        console.log('📡 RTP packet received:', packet.length);
+      });
+
+      try {
+        await plainTransport.connect({
+          ip: '127.0.0.1',
+          port: 5004,
+          rtcpPort: 5005  // Explicitly set RTCP port
+        });
+
+        const consumer = await plainTransport.consume({
+          producerId: producer.id,
+          rtpCapabilities: router.rtpCapabilities,
+          paused: false,
+        });
+        await consumer.resume();
+        console.log("✅ Consumer created on plainTransport for FFmpeg");
+
+        const ffmpegStream = new FfmpegStream({
+          ip: '127.0.0.1',
+          port: 5004,
+          codec: {
+            name: codec.mimeType.split('/')[1],
+            clockRate: codec.clockRate,
+            payloadType: codec.payloadType,
+          }
+        });
+
+        peers[socket.id].ffmpeg = ffmpegStream;
+
+      } catch (err) {
+        console.error("❌ Whisper 관련 설정 실패:", err);
+      }
+
+    }
 
     addProducer(producer, roomName)
 
