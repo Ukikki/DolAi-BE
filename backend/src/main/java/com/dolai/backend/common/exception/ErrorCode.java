@@ -43,7 +43,10 @@ public enum ErrorCode {
 
     // Users
     USER_FILE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "파일 업로드를 실패하였습니다."),
-    USER_INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다.");
+    USER_INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
+
+    // To-do
+    TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 할 일을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;

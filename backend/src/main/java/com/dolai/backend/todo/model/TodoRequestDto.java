@@ -1,16 +1,22 @@
 package com.dolai.backend.todo.model;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import java.time.LocalDateTime;
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @Builder
 public class TodoRequestDto {
+    @NotBlank(message = "할 일 제목은 필수입니다.")
     private String title;
-    private String description;
-    private String dueDate; // ISO_LOCAL_DATE_TIME
+
+    @NotNull(message = "마감일을 선택해주세요.")
+    private LocalDateTime dueDate;
+
     private String meetingId;
-    private String assignee; // ✅ 요게 없으면 빌더가 에러남
+
+    private String assignee; // AI To-do 생성 시에만 사용
 }
