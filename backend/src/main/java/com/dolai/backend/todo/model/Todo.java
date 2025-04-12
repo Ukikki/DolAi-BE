@@ -1,5 +1,6 @@
 package com.dolai.backend.todo.model;
 
+import com.dolai.backend.common.model.BaseTimeEntity;
 import com.dolai.backend.todo.model.enums.Status;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.meeting.model.Meeting;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Todo {
+public class Todo extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,9 +29,6 @@ public class Todo {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;  // To-Do 내용
-
     private LocalDateTime dueDate;  // To-Do 기한
 
     @ManyToOne
@@ -39,6 +37,22 @@ public class Todo {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status= Status.PENDING;
+    private Status status;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = Status.PENDING;
+        }
+    }
+
+    public static Todo create(User user, TodoRequestDto dto, Meeting meeting) {
+        return Todo.builder()
+                .title(dto.getTitle())
+                .dueDate(dto.getDueDate())
+                .user(user)
+                .meeting(meeting)
+                .status(Status.PENDING)
+                .build();
+    }
 }
