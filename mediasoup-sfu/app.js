@@ -2,6 +2,8 @@
  * integrating mediasoup server with a node.js application
  */
 
+const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+
 /* Please follow mediasoup installation requirements */
 /* https://mediasoup.org/documentation/v3/mediasoup/installation/ */
 import express from 'express'
@@ -23,6 +25,7 @@ app.use('/api', restRoutes)
 
 // roomManager.js 등록
 import { createWorker, rooms } from './roomManager.js'
+import FfmpegStream from './server/whisper/ffmpegStream.js';
 
 app.get('*', (req, res, next) => {
   const path = '/sfu/'
@@ -92,6 +95,7 @@ const mediaCodecs = [
   {
     kind: 'audio',
     mimeType: 'audio/opus',
+    preferredPayloadType: 111,
     clockRate: 48000,
     channels: 2,
   },
@@ -340,6 +344,55 @@ connections.on('connection', async socket => {
 
     // add producer to the producers array
     const { roomName } = peers[socket.id]
+    const router = rooms[roomName].router;
+
+    if (kind === 'audio') {
+      const codec = producer.rtpParameters.codecs[0];
+      console.log("🎧 Producer Codec Info:", codec); // << 여기!
+      // RTP 스트림을 Whisper로 보내기 위한 FFmpeg 실행
+      const plainTransport = await rooms[roomName].router.createPlainTransport({
+        listenIp: { ip: '0.0.0.0', announcedIp: PUBLIC_IP },
+        rtcpMux: false,  // Changed to false
+        comedia: false   // Changed to false
+      });
+
+      // ✅ RTP 패킷 들어오는지 확인 로그
+      plainTransport.on('rtp', packet => {
+        console.log('📡 RTP packet received:', packet.length);
+      });
+
+      try {
+        await plainTransport.connect({
+          ip: '127.0.0.1',
+          port: 5004,
+          rtcpPort: 5005  // Explicitly set RTCP port
+        });
+
+        const consumer = await plainTransport.consume({
+          producerId: producer.id,
+          rtpCapabilities: router.rtpCapabilities,
+          paused: false,
+        });
+        await consumer.resume();
+        console.log("✅ Consumer created on plainTransport for FFmpeg");
+
+        const ffmpegStream = new FfmpegStream({
+          ip: '127.0.0.1',
+          port: 5004,
+          codec: {
+            name: codec.mimeType.split('/')[1],
+            clockRate: codec.clockRate,
+            payloadType: codec.payloadType,
+          }
+        });
+
+        peers[socket.id].ffmpeg = ffmpegStream;
+
+      } catch (err) {
+        console.error("❌ Whisper 관련 설정 실패:", err);
+      }
+
+    }
 
     addProducer(producer, roomName)
 
@@ -443,7 +496,7 @@ const createWebRtcTransport = async (router) => {
         listenIps: [
           {
             ip: '0.0.0.0', // replace with relevant IP address // 서버 내부용
-            announcedIp: '223.194.136.83', // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
+            announcedIp: PUBLIC_IP, // 10.0.0.115 -> 맥북의 공인 IP(클라이언트에게 알려줄 공인 IP)
           }
         ],
         enableUdp: true,
@@ -472,3 +525,21 @@ const createWebRtcTransport = async (router) => {
     }
   })
 }
+
+app.get('/sfu/:room', (req, res) => {
+  const htmlPath = path.join(__dirname, 'public', 'index.html');
+  let html = fs.readFileSync(htmlPath, 'utf-8');
+
+  const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+
+  // IP 삽입 스크립트 추가
+  html = html.replace(
+      '</head>',
+      `<script>window.__PUBLIC_IP__ = "${PUBLIC_IP}";</script></head>`
+  );
+
+  res.send(html);
+});
+
+// 정적 리소스(js, css 등)는 여전히 static으로 서비스
+app.use('/sfu/:room', express.static(path.join(__dirname, 'public')));

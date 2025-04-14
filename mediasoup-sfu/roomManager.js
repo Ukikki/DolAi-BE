@@ -1,5 +1,5 @@
 // roomManager.js
-import mediasoup from 'mediasoup'
+import * as mediasoup from 'mediasoup'
 
 export const mediaCodecs = [
     {

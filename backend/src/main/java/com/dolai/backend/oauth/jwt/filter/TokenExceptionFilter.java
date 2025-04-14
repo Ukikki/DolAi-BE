@@ -1,5 +1,6 @@
 package com.dolai.backend.oauth.jwt.filter;
 
+import com.dolai.backend.common.exception.CustomException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,12 +18,20 @@ public class TokenExceptionFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             filterChain.doFilter(request, response);
-        } catch (IllegalArgumentException e) { // 잘못된 토큰 처리
+        } catch (CustomException e) { // axios에서 401 감지
+            log.warn("❌ CustomException caught: {}", e.getMessage());
+            response.setStatus(e.getErrorCode().getStatus().value());
+            response.setContentType("application/json");
+            response.getWriter().write(
+                    "{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}"
+            );
+        } catch (IllegalArgumentException e) {
             log.warn("❌ Invalid token: {}", e.getMessage());
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid token");
-        } catch (Exception e) { // 기타 예외 처리
+        } catch (Exception e) {
             log.error("❌ Unexpected error: {}", e.getMessage());
             response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error");
         }
     }
+
 }

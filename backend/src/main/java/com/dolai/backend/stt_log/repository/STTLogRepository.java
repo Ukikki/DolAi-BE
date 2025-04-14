@@ -9,4 +9,8 @@ import java.util.List;
 @Repository
 public interface STTLogRepository extends JpaRepository<STTLog, Long> {
     List<STTLog> findByMeetingIdOrderByTimestampAsc(String meetingId);
+
+    List<STTLog> findTop10BySyncedFalseOrderByTimestampAsc();
+
+    List<STTLog> findByMeetingId(String meetingId);
 }

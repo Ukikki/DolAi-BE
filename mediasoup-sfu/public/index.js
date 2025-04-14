@@ -1,3 +1,6 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 //index.js
 const io = require('socket.io-client')
 const mediasoupClient = require('mediasoup-client')
@@ -135,7 +138,7 @@ const createDevice = async () => {
     const turnCreds = await generateTurnCredentials(secret);
 
     turnIceServer = {
-      urls: 'turn:223.194.136.83:3478?transport=udp',
+      urls: 'turn:${process.env.TURN_IP}:3478?transport=udp',
       username: turnCreds.username,
       credential: turnCreds.credential,
     };

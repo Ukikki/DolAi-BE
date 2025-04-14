@@ -59,6 +59,7 @@ public class AuthController {
         String accessToken = resolveToken(request);
         String refreshToken = request.getHeader("Refresh-Token"); // 🔹 클라이언트가 같이 보내야 함
 
+        log.info("📦 받은 리프레시 토큰: {}", refreshToken);
         if (!StringUtils.hasText(refreshToken)) {
             return ErrorResponse.toResponseEntity(ErrorCode.INVALID_JWT);
         }

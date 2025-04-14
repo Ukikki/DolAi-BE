@@ -4,7 +4,7 @@ import com.dolai.backend.meeting.model.*;
 import com.dolai.backend.meeting.repository.MeetingRepository;
 import com.dolai.backend.meeting.repository.ParticipantsRepository;
 import com.dolai.backend.user.model.User;
-import lombok.RequiredArgsConstructor;
+import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,13 +20,26 @@ import static com.dolai.backend.meeting.model.enums.Status.ENDED;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MeetingService {
 
     private final MeetingRepository meetingRepository;
     private final ParticipantsRepository participantsRepository;
 
     private final WebClient webClient; // 반드시 사용해야 신뢰 무시됨
+
+    private final String publicIp;
+
+    public MeetingService(
+            MeetingRepository meetingRepository,
+            ParticipantsRepository participantsRepository,
+            WebClient webClient,
+            Dotenv dotenv
+    ) {
+        this.meetingRepository = meetingRepository;
+        this.participantsRepository = participantsRepository;
+        this.webClient = webClient;
+        this.publicIp = dotenv.get("PUBLIC_IP");
+    }
 
     // 1. 새 화상회의 생성
     public MeetingResponseDto createMeeting(MeetingCreateRequestDto request, String userId) {
@@ -50,7 +63,7 @@ public class MeetingService {
         }
 
         // 초대 링크 생성
-        String inviteUrl = "https://223.194.136.83:3000/sfu/" + roomId;
+        String inviteUrl = "https://" + publicIp + ":3000/sfu/" + roomId;
 
         // 회의 정보 DB 저장
         Meeting meeting = Meeting.create(request.getTitle(), request.getStartTime(), userId, inviteUrl);

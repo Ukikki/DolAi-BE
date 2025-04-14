@@ -40,6 +40,19 @@ out/
 backend/.env
 .env
 
+#mediasoup
+/mediasoup-sfu/node_modules
+
 backend/src/main/resources/secret-application.properties
 
+# macOS 시스템 파일
+.DS_Store
+
+# Gradle 빌드 캐시
 .gradle/
+
+gradle
+package-lock.json
+
+mediasoup-sfu/node_modules
+node_modules/
