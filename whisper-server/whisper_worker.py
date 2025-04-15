@@ -5,7 +5,8 @@ from datetime import datetime
 from faster_whisper import WhisperModel
 from difflib import SequenceMatcher
 
-SPRING_URL = "http://localhost:8081/stt/log"
+SPRING_URL = "http://host.docker.internal:8081/stt/log"
+
 DEBUG = True
 
 wake_words = ["비서야", "돌아이", "또라이", "도라이"]
@@ -21,7 +22,9 @@ def is_similar(a, b, threshold=SIMILARITY_THRESHOLD):
 # 모델 로드 함수
 def load_model():
     print("Loading Whisper model...")
-    model = WhisperModel("tiny", device="cpu", compute_type="int8")
+
+    model = WhisperModel("small", device="cpu", compute_type="int8")
+
     print("Model loaded.")
     return model
 
