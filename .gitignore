@@ -52,7 +52,6 @@ backend/src/main/resources/secret-application.properties
 .gradle/
 
 gradle
-node_modules/
 package-lock.json
 
 mediasoup-sfu/node_modules

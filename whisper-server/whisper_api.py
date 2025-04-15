@@ -6,6 +6,7 @@ import requests
 import base64
 
 app = Flask(__name__)
+
 SPRING_URL = "http://host.docker.internal:8081/stt/log"
 
 @app.route("/whisper/stream", methods=["POST"])
