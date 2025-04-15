@@ -13,11 +13,13 @@ public class FriendInfoDto {
     private String id;
     private String email;
     private String name;
+    private String profile_image;
 
-    public FriendInfoDto(String id, String email, String name) {
+    public FriendInfoDto(String id, String email, String name, String profile_image) {
         this.id = id;
         this.email = email;
         this.name = name;
+        this.profile_image = profile_image;
     }
 
     public static FriendInfoDto from(User user) {
@@ -25,6 +27,7 @@ public class FriendInfoDto {
                 .id(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
+                .profile_image(user.getProfileImageUrl())
                 .build();
     }
 }

@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -54,9 +56,7 @@ public class UserService {
         }
     }
 
-    public UserDto findUserByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        UserDto userDto = UserDto.create(user);
-        return userDto;
+    public List<UserDto> findUserByEmail(String email) {
+        List<User> users = userRepository.findByEmailContainingIgnoreCase(email);
+        return users.stream().map(UserDto::create).collect(Collectors.toList());
     }}
