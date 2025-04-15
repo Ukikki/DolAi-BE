@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,8 +37,8 @@ public class UserController {
     }
     @GetMapping("/search")
     public ResponseEntity<?> searchByEmail(@RequestParam(name = "email") String email) {
-        UserDto user = userService.findUserByEmail(email);
-        return ResponseEntity.ok(new SuccessDataResponse<>(user));
+        List<UserDto> users = userService.findUserByEmail(email); // 부분 일치 검색
+        return ResponseEntity.ok(new SuccessDataResponse<>(users));
     }
 
     @PatchMapping("/rename")
