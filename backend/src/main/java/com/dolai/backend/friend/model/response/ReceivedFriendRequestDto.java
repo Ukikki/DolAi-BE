@@ -17,6 +17,7 @@ public class ReceivedFriendRequestDto {
     private String id;
     private String email;
     private String name;
+    private String profile_image;
 
     public static ReceivedFriendRequestDto from(Friends friends) {
         User requester = friends.getRequester();
@@ -25,6 +26,7 @@ public class ReceivedFriendRequestDto {
                 .id(requester.getId())
                 .email(requester.getEmail())
                 .name(requester.getName())
+                .profile_image(requester.getProfileImageUrl())
                 .build();
     }
 }
