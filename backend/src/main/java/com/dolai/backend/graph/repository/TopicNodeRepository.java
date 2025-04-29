@@ -1,7 +1,6 @@
 package com.dolai.backend.graph.repository;
 
 import com.arangodb.springframework.repository.ArangoRepository;
-import com.dolai.backend.graph.entity.TopicNode;
 
 import java.util.Optional;
 

@@ -1,11 +1,9 @@
 package com.dolai.backend.graph.runner;
 
 import com.dolai.backend.graph.entity.UtteranceNode;
-import com.dolai.backend.graph.entity.TopicNode;
 import com.dolai.backend.graph.repository.UtteranceNodeRepository;
 import com.dolai.backend.graph.repository.TopicNodeRepository;
 import com.dolai.backend.graph.repository.UtteranceToTopicEdgeRepository;
-import com.dolai.backend.graph.edge.UtteranceToTopicEdge;
 import com.arangodb.springframework.core.ArangoOperations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;

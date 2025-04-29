@@ -6,17 +6,22 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * 키워드(Node) - 핵심 단어
+ * 회의(미팅)를 나타내는 Node
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("keyword_nodes")
-public class KeywordNode {
+@Document("meeting_nodes")
+public class MeetingNode {
     @Id
     private String id;
-    private String word;
+    private String title;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private List<String> participantIds;  // participant_nodes/{id}
 }

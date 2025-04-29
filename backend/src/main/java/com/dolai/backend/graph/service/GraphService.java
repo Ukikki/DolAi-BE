@@ -2,10 +2,6 @@ package com.dolai.backend.graph.service;
 
 import com.arangodb.ArangoCursor;
 import com.arangodb.springframework.core.ArangoOperations;
-import com.dolai.backend.graph.edge.UtteranceToKeywordEdge;
-import com.dolai.backend.graph.edge.UtteranceToTopicEdge;
-import com.dolai.backend.graph.entity.KeywordNode;
-import com.dolai.backend.graph.entity.TopicNode;
 import com.dolai.backend.graph.entity.UtteranceNode;
 import com.dolai.backend.graph.repository.*;
 import com.dolai.backend.nlp.service.KeywordExtractionService;

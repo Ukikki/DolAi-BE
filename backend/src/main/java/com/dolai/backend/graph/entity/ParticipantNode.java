@@ -8,15 +8,17 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 
 /**
- * 키워드(Node) - 핵심 단어
+ * 회의 참석자를 나타내는 Node
  */
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("keyword_nodes")
-public class KeywordNode {
+@Document("participant_nodes")
+public class ParticipantNode {
     @Id
     private String id;
-    private String word;
+    private String name;
+    private String email;
 }
