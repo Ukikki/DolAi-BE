@@ -5,10 +5,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Persistent;
 
 /**
- * 발화 - 토픽 연결 Edge
+ * 요약(Summary) - 회의 연결 Edge
  */
-@Edge("utterance_to_topic_edges")
-public class UtteranceToTopicEdge {
+@Edge("summary_to_meeting_edges")
+public class SummaryToMeetingEdge {
     @Id
     private String id;
     @Persistent
