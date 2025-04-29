@@ -2,7 +2,6 @@ package com.dolai.backend.graph.repository;
 
 import com.arangodb.springframework.annotation.Query;
 import com.arangodb.springframework.repository.ArangoRepository;
-import com.dolai.backend.graph.edge.UtteranceToKeywordEdge;
 import org.springframework.data.repository.query.Param;
 
 public interface UtteranceToKeywordEdgeRepository extends ArangoRepository<UtteranceToKeywordEdge, String> {

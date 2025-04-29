@@ -1,33 +1,28 @@
 package com.dolai.backend.graph.entity;
 
+
 import com.arangodb.springframework.annotation.Document;
-import com.arangodb.springframework.annotation.Relations;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import java.time.LocalDateTime;
 
-import java.util.Collection;
-
-@Document("utterancenodes")
-@Data
+/**
+ * 발화(대화 내용)를 나타내는 Node
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Document("utterance_nodes")
 public class UtteranceNode {
-
     @Id
     private String id;
-
     private String text;
-
-    private String meetingId;
-
     private String speakerName;
-
-    @Relations(edges = com.dolai.backend.graph.edge.UtteranceToTopicEdge.class, lazy = true)
-    private Collection<TopicNode> topics;
-
-    @Relations(edges = com.dolai.backend.graph.edge.UtteranceToKeywordEdge.class, lazy = true)
-    private Collection<KeywordNode> keywords;
+    private LocalDateTime timestamp;
+    private String meetingId;  // meeting_nodes/{id}
 }
+

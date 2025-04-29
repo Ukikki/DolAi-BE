@@ -56,3 +56,5 @@ package-lock.json
 
 mediasoup-sfu/node_modules
 node_modules/
+mediasoup-sfu/package-lock.json
+mediasoup-sfu/package.json

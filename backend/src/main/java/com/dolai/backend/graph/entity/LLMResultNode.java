@@ -6,17 +6,22 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import java.time.LocalDateTime;
 
 /**
- * 키워드(Node) - 핵심 단어
+ * LLM 요청-응답 결과 저장용 Node (선택)
  */
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("keyword_nodes")
-public class KeywordNode {
+@Document("llm_result_nodes")
+public class LLMResultNode {
     @Id
     private String id;
-    private String word;
+    private String prompt;
+    private String response;
+    private LocalDateTime createdAt;
+    private String meetingId;
 }
