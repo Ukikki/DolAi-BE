@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.*;
@@ -355,5 +356,28 @@ public class GraphService {
 
         log.info("✅ Finished regenerating graph for meeting {}", meetingId);
     }
+
+    // LLM context용 utterance 텍스트 조회
+    public Mono<List<String>> getContextByMeetingId(String meetingId) {
+        String query = """
+        FOR u IN utterancenodes
+            FILTER u.meetingId == @meetingId
+            SORT u.timestamp ASC
+            LIMIT 50
+            RETURN u.text
+    """;
+
+        Map<String, Object> bindVars = Map.of("meetingId", meetingId);
+
+        try {
+            ArangoCursor<String> cursor = (ArangoCursor<String>) (ArangoCursor<?>) arangoTemplate.query(query, bindVars, String.class);
+            List<String> result = cursor.asListRemaining();
+            return Mono.just(result);
+        } catch (Exception e) {
+            log.error("Error getting utterance texts for meetingId {}: {}", meetingId, e.getMessage());
+            return Mono.just(Collections.emptyList());
+        }
+    }
+
 
 }

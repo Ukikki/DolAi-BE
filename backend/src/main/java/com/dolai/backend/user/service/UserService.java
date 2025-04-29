@@ -1,7 +1,5 @@
 package com.dolai.backend.user.service;
 
-import com.dolai.backend.common.exception.CustomException;
-import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.oauth.model.OAuth2UserInfo;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.model.UserDto;
