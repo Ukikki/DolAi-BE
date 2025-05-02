@@ -1,18 +1,19 @@
 package com.example.demo.graph.edge;
 
 import com.arangodb.springframework.annotation.Edge;
+import org.springframework.data.annotation.Id;
+import lombok.*;
 import com.arangodb.springframework.annotation.From;
 import com.arangodb.springframework.annotation.To;
-import lombok.*;
-import org.springframework.data.annotation.Id;
 
-@Edge("utterance_to_topic")
+
+@Edge("meeting_to_utterance")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class UtteranceToTopicEdge {
+public class MeetingToUtteranceEdge {
     @Id
     private String id;
 
@@ -22,7 +23,7 @@ public class UtteranceToTopicEdge {
     @To
     private String _to;
 
-    public UtteranceToTopicEdge(String from, String to) {
+    public MeetingToUtteranceEdge(String from, String to) {
         this._from = from;
         this._to = to;
     }

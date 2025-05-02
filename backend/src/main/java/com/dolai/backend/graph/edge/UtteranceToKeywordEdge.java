@@ -1,18 +1,29 @@
-package com.dolai.backend.graph.edge;
+package com.example.demo.graph.edge;
 
 import com.arangodb.springframework.annotation.Edge;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Persistent;
+import lombok.*;
+import com.arangodb.springframework.annotation.From;
+import com.arangodb.springframework.annotation.To;
 
-/**
- * 발화 - 키워드 연결 Edge
- */
-@Edge("utterance_to_keyword_edges")
+@Edge("utterance_to_keyword")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class UtteranceToKeywordEdge {
     @Id
     private String id;
-    @Persistent
+
+    @From
     private String _from;
-    @Persistent
+
+    @To
     private String _to;
+
+    public UtteranceToKeywordEdge(String from, String to) {
+        this._from = from;
+        this._to = to;
+    }
 }
