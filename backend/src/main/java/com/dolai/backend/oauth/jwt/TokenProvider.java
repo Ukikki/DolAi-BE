@@ -36,7 +36,7 @@ import org.springframework.util.StringUtils;
 public class TokenProvider {
     private final UserRepository userRepository;
     private final TokenService tokenService;
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30L;  // 30분
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24L;  // 30분
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60L * 24 * 7;  // 7일
     private static final String KEY_ROLE = "role";
 

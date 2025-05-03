@@ -11,6 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+
 import java.util.Map;
 
 @Slf4j
@@ -41,6 +44,7 @@ public class OAuth2ApiClient {
         log.info("🔹 [OAuth2 요청] Provider: {}, Token URI: {}", provider, providerConfig.getTokenUri());
         log.info("🔹 [OAuth2 요청 데이터] client_id: {}, redirect_uri: {}, code: {}",
                 providerConfig.getClientId(), providerConfig.getRedirectUri(), authorizationCode);
+        log.info("✅ 최종 redirect_uri 확인: {}", providerConfig.getRedirectUri());
 
         // Form Data 방식으로 요청
         return request
@@ -50,6 +54,20 @@ public class OAuth2ApiClient {
                         .with("grant_type", "authorization_code")
                         .with("redirect_uri", providerConfig.getRedirectUri()))
                 .retrieve()
+                .onStatus(
+                        status -> status.is4xxClientError() || status.is5xxServerError(),
+                        response -> response.bodyToMono(String.class).flatMap(errorBody -> {
+                            log.error("❌ OAuth2 토큰 요청 실패 응답 바디: {}", errorBody);
+                            return Mono.error(WebClientResponseException.create(
+                                    response.statusCode().value(),
+                                    "OAuth2 Error",
+                                    response.headers().asHttpHeaders(),
+                                    errorBody.getBytes(),
+                                    null,
+                                    null
+                            ));
+                        })
+                )
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})  // 제네릭 타입 명시
                 .block();
     }
