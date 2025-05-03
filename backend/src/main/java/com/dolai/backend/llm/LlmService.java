@@ -42,12 +42,10 @@ public class LlmService {
                 )
         );
 
-        // Gemini API 호출
+        String fullUrl = geminiApiUrl + "?key=" + geminiApiKey;
+
         return webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path(geminiApiUrl)
-                        .queryParam("key", geminiApiKey)
-                        .build())
+                .uri(fullUrl)
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
