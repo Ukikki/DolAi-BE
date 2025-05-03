@@ -46,7 +46,7 @@ public class DirectoryService {
                     .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
         }
 
-        // 디렉터리 이름 중복 자동 처리
+        // 디렉터리 이름 중복 자동 처리 ("폴더", "폴더 (1)", "폴더 (2)" ...)
         String finalName = generateUniqueName(request.getName(), type, parent, user.getId(), request.getMeetingId());
 
         Directory directory = new Directory();
@@ -54,6 +54,7 @@ public class DirectoryService {
         directory.setParent(parent);
         directory.setType(type);
 
+        // PERSONAL일 경우 user 설정 / SHARED일 경우 meeting 설정
         if (type == DirectoryType.PERSONAL) {
             directory.setUser(user);
             directory.setMeeting(null);
@@ -80,6 +81,7 @@ public class DirectoryService {
             directoryUserRepository.save(du);
 
         } else {
+            // 공유 폴더는 해당 회의의 참가자 모두에게 DirectoryUser 생성
             Meeting meeting = meetingRepository.findById(request.getMeetingId())
                     .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
             for (Participant participant : meeting.getParticipants()) {
@@ -123,21 +125,41 @@ public class DirectoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<DirectoryListResponseDto> getChildDirectories(String parentDirectoryId) {
+    public List<DirectoryListResponseDto> getMyDirectories(User user) {
+        List<DirectoryUser> directoryUsers = directoryUserRepository.findByUserAndDirectoryParentIsNull(user);
+        return directoryUsers.stream()
+                .map(du -> {
+                    Directory dir = du.getDirectory();
+                    return DirectoryListResponseDto.builder()
+                            .directoryId(dir.getId())
+                            .name(du.getName())
+                            .parentDirectoryId(dir.getParent() != null ? dir.getParent().getId() : null)
+                            .color(du.getColor().name()) // ← 색상 추가
+                            .build();
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DirectoryListResponseDto> getChildDirectories(Long parentDirectoryId, User user) {
         Directory parent = null;
 
         if (parentDirectoryId != null) {
-            parent = directoryRepository.findById(Long.parseLong(parentDirectoryId))
+            parent = directoryRepository.findById(parentDirectoryId)
                     .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
         }
 
-        List<Directory> children = directoryRepository.findByParent(parent);
+        List<DirectoryUser> childDirectoryUsers = directoryUserRepository.findByUserAndDirectory_Parent(user, parent);
 
-        return children.stream()
-                .map(dir -> DirectoryListResponseDto.builder()
-                        .directoryId(dir.getId())
-                        .name(dir.getName())
-                        .parentDirectoryId(dir.getParent() != null ? String.valueOf(dir.getParent().getId()) : null)
+        return childDirectoryUsers.stream()
+                .map(du -> DirectoryListResponseDto.builder()
+                        .directoryId(du.getDirectory().getId())
+                        .name(du.getName())
+                        .color(du.getColor().name())
+                        .parentDirectoryId(
+                                du.getDirectory().getParent() != null
+                                        ? du.getDirectory().getParent().getId()
+                                        : null)
                         .build())
                 .toList();
     }
@@ -149,13 +171,5 @@ public class DirectoryService {
 
         documentPlacementRepository.deleteByDirectory(directory);
         directoryRepository.delete(directory);
-    }
-
-    @Transactional
-    public void updateDirectoryName(Long directoryId, String newName) {
-        Directory directory = directoryRepository.findById(directoryId)
-                .orElseThrow(() -> new IllegalArgumentException("디렉터리를 찾을 수 없습니다."));
-        directory.setName(newName);
-        directoryRepository.save(directory);
     }
 }

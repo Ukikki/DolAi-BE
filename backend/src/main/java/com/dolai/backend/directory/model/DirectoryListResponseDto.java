@@ -8,5 +8,6 @@ import lombok.Getter;
 public class DirectoryListResponseDto {
     private Long directoryId;
     private String name;
-    private String parentDirectoryId;
+    private Long parentDirectoryId;
+    private String color;
 }
