@@ -27,6 +27,8 @@ public class Notification {
 
     private String receiverId;
 
+    private String targetUrl;
+
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -34,11 +36,12 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
-    public static Notification create(Type type, String receiverId, Map<String, String> params) {
+    public static Notification create(Type type, String receiverId, Map<String, String> params, String targetUrl) {
         return Notification.builder()
                 .type(type)
                 .receiverId(receiverId)
                 .title(type.format(params))
+                .targetUrl(targetUrl)
                 .build();
     }
 }

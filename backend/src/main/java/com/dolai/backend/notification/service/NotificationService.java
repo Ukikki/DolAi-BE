@@ -20,14 +20,14 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void notify(String receiverId, Type type, Map<String, String> params) {
+    public void notify(String receiverId, Type type, Map<String, String> params, String targetUrl) {
         String title = type.format(params);
         log.info("[알림 전송] to={} type={} title={}", receiverId, type, title);
-        Notification notification = Notification.create(type, receiverId, params);
+        Notification notification = Notification.create(type, receiverId, params, targetUrl);
         Notification saved = notificationRepository.save(notification);
         messagingTemplate.convertAndSend(
                 "/topic/notifications/" + receiverId,
-                new NotificationPayload(saved.getTitle(), type.getCategory())
+                new NotificationPayload(saved.getTitle(), type.getCategory(), saved.getTargetUrl())
         );
     }
 
