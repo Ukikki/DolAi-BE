@@ -78,7 +78,7 @@ public class FriendsService {
         notificationService.notify(
                 receiverId,
                 Type.FRIEND_REQUEST,
-                Map.of("sender", requester.getName())
+                Map.of("sender", requester.getName()), null
         );
         return saved;
     }
@@ -103,7 +103,7 @@ public class FriendsService {
         notificationService.notify(
                 requester.getId(),
                 Type.FRIEND_ACCEPT,
-                Map.of("sender", receiver.getName())
+                Map.of("sender", receiver.getName()), null
         );
     }
 
@@ -126,7 +126,7 @@ public class FriendsService {
         notificationService.notify(
                 requester.getId(),
                 Type.FRIEND_REJECT,
-                Map.of("sender", receiver.getName())
+                Map.of("sender", receiver.getName()), null
         );
 
     }
