@@ -3,8 +3,12 @@ package com.dolai.backend.document.model;
 import com.dolai.backend.common.model.BaseTimeEntity;
 import com.dolai.backend.document.model.enums.FileType;
 import com.dolai.backend.meeting.model.Meeting;
+import com.dolai.backend.meeting.model.enums.Status;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "documents")
@@ -23,18 +27,11 @@ public class Document extends BaseTimeEntity {
     @JoinColumn(name = "meeting_id", nullable = false)  // FK 설정
     private Meeting meeting;
 
-    // 문서 버전
-    @Column(nullable = false)
-    private int version;
-
     @Column(nullable = false, name = "file_url", length = 2083)
     private String fileUrl; // S3 파일 저장 경로
 
     @Column(nullable = false)
     private String title;  // 문서 제목
-
-    @Column(columnDefinition = "TEXT")
-    private String summary;  // 요약 내용
 
     @Enumerated(EnumType.STRING)
     @Column(name = "file_type", nullable = false)
@@ -43,4 +40,13 @@ public class Document extends BaseTimeEntity {
     // private String detailedJsonUrl;
     // private String graphImageUrl;
     // private String notesUrl;
+
+    public static Document create(Meeting meeting, String fileUrl, String title, FileType fileType) {
+        return Document.builder()
+                .meeting(meeting)
+                .fileUrl(fileUrl)
+                .title(title)
+                .fileType(fileType)
+                .build();
+    }
 }

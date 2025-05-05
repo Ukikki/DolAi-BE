@@ -1,10 +1,10 @@
 package com.dolai.backend.directory.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DirectoryRequestDto {
     private String name;
     private Long parentDirectoryId;

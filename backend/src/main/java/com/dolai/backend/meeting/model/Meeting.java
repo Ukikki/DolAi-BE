@@ -36,7 +36,7 @@ public class Meeting extends BaseTimeEntity {
     private String inviteUrl;
 
     @Column(name = "host_user_id", nullable = false)
-    private String hostUserId;  // String → Long 변경 (BIGINT 대응)
+    private String hostUserId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -45,14 +45,14 @@ public class Meeting extends BaseTimeEntity {
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participant> participants = new ArrayList<>();
 
-    public static Meeting create(String title, LocalDateTime startTime, String hostUserId, String inviteUrl) {
+    public static Meeting create(String title, LocalDateTime startTime, String hostUserId, String inviteUrl, Status status) {
         return Meeting.builder()
                 .id(UUID.randomUUID().toString())  // UUID 자동 생성
                 .title(title)
                 .startTime(startTime)
                 .hostUserId(hostUserId)
                 .inviteUrl(inviteUrl) // 초대 URL 자동 생성
-                .status(Status.SCHEDULED) // 기본 상태: 예약됨
+                .status(status) // 기본 상태: 예약됨
                 .build();
     }
 }

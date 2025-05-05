@@ -4,6 +4,7 @@ import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.document.model.Document;
 import com.dolai.backend.document.model.DocumentResponseDto;
+import com.dolai.backend.document.model.enums.FileType;
 import com.dolai.backend.document.repository.DocumentPlacementRepository;
 import com.dolai.backend.document.repository.DocumentRepository;
 import com.dolai.backend.document.repository.MetaDataRepository;
@@ -11,12 +12,14 @@ import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.repository.MeetingRepository;
 import com.dolai.backend.todo.service.TodoService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
@@ -26,13 +29,14 @@ public class DocumentService {
     private final MetaDataRepository metaDataRepository;
     private final S3ServiceStub s3Service;
     private final TodoService todoService;
+    private final MetaDataService metaDataService;
 
     @Transactional(readOnly = true)
     public DocumentResponseDto getDocumentByMeetingId(String meetingId) {
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
 
-        Document document = documentRepository.findTopByMeetingOrderByVersionDesc(meeting)
+        Document document = documentRepository.findTopByMeetingOrderByCreatedAtDesc(meeting)
                 .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
 
         List<String> participants = meeting.getParticipants().stream()
@@ -45,13 +49,11 @@ public class DocumentService {
         String notesUrl = document.getFileUrl().replace(".pdf", "_notes.txt");
 
         return DocumentResponseDto.builder()
-                .version(document.getVersion())
                 .title(document.getTitle())
                 .date(meeting.getStartTime().toLocalDate().toString())
                 .participants(participants)
                 .duration(String.valueOf(Duration.between(meeting.getStartTime(), meeting.getEndTime()).toMinutes()))
                 .organizer("김철수") // 예시, 실제 hostUserId → User 이름 매핑 가능
-                .summary(document.getSummary())
                 .detailedContent(s3Service.fetchDetailedContent(detailedContentUrl))
                 .graphs(s3Service.fetchGraphImageBase64(graphImageUrl))
                 .notes(s3Service.fetchNotes(notesUrl))
@@ -71,5 +73,19 @@ public class DocumentService {
 
         // 마지막으로 문서 삭제
         documentRepository.delete(document);
+    }
+
+    @Transactional
+    public Document createDocument(Meeting meeting, String docPath) {
+        String extension = metaDataService.extractExtension(docPath);
+        FileType fileType = FileType.fromExtension(extension);
+        String documentName = meeting.getTitle() + "." + fileType;
+
+        Document document = Document.create(meeting, docPath, documentName, fileType);
+        documentRepository.save(document);
+
+        metaDataService.saveMetaData(document);
+
+        return document;
     }
 }

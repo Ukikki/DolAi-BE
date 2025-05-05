@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +25,7 @@ public class DirectoryController {
     private final DirectoryService directoryService;
     private final DirectoryUserService directoryUserService;
 
+    //디렉터리 생성
     @PostMapping
     public ResponseEntity<DirectoryResponseDto> createDirectory(
             @RequestBody DirectoryRequestDto request,
@@ -35,14 +35,24 @@ public class DirectoryController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getChildDirectories(
-            @RequestParam(name = "parentDirectoryId", required = false) String parentDirectoryId
-    ) {
-        List<DirectoryListResponseDto> directories = directoryService.getChildDirectories(parentDirectoryId);
+    //내 디렉터리 조회
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyDirectories(@AuthenticationPrincipal User user) {
+        List<DirectoryListResponseDto> directories = directoryService.getMyDirectories(user);
         return ResponseEntity.ok(new SuccessDataResponse<>(directories));
     }
 
+    //특정 디렉터리 ID를 기반으로 하위 디렉터리 조회
+    @GetMapping
+    public ResponseEntity<?> getChildDirectories(
+            @RequestParam(name = "parentDirectoryId", required = false) Long parentDirectoryId,
+            @AuthenticationPrincipal User user
+    ) {
+        List<DirectoryListResponseDto> directories = directoryService.getChildDirectories(parentDirectoryId, user);
+        return ResponseEntity.ok(new SuccessDataResponse<>(directories));
+    }
+
+    //사용자 소유 디렉터리 삭제
     @DeleteMapping("/{directoryId}")
     public ResponseEntity<SuccessMessageResponse> deleteDirectory(
             @PathVariable(name = "directoryId") Long directoryId,
@@ -52,9 +62,10 @@ public class DirectoryController {
         return ResponseEntity.ok(new SuccessMessageResponse("Document deleted successfully"));
     }
 
+    // 디렉터리 색상 변경
     @PatchMapping("/{directoryId}/color")
     public ResponseEntity<?> updateFolderColor(
-            @PathVariable Long directoryId,
+            @PathVariable(name="directoryId") Long directoryId,
             @RequestBody Map<String, String> request,
             @AuthenticationPrincipal User user
     ) {
@@ -69,14 +80,15 @@ public class DirectoryController {
         }
     }
 
+    //디렉터리 이름 변경
     @PatchMapping("/{directoryId}/name")
     public ResponseEntity<?> updateDirectoryName(
-            @PathVariable Long directoryId,
+            @PathVariable(name="directoryId") Long directoryId,
             @RequestBody Map<String, String> request,
             @AuthenticationPrincipal User user
     ) {
         String newName = request.get("name");
-        directoryService.updateDirectoryName(directoryId, newName);
+        directoryUserService.updateDirectoryName(directoryId, newName, user);
         return ResponseEntity.ok().body(new SuccessMessageResponse("디렉터리 이름 변경 완료"));
     }
 }
