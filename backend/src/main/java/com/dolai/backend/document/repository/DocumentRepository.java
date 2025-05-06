@@ -13,6 +13,6 @@ import java.util.Optional;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByMeeting(Meeting meeting);
-    Optional<Document> findTopByMeetingOrderByVersionDesc(Meeting meeting);
+    Optional<Document> findTopByMeetingOrderByCreatedAtDesc(Meeting meeting);
 
 }

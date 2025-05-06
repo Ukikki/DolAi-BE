@@ -25,12 +25,16 @@ public enum ErrorCode {
     DIRECTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "디렉터리를 찾을 수 없습니다."),
     MEETING_ID_REQUIRED(HttpStatus.BAD_REQUEST, "공유 디렉터리는 meetingId가 필요합니다."),
     MEETING_ID_SHOULD_BE_NULL(HttpStatus.BAD_REQUEST, "개인 디렉터리에는 meetingId를 포함할 수 없습니다."),
+    DIRECTORY_USER_NOT_FOUND(HttpStatus.FORBIDDEN, "해당 디렉터리에 대한 접근 권한이 없습니다."),
 
     // Document
     DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의에 연결된 문서를 찾을 수 없습니다."),
 
     // Meeting
     MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의를 찾을 수 없습니다."),
+    MEETING_ALREADY_STARTED(HttpStatus.BAD_REQUEST, "호스트가 회의를 시작하지 않았습니다."),
+    MEETING_ENDED(HttpStatus.BAD_REQUEST, "종료된 회의입니다."),
+    MEETING_HOST_ONLY(HttpStatus.FORBIDDEN, "회의 주최자만 회의를 종료할 수 있습니다."),
 
     //Friends
     FRIEND_ALREADY_REQUESTED(HttpStatus.CONFLICT, "이미 친구 요청이 존재합니다."),

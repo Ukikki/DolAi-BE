@@ -28,25 +28,35 @@ public class DirectoryService {
     private final DocumentPlacementRepository documentPlacementRepository;
 
     @Transactional
+    public Directory createDirectoryEntity(DirectoryRequestDto request, User user) {
+        return createDirectoryCore(request, user);
+    }
+
+    @Transactional
     public DirectoryResponseDto createDirectory(DirectoryRequestDto request, User user) {
+        Directory dir = createDirectoryCore(request, user);
+        return DirectoryResponseDto.builder()
+                .status("success")
+                .message("Directory created successfully")
+                .directoryId(dir.getId())
+                .name(dir.getName())
+                .build();
+    }
 
+    private Directory createDirectoryCore(DirectoryRequestDto request, User user) {
         DirectoryType type = DirectoryType.valueOf(request.getType().toUpperCase());
-        if (type == DirectoryType.PERSONAL && request.getMeetingId() != null) {
+
+        if (type == DirectoryType.PERSONAL && request.getMeetingId() != null)
             throw new CustomException(ErrorCode.MEETING_ID_SHOULD_BE_NULL);
-        }
-
-        if (type == DirectoryType.SHARED && request.getMeetingId() == null) {
+        if (type == DirectoryType.SHARED && request.getMeetingId() == null)
             throw new CustomException(ErrorCode.MEETING_ID_REQUIRED);
-        }
 
-        // 부모 디렉터리 조회
         Directory parent = null;
         if (request.getParentDirectoryId() != null) {
             parent = directoryRepository.findById(request.getParentDirectoryId())
                     .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
         }
 
-        // 디렉터리 이름 중복 자동 처리
         String finalName = generateUniqueName(request.getName(), type, parent, user.getId(), request.getMeetingId());
 
         Directory directory = new Directory();
@@ -56,50 +66,46 @@ public class DirectoryService {
 
         if (type == DirectoryType.PERSONAL) {
             directory.setUser(user);
-            directory.setMeeting(null);
         } else {
-            if (request.getMeetingId() == null) {
-                throw new CustomException(ErrorCode.MEETING_ID_REQUIRED);
-            }
             Meeting meeting = meetingRepository.findById(request.getMeetingId())
                     .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
-            directory.setUser(null);
             directory.setMeeting(meeting);
         }
 
         directoryRepository.save(directory);
+        createDirectoryUsers(directory, user, request.getMeetingId(), finalName, type);
 
-        // DirectoryUser 생성
+        return directory;
+    }
+
+    private void createDirectoryUsers(Directory directory, User user, String meetingId, String name, DirectoryType type) {
         if (type == DirectoryType.PERSONAL) {
-            DirectoryUser du = DirectoryUser.builder()
+            directoryUserRepository.save(DirectoryUser.builder()
                     .user(user)
                     .directory(directory)
-                    .name(finalName)
+                    .name(name)
                     .color(DirectoryColor.BLUE)
-                    .build();
-            directoryUserRepository.save(du);
-
+                    .build());
         } else {
-            Meeting meeting = meetingRepository.findById(request.getMeetingId())
+            Meeting meeting = meetingRepository.findById(meetingId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
             for (Participant participant : meeting.getParticipants()) {
-                User participantUser = participant.getUser();
-                DirectoryUser du = DirectoryUser.builder()
-                        .user(participantUser)
+                directoryUserRepository.save(DirectoryUser.builder()
+                        .user(participant.getUser())
                         .directory(directory)
-                        .name(finalName)
+                        .name(name)
                         .color(DirectoryColor.BLUE)
-                        .build();
-                directoryUserRepository.save(du);
+                        .build());
             }
         }
+    }
 
-        return DirectoryResponseDto.builder()
-                .status("success")
-                .message("Directory created successfully")
-                .directoryId(directory.getId())
-                .name(finalName)
-                .build();
+    @Transactional
+    public Directory createSharedDirectory(Meeting meeting, User user) {
+        String name = meeting.getStartTime().toLocalDate().toString();
+        DirectoryRequestDto dto = new DirectoryRequestDto(name, null, "SHARED", meeting.getId());
+        Directory directory = createDirectoryCore(dto, user);
+        return directory;
     }
 
     private String generateUniqueName(String baseName, DirectoryType type, Directory parent, String userId, String meetingId) {
@@ -123,21 +129,41 @@ public class DirectoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<DirectoryListResponseDto> getChildDirectories(String parentDirectoryId) {
+    public List<DirectoryListResponseDto> getMyDirectories(User user) {
+        List<DirectoryUser> directoryUsers = directoryUserRepository.findByUserAndDirectoryParentIsNull(user);
+        return directoryUsers.stream()
+                .map(du -> {
+                    Directory dir = du.getDirectory();
+                    return DirectoryListResponseDto.builder()
+                            .directoryId(dir.getId())
+                            .name(du.getName())
+                            .parentDirectoryId(dir.getParent() != null ? dir.getParent().getId() : null)
+                            .color(du.getColor().name()) // ← 색상 추가
+                            .build();
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DirectoryListResponseDto> getChildDirectories(Long parentDirectoryId, User user) {
         Directory parent = null;
 
         if (parentDirectoryId != null) {
-            parent = directoryRepository.findById(Long.parseLong(parentDirectoryId))
+            parent = directoryRepository.findById(parentDirectoryId)
                     .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
         }
 
-        List<Directory> children = directoryRepository.findByParent(parent);
+        List<DirectoryUser> childDirectoryUsers = directoryUserRepository.findByUserAndDirectory_Parent(user, parent);
 
-        return children.stream()
-                .map(dir -> DirectoryListResponseDto.builder()
-                        .directoryId(dir.getId())
-                        .name(dir.getName())
-                        .parentDirectoryId(dir.getParent() != null ? String.valueOf(dir.getParent().getId()) : null)
+        return childDirectoryUsers.stream()
+                .map(du -> DirectoryListResponseDto.builder()
+                        .directoryId(du.getDirectory().getId())
+                        .name(du.getName())
+                        .color(du.getColor().name())
+                        .parentDirectoryId(
+                                du.getDirectory().getParent() != null
+                                        ? du.getDirectory().getParent().getId()
+                                        : null)
                         .build())
                 .toList();
     }
@@ -149,13 +175,5 @@ public class DirectoryService {
 
         documentPlacementRepository.deleteByDirectory(directory);
         directoryRepository.delete(directory);
-    }
-
-    @Transactional
-    public void updateDirectoryName(Long directoryId, String newName) {
-        Directory directory = directoryRepository.findById(directoryId)
-                .orElseThrow(() -> new IllegalArgumentException("디렉터리를 찾을 수 없습니다."));
-        directory.setName(newName);
-        directoryRepository.save(directory);
     }
 }

@@ -1,15 +1,13 @@
 package com.dolai.backend.document.model;
 
+import com.dolai.backend.document.model.enums.FileType;
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class DocumentRequestDto {
-    private Long id;
-    private Long meetingId;
+    private String fileUrl;
     private String title;
-    private String summary;
+    private FileType fileType;
 }
