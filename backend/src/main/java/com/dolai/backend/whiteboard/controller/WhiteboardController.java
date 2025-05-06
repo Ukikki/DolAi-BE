@@ -15,8 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class WhiteboardController {
     private final WhiteboardService whiteboardService;
 
+    // 화이트보드 시작
     @PostMapping("/start/{meetingId}")
     public ResponseEntity<WhiteboardSession> start(@PathVariable String meetingId) {
         return ResponseEntity.ok(whiteboardService.startSession(meetingId));
+    }
+
+    // 화이트보드 종료
+    @PostMapping("/end/{meetingId}")
+    public ResponseEntity<WhiteboardSession> end(@PathVariable String meetingId) {
+        return ResponseEntity.ok(whiteboardService.endSession(meetingId));
     }
 }

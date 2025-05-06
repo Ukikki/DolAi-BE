@@ -21,6 +21,7 @@ public class WhiteboardSession {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime endTime;
+
     private boolean active;
 
 }
