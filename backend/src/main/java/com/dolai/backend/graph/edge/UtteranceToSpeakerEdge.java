@@ -1,10 +1,10 @@
-package com.example.demo.graph.edge;
+package com.dolai.backend.graph.edge;
 
 import com.arangodb.springframework.annotation.Edge;
-import org.springframework.data.annotation.Id;
-import lombok.*;
 import com.arangodb.springframework.annotation.From;
 import com.arangodb.springframework.annotation.To;
+import lombok.*;
+import org.springframework.data.annotation.Id;
 
 @Edge("utterance_to_speaker")
 @Getter

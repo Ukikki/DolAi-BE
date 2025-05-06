@@ -29,6 +29,10 @@ configurations.all {
 
 repositories {
 	mavenCentral() // Maven Central에 의존성 검색
+	// ArangoDB 7.x 의 jackson-serde 등 추가 라이브러리 제공 위치
+	maven {
+		url 'https://maven.arangodb.com/repository/java'
+	}
 }
 
 dependencies {
@@ -43,15 +47,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
 	// .env 파일 로드를 위한 dotenv-java 추가
-//	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 	implementation 'io.github.cdimascio:java-dotenv:5.2.2'
 
 	// MySQL JDBC 드라이버
 	implementation 'mysql:mysql-connector-java:8.0.33'
 
-	// ArangoDB Spring Data
-	implementation 'com.arangodb:arangodb-spring-data:4.2.0'
-	implementation 'com.arangodb:arangodb-java-driver:7.7.0'
+	// ArangoDB (안정 버전)
+	implementation 'com.arangodb:arangodb-spring-data:3.6.0'
+	implementation 'com.arangodb:arangodb-java-driver:6.7.2'
 
 	// JSON 직렬화/역직렬화 지원 (Jackson)
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -95,6 +98,16 @@ dependencies {
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 
 	implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
+	// ArangoDB Java Driver 6.x가 Apache HttpClient 의존성을 필요로 함
+	implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+
+	// 형태소 분석기 라이브러리
+	implementation 'org.openkoreantext:open-korean-text:2.1.0'
+
+	// Gson 라이브러리
+	implementation 'com.google.code.gson:gson:2.10.1'
+
 }
 
 tasks.named('test') {

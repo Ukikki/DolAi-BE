@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
 import java.util.List;
 
 @Slf4j
@@ -24,19 +25,24 @@ public class STTLogSyncService {
 
         for (STTLog sttLog : logsToSync) {
             try {
-                log.info("💬 Syncing: [{}] {} - {}", sttLog.getMeeting().getId(), sttLog.getSpeakerName(), sttLog.getText());
+                String meetingId = sttLog.getMeeting().getId().toString();
+                String speaker = sttLog.getSpeakerName();
+                String text = sttLog.getText();
+
+                log.info("Syncing to ArangoDB → [{}] {}: {}", meetingId, speaker, text);
+
                 graphService.saveUtterance(
-                        sttLog.getMeeting().getId().toString(),
-                        sttLog.getSpeakerName(),
-                        sttLog.getText()
+                        meetingId,
+                        speaker,
+                        text,
+                        sttLog.getTimestamp().atZone(ZoneId.systemDefault()).toInstant()
                 );
 
                 sttLog.setSynced(true);
                 sttLogRepository.save(sttLog);
             } catch (Exception e) {
-                log.error("❌ Failed to sync STTLog", e);
+                log.error("Failed to sync STTLog (ID: {})", sttLog.getId(), e);
             }
         }
-
     }
 }

@@ -13,4 +13,7 @@ public interface STTLogRepository extends JpaRepository<STTLog, Long> {
     List<STTLog> findTop10BySyncedFalseOrderByTimestampAsc();
 
     List<STTLog> findByMeetingId(String meetingId);
+
+    // Meeting ID로 찾고, synced=false인 것만 가져오는 메서드
+    List<STTLog> findByMeetingIdAndSyncedFalse(String meetingId);
 }

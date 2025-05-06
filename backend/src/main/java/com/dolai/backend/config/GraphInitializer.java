@@ -1,4 +1,4 @@
-package com.example.demo.config;
+package com.dolai.backend.config;
 
 import com.arangodb.ArangoDB;
 import com.arangodb.ArangoDatabase;
@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
-import static com.mysql.cj.telemetry.TelemetryAttribute.DB_NAME;
 
 @Component
 @RequiredArgsConstructor
