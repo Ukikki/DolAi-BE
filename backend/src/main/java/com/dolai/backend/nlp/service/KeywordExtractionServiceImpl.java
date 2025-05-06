@@ -1,4 +1,4 @@
-package com.example.demo.nlp.service;
+package com.dolai.backend.nlp.service;
 
 import org.openkoreantext.processor.OpenKoreanTextProcessorJava;
 import org.springframework.stereotype.Service;

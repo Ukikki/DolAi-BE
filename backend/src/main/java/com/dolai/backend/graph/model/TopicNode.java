@@ -1,9 +1,8 @@
-package com.example.demo.graph.model;
+package com.dolai.backend.graph.model;
 
-import com.arangodb.springframework.annotation.ArangoId;
 import com.arangodb.springframework.annotation.Document;
-import org.springframework.data.annotation.Id;
 import lombok.*;
+import org.springframework.data.annotation.Id;
 
 @Document("topics")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @ToString

@@ -1,12 +1,15 @@
-package com.example.demo.graph.service;
+package com.dolai.backend.graph.service;
 
 import com.arangodb.ArangoDatabase;
-import com.example.demo.graph.edge.*;
-import com.example.demo.graph.model.*;
-import com.example.demo.nlp.service.KeywordExtractionService;
-import com.example.demo.nlp.service.TopicExtractionService;
-import com.example.demo.stt_log.model.STTLog;
-import com.example.demo.stt_log.repository.STTLogRepository;
+import com.dolai.backend.graph.edge.MeetingToUtteranceEdge;
+import com.dolai.backend.graph.edge.UtteranceToKeywordEdge;
+import com.dolai.backend.graph.edge.UtteranceToSpeakerEdge;
+import com.dolai.backend.graph.edge.UtteranceToTopicEdge;
+import com.dolai.backend.graph.model.*;
+import com.dolai.backend.nlp.service.KeywordExtractionService;
+import com.dolai.backend.nlp.service.TopicExtractionService;
+import com.dolai.backend.stt_log.model.STTLog;
+import com.dolai.backend.stt_log.repository.STTLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;

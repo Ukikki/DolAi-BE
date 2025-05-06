@@ -1,6 +1,6 @@
-package com.example.demo.graph.controller;
+package com.dolai.backend.graph.controller;
 
-import com.example.demo.graph.service.GraphService;
+import com.dolai.backend.graph.service.GraphService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

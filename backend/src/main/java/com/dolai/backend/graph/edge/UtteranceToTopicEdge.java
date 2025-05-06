@@ -1,4 +1,4 @@
-package com.example.demo.graph.edge;
+package com.dolai.backend.graph.edge;
 
 import com.arangodb.springframework.annotation.Edge;
 import com.arangodb.springframework.annotation.From;
