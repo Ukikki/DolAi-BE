@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import { EventEmitter } from 'events';
 
 class FfmpegStream extends EventEmitter {
-  constructor(rtpParameters) {
+  constructor(rtpParameters, meetingId, speaker) {
     super();
     this.rtpParameters = rtpParameters;
     this.ffmpegProcess = null;
@@ -15,6 +15,8 @@ class FfmpegStream extends EventEmitter {
     this.targetSize = 48000; // 약 1.5초 분량 (16kHz, 16bit, mono)
     this.maxWaitTime = 3000; // 최대 대기 시간 (ms)
     this.lastProcessTime = Date.now();
+    this.meetingId = meetingId;
+    this.speaker = speaker;
     this._start();
   }
 
@@ -122,8 +124,8 @@ class FfmpegStream extends EventEmitter {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          meetingId: '8b95cf8b-e7c2-4e76-a47a-f15b5d3f1397',
-          speaker: '두더지',
+          meetingId: this.meetingId,
+          speaker: this.speaker,
           audioData: combinedBuffer.toString('base64')
         })
       });

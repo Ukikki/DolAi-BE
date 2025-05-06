@@ -148,19 +148,21 @@ connections.on('connection', async socket => {
     }
   })
 
-  socket.on('joinRoom', async ({ roomName }, callback) => {
+  socket.on('joinRoom', async ({ roomName, meetingId, userName }, callback) => {
     // create Router if it does not exist
     // const router1 = rooms[roomName] && rooms[roomName].get('data').router || await createRoom(roomName, socket.id)
     const router1 = await createRoom(roomName, socket.id)
+    console.log("📩 joinRoom 받음:", roomName, meetingId, userName);
 
     peers[socket.id] = {
       socket,
       roomName,           // Name for the Router this Peer joined
+      meetingId,
       transports: [],
       producers: [],
       consumers: [],
       peerDetails: {
-        name: '',
+        name: userName,
         isAdmin: false,   // Is this Peer the Admin?
       }
     }
@@ -376,6 +378,8 @@ connections.on('connection', async socket => {
         await consumer.resume();
         console.log("✅ Consumer created on plainTransport for FFmpeg");
 
+        const { meetingId, peerDetails: { name: userName } } = peers[socket.id];
+
         const ffmpegStream = new FfmpegStream({
           ip: '127.0.0.1',
           port: 5004,
@@ -384,7 +388,7 @@ connections.on('connection', async socket => {
             clockRate: codec.clockRate,
             payloadType: codec.payloadType,
           }
-        });
+        }, meetingId, userName);
 
         peers[socket.id].ffmpeg = ffmpegStream;
 

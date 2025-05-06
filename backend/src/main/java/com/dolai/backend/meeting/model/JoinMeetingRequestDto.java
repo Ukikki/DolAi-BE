@@ -10,4 +10,5 @@ public class JoinMeetingRequestDto {
     private String userId;       // optional
     @NotBlank(message = "inviteUrl은 필수 입력값입니다.")
     private String inviteUrl;    // required
+    private String meetingId;
 }

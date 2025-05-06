@@ -57,7 +57,7 @@ def transcribe_from_pcm(audio_bytes, speaker, meeting_id):
                 break
 
         payload = {
-            "meetingId": "8b95cf8b-e7c2-4e76-a47a-f15b5d3f1397",
+            "meetingId": meeting_id,
             "speaker": speaker,
             "text": text,
             "timestamp": datetime.now().isoformat()

@@ -97,6 +97,8 @@ services:
       - "5001:5001"
     networks:
       - backend_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   backend_network:
