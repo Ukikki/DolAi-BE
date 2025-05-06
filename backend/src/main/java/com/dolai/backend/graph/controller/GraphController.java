@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/graph")
@@ -20,6 +21,13 @@ public class GraphController {
         if (meetingId == null || meetingId.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("meetingId는 필수입니다.");
         }
+
+        try {
+            UUID.fromString(meetingId); // UUID 형식 검증
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("meetingId는 UUID 형식이어야 합니다.");
+        }
+
         graphService.syncGraphFromMysql(meetingId);
         return ResponseEntity.ok("해당 미팅 그래프 동기화 완료: " + meetingId);
     }
