@@ -8,11 +8,14 @@ import com.dolai.backend.common.success.SuccessDataResponse;
 import com.dolai.backend.graph.service.GraphService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/llm")
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LlmController {
 
     private final LlmDocumentService llmDocumentService;
+    private final LlmService llmService;
     private final GraphService graphService;
 
     // 미팅 발화 context를 가져와서 LLM에 질문을 던짐
@@ -44,6 +48,7 @@ public class LlmController {
     @Data
     static class TopicRequest {
         private String text;
+    }
 
     @PostMapping("/summarize")
     public ResponseEntity<?> summarize(@RequestBody Map<String, String> body) {
