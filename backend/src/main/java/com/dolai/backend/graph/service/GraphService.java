@@ -18,9 +18,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -166,6 +164,53 @@ public class GraphService {
         ).asListRemaining();
 
         return Mono.just(contexts);
+    }
+
+    // ArangoDB에 저장된 그래프 데이터를 읽어서 시각화에 필요한 형태 (nodes & edges)로 반환
+    public Map<String, Object> getGraphVisualization(String meetingId) {
+        String startVertex = "meetings/" + meetingId;
+
+        String aql = """
+        FOR v, e, p IN 1..3 OUTBOUND @startVertex GRAPH "dolai"
+            RETURN { vertex: v, edge: e }
+    """;
+
+        Map<String, Object> bindVars = Map.of("startVertex", startVertex);
+        var cursor = arangoDatabase.query(aql, bindVars, null, Map.class);
+        List<Map> rawResults = cursor.asListRemaining();
+
+        Set<Map<String, String>> nodes = new HashSet<>();
+        List<Map<String, String>> edges = new ArrayList<>();
+
+        for (Map entry : rawResults) {
+            Map v = (Map) entry.get("vertex");
+            Map e = (Map) entry.get("edge");
+
+            if (v != null) {
+                String id = (String) v.get("_id");
+                String label = (String) v.getOrDefault("text", v.getOrDefault("name", "unknown")).toString();
+                String type = id.split("/")[0];
+                nodes.add(Map.of(
+                        "id", id,
+                        "label", label,
+                        "type", type
+                ));
+            }
+
+            if (e != null) {
+                edges.add(Map.of(
+                        "from", (String) e.get("_from"),
+                        "to", (String) e.get("_to"),
+                        "type", ((String) e.get("_id")).split("/")[0]
+                ));
+            }
+        }
+
+        return Map.of(
+                "meetingId", meetingId,
+                "nodes", nodes,
+                "edges", edges
+        );
     }
 
 }
