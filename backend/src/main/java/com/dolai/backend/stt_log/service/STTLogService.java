@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -54,5 +55,13 @@ public class STTLogService {
 
     public List<STTLog> getLogsByMeeting(String meetingId) {
         return sttLogRepository.findByMeetingIdOrderByTimestampAsc(meetingId);
+    }
+
+    public String getFullTranscriptForLLM(String meetingId) {
+        List<STTLog> logs = sttLogRepository.findByMeetingIdOrderByTimestampAsc(meetingId);
+
+        return logs.stream()
+                .map(log -> log.getSpeakerName() + ": " + log.getText())
+                .collect(Collectors.joining("\n"));
     }
 }
