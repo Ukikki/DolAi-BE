@@ -13,5 +13,8 @@ public class STTLogRequest {
     private String meetingId;
     private String speaker;
     private String text;
+    private String textKo;
+    private String textEn;
+    private String textZh;
     private LocalDateTime timestamp;
 }

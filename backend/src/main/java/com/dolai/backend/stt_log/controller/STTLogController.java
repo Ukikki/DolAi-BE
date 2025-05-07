@@ -28,6 +28,9 @@ public class STTLogController {
         STTLogBroadcastDto dto = STTLogBroadcastDto.builder()
                 .speaker(request.getSpeaker())
                 .text(request.getText())
+                .textKo(request.getTextKo())
+                .textEn(request.getTextEn())
+                .textZh(request.getTextZh())
                 .timestamp(LocalDateTime.now()) // 또는 request.getTimestamp()
                 .build();
 

@@ -36,6 +36,9 @@ public class STTLogService {
                 .meeting(meeting)
                 .speakerName(request.getSpeaker())
                 .text(request.getText())
+                .textKo(request.getTextKo())
+                .textEn(request.getTextEn())
+                .textZh(request.getTextZh())
                 .timestamp(request.getTimestamp() != null ? request.getTimestamp() : LocalDateTime.now())
                 .build();
 
@@ -46,6 +49,9 @@ public class STTLogService {
         STTLogBroadcastDto dto = STTLogBroadcastDto.builder()
                 .speaker(log.getSpeakerName())
                 .text(log.getText())
+                .textKo(log.getTextKo())
+                .textEn(log.getTextEn())
+                .textZh(log.getTextZh())
                 .timestamp(log.getTimestamp())
                 .build();
 
@@ -61,7 +67,7 @@ public class STTLogService {
         List<STTLog> logs = sttLogRepository.findByMeetingIdOrderByTimestampAsc(meetingId);
 
         return logs.stream()
-                .map(log -> log.getSpeakerName() + ": " + log.getText())
+                .map(log -> log.getSpeakerName() + ": " + log.getTextKo())
                 .collect(Collectors.joining("\n"));
     }
 }

@@ -43,6 +43,7 @@ public class Meeting extends BaseTimeEntity {
     private Status status;
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Participant> participants = new ArrayList<>();
 
     public static Meeting create(String title, LocalDateTime startTime, String hostUserId, String inviteUrl, Status status) {

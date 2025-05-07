@@ -42,13 +42,14 @@ public class UserService {
             return userRepository.save(existingUser);
         } else {
             // 신규 유저 저장
-            User newUser = User.builder()
-                    .id(userInfo.getSub()) // OAuth2 Provider의 고유 ID 사용
-                    .email(userInfo.getEmail())
-                    .name(userInfo.getName())
-                    .profileImageUrl(userInfo.getProfileImageUrl())
-                    .provider(userInfo.getProvider()) // 이미 Provider Enum이므로 그대로 사용
-                    .build();
+            User newUser = User.create(
+                    userInfo.getSub(),
+                    userInfo.getEmail(),
+                    userInfo.getName(),
+                    userInfo.getProfileImageUrl(),
+                    userInfo.getProvider()
+            );
+
             log.info("🆕 신규 사용자 저장: {}", newUser);
             return userRepository.save(newUser);
         }
