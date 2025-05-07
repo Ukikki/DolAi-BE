@@ -25,9 +25,10 @@ public class LlmDocumentService {
     private final MeetingDocGenerator meetingDocGenerator;
     private final MeetingRepository meetingRepository;
     private final ObjectMapper objectMapper;
+    private final AzureTranslationService azureTranslationService;
 
-    @Value("${doc.template-path}")
-    private String templatePath;
+    @Value("${doc.template-dir}")
+    private String templateDir;
 
     @Value("${doc.output-dir}")
     private String outputDir;
@@ -69,7 +70,6 @@ public class LlmDocumentService {
                 
                 회의 로그:
                 """ + context;
-
 
         Map<String, String> summary = Map.of(
                 "content", "(요약 없음)",
@@ -135,7 +135,7 @@ public class LlmDocumentService {
         );
 
         // 5. 문서 생성
-        File template = new File(templatePath);
+        File template = new File(templateDir, "meetingDoc.docx");
         String safeTitle = meeting.getTitle().replaceAll("[\\\\/:*?\"<>|\\s]", "_");
         String dateStr = meeting.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String fileName = safeTitle + "_" + dateStr + ".docx";
@@ -144,6 +144,48 @@ public class LlmDocumentService {
 
         meetingDocGenerator.generateDocx(values, template, output);
 
+        // 6. 번역된 문서 생성
+        try {
+            String contentEn = azureTranslationService.translate(contentText, "en");
+            String resultEn = azureTranslationService.translate(resultText, "en");
+
+            String contentZh = azureTranslationService.translate(contentText, "zh-Hans");
+            String resultZh = azureTranslationService.translate(resultText, "zh-Hans");
+
+            Map<String, String> valuesEn = Map.of(
+                    "date", date,
+                    "time", time,
+                    "title", meeting.getTitle(),
+                    "attendees", attendees,
+                    "content", contentEn,
+                    "result", resultEn
+            );
+
+            Map<String, String> valuesZh = Map.of(
+                    "date", date,
+                    "time", time,
+                    "title", meeting.getTitle(),
+                    "attendees", attendees,
+                    "content", contentZh,
+                    "result", resultZh
+            );
+
+            generateDocx(valuesEn, safeTitle + "_" + dateStr + ".en.docx", "meetingDoc_en.docx");
+            generateDocx(valuesZh, safeTitle + "_" + dateStr + ".zh.docx", "meetingDoc_zh.docx");
+
+        } catch (Exception e) {
+            log.error("❌ 다국어 번역 또는 문서 생성 실패", e);
+        }
+
+
         return output.getAbsolutePath();
     }
+
+    private void generateDocx(Map<String, String> values, String filename, String templateFilename) {
+        File template = new File(templateDir, templateFilename);
+        File output = new File(outputDir, filename);
+        output.getParentFile().mkdirs();
+        meetingDocGenerator.generateDocx(values, template, output);
+    }
+
 }

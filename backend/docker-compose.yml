@@ -99,6 +99,8 @@ services:
       - backend_network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    env_file:
+      - ../whisper-server/.env
 
 networks:
   backend_network:

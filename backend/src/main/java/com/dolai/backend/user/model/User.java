@@ -1,13 +1,11 @@
 package com.dolai.backend.user.model;
 
 import com.dolai.backend.common.model.BaseTimeEntity;
+import com.dolai.backend.user.model.enums.Language;
 import com.dolai.backend.user.model.enums.Provider;
 import com.dolai.backend.user.model.enums.Role;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -19,6 +17,8 @@ import java.util.Collections;
 @NoArgsConstructor
 @Entity
 @Table(name = "user")
+@AllArgsConstructor
+@Builder
 public class User extends BaseTimeEntity {
     @Id
     private String id;  // Google/Kakao에서 받은 고유 sub 값
@@ -38,17 +38,27 @@ public class User extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role = Role.USER; // 기본값 'user'
+    @Builder.Default
+    private Role role = Role.USER;
 
-    @Builder
-    public User(String id, String email, String name, String profileImageUrl, Provider provider, Role role) {
-        this.id = id;
-        this.email = email;
-        this.name = name;
-        this.profileImageUrl = profileImageUrl;
-        this.provider = provider;
-        this.role = role != null ? role : Role.USER; // 기본값 USER 설정
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private Language language = Language.KO;
+
+
+    public static User create(String id, String email, String name, String profileImageUrl, Provider provider) {
+        return User.builder()
+                .id(id)
+                .email(email)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .provider(provider)
+                .role(Role.USER)
+                .language(Language.KO)
+                .build();
     }
+
 
     public User update(String name, String profileImageUrl) {
         this.name = name;

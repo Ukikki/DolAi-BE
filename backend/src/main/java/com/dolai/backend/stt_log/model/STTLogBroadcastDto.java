@@ -14,5 +14,8 @@ import java.time.LocalDateTime;
 public class STTLogBroadcastDto {
     private String speaker;
     private String text;
+    private String textKo;
+    private String textEn;
+    private String textZh;
     private LocalDateTime timestamp;
 }

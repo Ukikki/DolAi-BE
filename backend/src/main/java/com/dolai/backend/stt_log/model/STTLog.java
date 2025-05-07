@@ -21,6 +21,16 @@ public class STTLog {
     private Meeting meeting;
     private String speakerName;
     private String text;
+
+    @Column(name = "text_ko")
+    private String textKo;
+
+    @Column(name = "text_en")
+    private String textEn;
+
+    @Column(name = "text_zh")
+    private String textZh;
+    private String translatedText;
     private LocalDateTime timestamp;
 
     @Builder.Default
