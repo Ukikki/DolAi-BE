@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,6 +20,9 @@ public class UtteranceNode {
     private String speaker;
 
     private String text;
+
+    private List<String> keywords;
+    private List<String> topics;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private Long startTime;

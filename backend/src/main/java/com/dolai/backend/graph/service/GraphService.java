@@ -47,8 +47,16 @@ public class GraphService {
 
     public void saveUtterance(String meetingId, String speakerName, String text, Instant timestamp) {
         String utteranceId = UUID.randomUUID().toString();
+
+        // 추출 먼저 수행
+        List<String> keywords = keywordExtractor.extract(text);
+        List<String> topics = topicExtractor.extract(text);
+
+        // 추출한 값을 포함하여 utterance 노드 구성
         UtteranceNode utterance = new UtteranceNode(utteranceId, speakerName, text, timestamp);
         utterance.setMeetingId(meetingId);
+        utterance.setKeywords(keywords);
+        utterance.setTopics(topics);
 
         String utteranceArangoId = arangoDatabase.collection("utterances")
                 .insertDocument(utterance).getId();
@@ -107,26 +115,6 @@ public class GraphService {
         }
     }
 
-    public Map<String, Object> debugGraphByMeetingId(String meetingId) {
-        String meetingArangoId = "meetings/" + meetingId;
-        String aql = """
-            FOR v, e, p IN 1..3 OUTBOUND @startVertex GRAPH "dolai"
-                RETURN {
-                    vertex: v,
-                    edge: e
-                }
-            """;
-        Map<String, Object> bindVars = Map.of("startVertex", meetingArangoId);
-        ArangoCursor<Map> cursor = arangoDatabase.query(aql, bindVars, null, Map.class);
-        List<Map> result = cursor.asListRemaining();
-
-        return Map.of(
-                "meetingId", meetingId,
-                "startVertex", meetingArangoId,
-                "graph", result
-        );
-    }
-
     public Mono<List<String>> getContextByMeetingId(String meetingId) {
         List<String> contexts = arangoDatabase.query(
                 """
@@ -156,27 +144,30 @@ public class GraphService {
 
         for (UtteranceNode utterance : utterances) {
             String utteranceId = "utterances/" + utterance.getId();
-            List<String> keywords = keywordService.extractAndSaveKeywords(utterance.getText());
-            List<String> topics = topicService.extractAndSaveTopics(Collections.singletonList(utterance))
-                    .getOrDefault(utterance.getId(), Collections.emptyList());
+            List<String> keywords = utterance.getKeywords() != null ? utterance.getKeywords() : List.of();
+            List<String> topics = utterance.getTopics() != null ? utterance.getTopics() : List.of();
 
             nodes.add(new GraphNode(utteranceId, "utterances", utterance.getText(), keywords, topics));
-            keywords.forEach(keyword -> {
+
+            for (String keyword : keywords) {
                 String keywordId = "keywords/" + keyword;
                 nodes.add(new GraphNode(keywordId, "keywords", keyword, null, null));
                 edges.add(new GraphEdge(utteranceId, keywordId, "utterance_to_keyword"));
-            });
-            topics.forEach(topic -> {
+            }
+
+            for (String topic : topics) {
                 String topicId = "topics/" + topic;
                 nodes.add(new GraphNode(topicId, "topics", topic, null, null));
                 edges.add(new GraphEdge(utteranceId, topicId, "utterance_to_topic"));
-            });
+            }
+
             if (utterance.getSpeaker() != null) {
                 String speakerId = safeArangoKey(utterance.getSpeaker());
                 String speakerNodeId = "speakers/" + speakerId;
                 nodes.add(new GraphNode(speakerNodeId, "speakers", utterance.getSpeaker(), null, null));
                 edges.add(new GraphEdge(utteranceId, speakerNodeId, "utterance_to_speaker"));
             }
+
             edges.add(new GraphEdge(meetingNode.getId(), utteranceId, "meeting_to_utterance"));
         }
 
