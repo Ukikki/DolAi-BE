@@ -20,13 +20,6 @@ configurations {
 	}
 }
 
-configurations.all {
-	resolutionStrategy {
-		force 'com.arangodb:arangodb-spring-data:3.6.0'
-		force 'com.arangodb:arangodb-java-driver:6.7.2'
-	}
-}
-
 repositories {
 	mavenCentral() // Maven Central에 의존성 검색
 	// ArangoDB 7.x 의 jackson-serde 등 추가 라이브러리 제공 위치
@@ -53,7 +46,7 @@ dependencies {
 	implementation 'mysql:mysql-connector-java:8.0.33'
 
 	// ArangoDB (안정 버전)
-	implementation 'com.arangodb:arangodb-spring-data:3.6.0'
+	//implementation 'com.arangodb:arangodb-spring-data:3.6.0'
 	implementation 'com.arangodb:arangodb-java-driver:6.7.2'
 
 	// JSON 직렬화/역직렬화 지원 (Jackson)

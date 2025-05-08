@@ -1,12 +1,10 @@
 package com.dolai.backend.graph.model;
 
-import com.arangodb.springframework.annotation.Document;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
 import java.time.Instant;
 
-@Document("meetings")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,7 +12,6 @@ import java.time.Instant;
 @ToString
 public class MeetingNode {
 
-    @Id
     private String id; // == safeArangoKey(meetingId)
 
     private String meetingId;    // 비즈니스 식별자 (예: "2024-05-01-10AM")

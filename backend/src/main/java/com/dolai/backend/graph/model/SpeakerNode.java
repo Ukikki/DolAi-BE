@@ -1,10 +1,8 @@
 package com.dolai.backend.graph.model;
 
-import com.arangodb.springframework.annotation.Document;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
-@Document("speakers")
 @Getter
 @Setter
 @NoArgsConstructor
