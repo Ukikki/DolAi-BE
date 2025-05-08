@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 * * ArangoDB Configuration: 기본 DB 연결 설정
  */
 
+@Getter
 @Configuration
 public class ArangoConfig {
 
@@ -19,7 +20,7 @@ public class ArangoConfig {
     private String host;
 
     @Value("${arangodb.port}")
-    private Integer port;
+    private int port;
 
     @Value("${arangodb.user}")
     private String user;
@@ -27,7 +28,6 @@ public class ArangoConfig {
     @Value("${arangodb.password}")
     private String password;
 
-    @Getter
     @Value("${arangodb.database}")
     private String database;
 
@@ -45,5 +45,4 @@ public class ArangoConfig {
     public ArangoDatabase arangoDatabase(ArangoDB arangoDB) {
         return arangoDB.db(database);
     }
-
 }
