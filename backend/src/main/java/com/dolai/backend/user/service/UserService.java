@@ -33,10 +33,9 @@ public class UserService {
                             updateProfileImage.contains("google") ||
                             updateProfileImage.startsWith("http");
 
-            String updateName = existingUser.getName(); // 기존 이름 유지
             String imageToUpdate = isUsingSocialImage ? socialProfileImage : updateProfileImage;
 
-            existingUser.update(updateName, imageToUpdate);
+            existingUser.setProfileImageUrl(imageToUpdate);
 
             log.info("🔄 기존 사용자 프로필이미지만 업데이트: {}", existingUser);
             return userRepository.save(existingUser);

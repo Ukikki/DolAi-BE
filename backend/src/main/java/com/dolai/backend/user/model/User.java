@@ -46,7 +46,6 @@ public class User extends BaseTimeEntity {
     @Builder.Default
     private Language language = Language.KO;
 
-
     public static User create(String id, String email, String name, String profileImageUrl, Provider provider) {
         return User.builder()
                 .id(id)
@@ -59,12 +58,6 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
-
-    public User update(String name, String profileImageUrl) {
-        this.name = name;
-        this.profileImageUrl = profileImageUrl;
-        return this;
-    }
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
