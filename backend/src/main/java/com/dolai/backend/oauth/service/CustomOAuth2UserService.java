@@ -56,13 +56,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return userRepository.findByEmail(oAuth2UserInfo.getEmail())
                 .map(existingUser -> {
                     // 기존 사용자 정보 업데이트 (변경이 있을 때만)
-                    if (!existingUser.getName().equals(oAuth2UserInfo.getName()) ||
-                            !existingUser.getProfileImageUrl().equals(oAuth2UserInfo.getProfileImageUrl())) {
-                        existingUser.update(oAuth2UserInfo.getName(), oAuth2UserInfo.getProfileImageUrl());
+                    if (shouldUpdateProfileImage(existingUser, oAuth2UserInfo)) {
+                        existingUser.setProfileImageUrl(oAuth2UserInfo.getProfileImageUrl());
                         return userRepository.save(existingUser);
                     }
                     return existingUser;
                 })
                 .orElseGet(() -> userRepository.save(oAuth2UserInfo.toEntity()));
     }
+
+    private boolean shouldUpdateProfileImage(User user, OAuth2UserInfo userInfo) {
+        String currentImage = user.getProfileImageUrl();
+        String newImage = userInfo.getProfileImageUrl();
+
+        return currentImage == null ||
+                currentImage.contains("kakao") ||
+                currentImage.contains("google") ||
+                currentImage.startsWith("http") &&
+                        !currentImage.equals(newImage);
+    }
+
 }
