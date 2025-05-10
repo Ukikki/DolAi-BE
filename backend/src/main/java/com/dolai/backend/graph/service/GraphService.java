@@ -1,10 +1,9 @@
 package com.dolai.backend.graph.service;
 
+import com.arangodb.ArangoCursor;
 import com.arangodb.ArangoDatabase;
-import com.dolai.backend.graph.edge.MeetingToUtteranceEdge;
-import com.dolai.backend.graph.edge.UtteranceToKeywordEdge;
-import com.dolai.backend.graph.edge.UtteranceToSpeakerEdge;
-import com.dolai.backend.graph.edge.UtteranceToTopicEdge;
+import com.arangodb.entity.BaseDocument;
+import com.dolai.backend.graph.edge.*;
 import com.dolai.backend.graph.model.*;
 import com.dolai.backend.nlp.service.KeywordExtractionService;
 import com.dolai.backend.nlp.service.TopicExtractionService;
@@ -19,19 +18,23 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class GraphService {
 
     private final STTLogRepository sttLogRepository;
-    private final ArangoDatabase arangoDatabase;
     private final KeywordExtractionService keywordExtractor;
     private final TopicExtractionService topicExtractor;
+    private final KeywordService keywordService;
+    private final TopicService topicService;
+
+    private final ArangoDatabase arangoDatabase;
 
     public void syncGraphFromMysql(String meetingId) {
         List<STTLog> logs = sttLogRepository.findByMeetingIdOrderByTimestampAsc(meetingId);
-
         for (STTLog log : logs) {
             saveUtterance(
                     log.getMeeting().getId(),
@@ -43,41 +46,30 @@ public class GraphService {
     }
 
     public void saveUtterance(String meetingId, String speakerName, String text, Instant timestamp) {
-        // UtteranceNode
         String utteranceId = UUID.randomUUID().toString();
+
+        // 추출 먼저 수행
+        List<String> keywords = keywordExtractor.extract(text);
+        List<String> topics = topicExtractor.extract(text);
+
+        // 추출한 값을 포함하여 utterance 노드 구성
         UtteranceNode utterance = new UtteranceNode(utteranceId, speakerName, text, timestamp);
         utterance.setMeetingId(meetingId);
+        utterance.setKeywords(keywords);
+        utterance.setTopics(topics);
 
-        // 문서 삽입 후, ArangoDB가 반환하는 "_id" 값을 통해 안전하게 edge 연결에 사용
-        var inserted = arangoDatabase.collection("utterances").insertDocument(utterance);
+        String utteranceArangoId = arangoDatabase.collection("utterances")
+                .insertDocument(utterance).getId();
 
-        // 주의: 직접 "utterances/" + id로 조합하지 않고,
-        // ArangoDB가 실제로 저장한 정확한 _id 값을 사용해야
-        // 나중에 edge에서 _from, _to 로 연결 시 vertex를 정확히 찾을 수 있음
-
-        // 로그
-        System.out.println("Utterance inserted: " + utterance.getId());  // 실제 UUID key
-        System.out.println("Utterance _id: utterances/" + utterance.getId());
-
-        String utteranceArangoId = inserted.getId();
-
-        // SpeakerNode
         String speakerKey = safeArangoKey(speakerName);
         String speakerArangoId = "speakers/" + speakerKey;
         SpeakerNode speaker = new SpeakerNode(speakerKey, speakerName);
         if (!arangoDatabase.collection("speakers").documentExists(speakerKey)) {
             arangoDatabase.collection("speakers").insertDocument(speaker);
         }
-
-        // 로그
-        System.out.println("Creating edge utterance_to_speaker:");
-        System.out.println("  _from: " + utteranceArangoId);
-        System.out.println("  _to: " + speakerArangoId);
-
         arangoDatabase.collection("utterance_to_speaker")
                 .insertDocument(new UtteranceToSpeakerEdge(utteranceArangoId, speakerArangoId));
 
-        // MeetingNode
         String meetingArangoId = "meetings/" + meetingId;
         MeetingNode meeting = new MeetingNode(meetingId, "Meeting " + meetingId, timestamp, null);
         if (!arangoDatabase.collection("meetings").documentExists(meetingId)) {
@@ -86,7 +78,6 @@ public class GraphService {
         arangoDatabase.collection("meeting_to_utterance")
                 .insertDocument(new MeetingToUtteranceEdge(meetingArangoId, utteranceArangoId));
 
-        // KeywordNodes
         for (String keyword : keywordExtractor.extract(text)) {
             String keywordId = safeArangoKey(keyword);
             String keywordArangoId = "keywords/" + keywordId;
@@ -98,7 +89,6 @@ public class GraphService {
                     .insertDocument(new UtteranceToKeywordEdge(utteranceArangoId, keywordArangoId));
         }
 
-        // TopicNodes
         for (String topic : topicExtractor.extract(text)) {
             String topicId = safeArangoKey(topic);
             String topicArangoId = "topics/" + topicId;
@@ -111,7 +101,6 @@ public class GraphService {
         }
     }
 
-    // ArangoDB에서 사용할 수 있는 안전한 키 생성
     public String safeArangoKey(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -126,91 +115,74 @@ public class GraphService {
         }
     }
 
-    // 디버그용 처리 뷰
-    public Map<String, Object> debugGraphByMeetingId(String meetingId) {
-        String meetingArangoId = "meetings/" + meetingId;
-
-        String aql = """
-        FOR v, e, p IN 1..3 OUTBOUND @startVertex GRAPH "dolai"
-            RETURN {
-                vertex: v,
-                edge: e
-            }
-        """;
-
-        Map<String, Object> bindVars = Map.of("startVertex", meetingArangoId);
-
-        var cursor = arangoDatabase.query(aql, bindVars, null, Map.class);
-        List<Map> result = cursor.asListRemaining();
-
-        return Map.of(
-                "meetingId", meetingId,
-                "startVertex", meetingArangoId,
-                "graph", result
-        );
-    }
-
     public Mono<List<String>> getContextByMeetingId(String meetingId) {
         List<String> contexts = arangoDatabase.query(
                 """
-                FOR u IN utterances
-                    FILTER u.meetingId == @meetingId
-                    SORT u.timestamp ASC
-                    RETURN u.text
+                    FOR u IN utterances
+                        FILTER u.meetingId == @meetingId
+                        SORT u.timestamp ASC
+                        RETURN u.text
                 """,
                 Map.of("meetingId", meetingId),
                 null,
                 String.class
         ).asListRemaining();
-
         return Mono.just(contexts);
     }
 
-    // ArangoDB에 저장된 그래프 데이터를 읽어서 시각화에 필요한 형태 (nodes & edges)로 반환
-    public Map<String, Object> getGraphVisualization(String meetingId) {
-        String startVertex = "meetings/" + meetingId;
+    public GraphResponse getGraphVisualization(String meetingId) {
+        GraphNode meetingNode = new GraphNode("meetings/" + meetingId, "meetings", meetingId, null, null);
+        List<UtteranceNode> utterances = new ArrayList<>();
 
-        String aql = """
-        FOR v, e, p IN 1..3 OUTBOUND @startVertex GRAPH "dolai"
-            RETURN { vertex: v, edge: e }
-    """;
+        String query = "FOR u IN utterances FILTER u.meetingId == @meetingId RETURN u";
+        Map<String, Object> bindVars = Map.of("meetingId", meetingId);
+        ArangoCursor<UtteranceNode> cursor = arangoDatabase.query(query, bindVars, null, UtteranceNode.class);
+        cursor.forEachRemaining(utterances::add);
 
-        Map<String, Object> bindVars = Map.of("startVertex", startVertex);
-        var cursor = arangoDatabase.query(aql, bindVars, null, Map.class);
-        List<Map> rawResults = cursor.asListRemaining();
+        List<GraphNode> nodes = new ArrayList<>(List.of(meetingNode));
+        List<GraphEdge> edges = new ArrayList<>();
 
-        Set<Map<String, String>> nodes = new HashSet<>();
-        List<Map<String, String>> edges = new ArrayList<>();
+        for (UtteranceNode utterance : utterances) {
+            String utteranceId = "utterances/" + utterance.getId();
+            List<String> keywords = utterance.getKeywords() != null ? utterance.getKeywords() : List.of();
+            List<String> topics = utterance.getTopics() != null ? utterance.getTopics() : List.of();
 
-        for (Map entry : rawResults) {
-            Map v = (Map) entry.get("vertex");
-            Map e = (Map) entry.get("edge");
+            nodes.add(new GraphNode(utteranceId, "utterances", utterance.getText(), keywords, topics));
 
-            if (v != null) {
-                String id = (String) v.get("_id");
-                String label = (String) v.getOrDefault("text", v.getOrDefault("name", "unknown")).toString();
-                String type = id.split("/")[0];
-                nodes.add(Map.of(
-                        "id", id,
-                        "label", label,
-                        "type", type
-                ));
+            for (String keyword : keywords) {
+                String keywordId = "keywords/" + keyword;
+                nodes.add(new GraphNode(keywordId, "keywords", keyword, null, null));
+                edges.add(new GraphEdge(utteranceId, keywordId, "utterance_to_keyword"));
             }
 
-            if (e != null) {
-                edges.add(Map.of(
-                        "from", (String) e.get("_from"),
-                        "to", (String) e.get("_to"),
-                        "type", ((String) e.get("_id")).split("/")[0]
-                ));
+            for (String topic : topics) {
+                String topicId = "topics/" + topic;
+                nodes.add(new GraphNode(topicId, "topics", topic, null, null));
+                edges.add(new GraphEdge(utteranceId, topicId, "utterance_to_topic"));
             }
+
+            if (utterance.getSpeaker() != null) {
+                String speakerId = safeArangoKey(utterance.getSpeaker());
+                String speakerNodeId = "speakers/" + speakerId;
+                nodes.add(new GraphNode(speakerNodeId, "speakers", utterance.getSpeaker(), null, null));
+                edges.add(new GraphEdge(utteranceId, speakerNodeId, "utterance_to_speaker"));
+            }
+
+            edges.add(new GraphEdge(meetingNode.getId(), utteranceId, "meeting_to_utterance"));
         }
 
-        return Map.of(
-                "meetingId", meetingId,
-                "nodes", nodes,
-                "edges", edges
-        );
+        return new GraphResponse("success", "Graph data retrieved successfully", meetingId, nodes, edges);
     }
 
+    public GraphResponse syncAndGetGraph(String meetingId) {
+        syncGraphFromMysql(meetingId);
+        return getGraphVisualization(meetingId);
+    }
+
+    public List<BaseDocument> getUtterances(String meetingId) {
+        String query = "FOR u IN utterances FILTER u.meetingId == @meetingId RETURN u";
+        Map<String, Object> bindVars = Map.of("meetingId", meetingId);
+        ArangoCursor<BaseDocument> cursor = arangoDatabase.query(query, bindVars, null, BaseDocument.class);
+        return StreamSupport.stream(cursor.spliterator(), false).collect(Collectors.toList());
+    }
 }

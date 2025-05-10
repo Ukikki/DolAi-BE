@@ -5,10 +5,10 @@ import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.common.success.SuccessDataResponse;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.model.UserDto;
+import com.dolai.backend.user.model.enums.Language;
 import com.dolai.backend.user.repository.UserRepository;
 import com.dolai.backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -42,8 +42,8 @@ public class UserController {
     }
 
     @PatchMapping("/rename")
-    public ResponseEntity<?> renameUser(@AuthenticationPrincipal User user, @RequestBody UserDto request) {
-        String newName = request.getName();
+    public ResponseEntity<?> renameUser(@AuthenticationPrincipal User user, @RequestBody Map<String, String> request) {
+        String newName = request.get("name");
 
         if (newName == null || newName.trim().isEmpty()) {
             throw new CustomException(ErrorCode.USER_INVALID_INPUT_VALUE);
@@ -54,8 +54,7 @@ public class UserController {
 
         return ResponseEntity.ok(new SuccessDataResponse<>(Map.of("name", newName)));
     }
-
-
+    
     @PatchMapping("/profile")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal User user, @RequestPart("image") MultipartFile imageFile) {
 
@@ -87,4 +86,23 @@ public class UserController {
             throw new CustomException(ErrorCode.USER_FILE_UPLOAD_FAILED);
         }
     }
+
+    @PatchMapping("/language")
+    public ResponseEntity<?> updateLanguage(@AuthenticationPrincipal User user, @RequestBody Map<String, String> request) {
+        String lang = request.get("language");
+
+        if (lang == null) {
+            throw new CustomException(ErrorCode.USER_INVALID_INPUT_VALUE);
+        }
+
+        try {
+            Language newLanguage = Language.valueOf(lang.toUpperCase()); // KO, EN, ZH 등
+            user.setLanguage(newLanguage);
+            userRepository.save(user);
+            return ResponseEntity.ok(new SuccessDataResponse<>(Map.of("language", newLanguage)));
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.USER_INVALID_INPUT_VALUE);
+        }
+    }
+
 }

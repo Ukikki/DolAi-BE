@@ -34,6 +34,7 @@ public class TopicExtractionServiceImpl implements TopicExtractionService {
     public List<String> extract(String text) {
         String prompt = """
                 아래 텍스트를 참고해서 관련된 주제를 3~5개 단어 수준으로 뽑아줘. 마크다운이나 설명은 필요 없어. 콤마로 구분해서 반환해줘.
+                형식 예시: 인공지능, 자연어 처리, 회의 분석
                 텍스트:
                 """ + text;
 
@@ -51,6 +52,7 @@ public class TopicExtractionServiceImpl implements TopicExtractionService {
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(geminiApiUrl, entity, Map.class);
+            log.info("Gemini 응답: {}", response.getBody()); // 이걸 꼭 찍어봐
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map content = (Map) ((List) response.getBody().get("candidates")).get(0);
                 Map parts = (Map) ((List) ((Map) content.get("content")).get("parts")).get(0);
