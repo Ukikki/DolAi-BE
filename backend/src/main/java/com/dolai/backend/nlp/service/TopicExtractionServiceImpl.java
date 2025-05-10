@@ -39,7 +39,7 @@ public class TopicExtractionServiceImpl implements TopicExtractionService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(geminiApiKey);
+        headers.add("x-goog-api-key", geminiApiKey);
 
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(

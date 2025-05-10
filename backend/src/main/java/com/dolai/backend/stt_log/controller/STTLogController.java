@@ -34,9 +34,8 @@ public class STTLogController {
                 .timestamp(LocalDateTime.now()) // 또는 request.getTimestamp()
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/stt/" + request.getMeetingId(), dto);
-
-        return ResponseEntity.ok(new SuccessMessageResponse("save STT Log."));    }
+        return ResponseEntity.ok(new SuccessMessageResponse("save STT Log."));
+    }
 
     @GetMapping
     public ResponseEntity<?> getLogsByMeeting(@RequestParam("meetingId") String meetingId) {
