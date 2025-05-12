@@ -32,8 +32,17 @@ public class TopicExtractionServiceImpl implements TopicExtractionService {
 
     @Override
     public List<String> extract(String text) {
+        if (text == null || text.trim().length() < 5) {
+            return List.of(); // Gemini 호출 X
+        }
+        // Gemini API 호출
         String prompt = """
-                아래 텍스트를 참고해서 관련된 주제를 3~5개 단어 수준으로 뽑아줘. 마크다운이나 설명은 필요 없어. 콤마로 구분해서 반환해줘.
+                감정, 태도, 표현 방식 같은 건 제외하고, **구체적인 주제나 개념 중심**으로 뽑아줘.
+                그것, 그걸, 더 같은 불명확한 명사나 관사도 제외해.
+                키워드가 **없다고 판단되면**, 응답하지 말고 **아무것도 출력하지 마**.
+                (문자열 'null', '응답 없음', 빈 리스트 등 어떤 것도 출력하지 마.)
+                너의 의견이나 해석, 주석도 절대 추가하지 마.
+                키워드는 **쉼표(,)로만 구분된 한 줄**로 반환해줘.
                 형식 예시: 인공지능, 자연어 처리, 회의 분석
                 텍스트:
                 """ + text;
