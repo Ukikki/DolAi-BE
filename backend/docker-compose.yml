@@ -93,6 +93,8 @@ services:
     container_name: whisper-server
     stdin_open: true
     tty: true
+    volumes:
+      - ../whisper-server:/app
     ports:
       - "5001:5001"
     networks:

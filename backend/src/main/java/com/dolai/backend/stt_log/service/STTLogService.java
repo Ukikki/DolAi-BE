@@ -1,5 +1,7 @@
 package com.dolai.backend.stt_log.service;
 
+import com.dolai.backend.common.exception.CustomException;
+import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.repository.MeetingRepository;
 import com.dolai.backend.stt_log.model.STTLog;
@@ -30,7 +32,7 @@ public class STTLogService {
 
     private STTLog saveLogToDB(STTLogRequest request) {
         Meeting meeting = meetingRepository.findById(request.getMeetingId())
-                .orElseThrow(() -> new IllegalArgumentException("회의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
 
         STTLog log = STTLog.builder()
                 .meeting(meeting)

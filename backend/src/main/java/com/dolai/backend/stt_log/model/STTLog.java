@@ -30,7 +30,6 @@ public class STTLog {
 
     @Column(name = "text_zh")
     private String textZh;
-    private String translatedText;
     private LocalDateTime timestamp;
 
     @Builder.Default

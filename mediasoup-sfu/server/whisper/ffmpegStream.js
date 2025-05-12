@@ -1,7 +1,19 @@
-// server/whisper/ffmpegStream.js
+//ffmpegStream.js
 import { spawn } from 'child_process';
-import fetch from 'node-fetch';
 import { EventEmitter } from 'events';
+import WebSocket from 'ws';
+
+function isSilence(buffer) {
+  const threshold = 0.01;
+  let sum = 0;
+  for (let i = 0; i < buffer.length; i += 2) {
+    const val = buffer.readInt16LE(i) / 32768.0;
+    sum += val * val;
+  }
+  const rms = Math.sqrt(sum / (buffer.length / 2));
+  //console.log("🎚️ RMS:", rms);  // 디버깅용
+  return rms < threshold;
+}
 
 class FfmpegStream extends EventEmitter {
   constructor(rtpParameters, meetingId, speaker) {
@@ -12,12 +24,26 @@ class FfmpegStream extends EventEmitter {
     this.queueSize = 0;
     this.processingInterval = null;
     this.isProcessing = false;
-    this.targetSize = 48000; // 약 1.5초 분량 (16kHz, 16bit, mono)
+    this.targetSize = 640000; // 약 1.5초 분량 (16kHz, 16bit, mono)
     this.maxWaitTime = 3000; // 최대 대기 시간 (ms)
     this.lastProcessTime = Date.now();
     this.meetingId = meetingId;
     this.speaker = speaker;
+    this.ws = null;
+    this._connectWebSocket();
     this._start();
+  }
+
+  // WebSocket 연결
+  _connectWebSocket() {
+    // 브라우저에서 WebSocket 연결
+    this.ws = new WebSocket('ws://localhost:5001/ws/whisper');
+    this.ws.onopen = () => console.log('🔌 WebSocket 연결됨');
+    this.ws.onerror = (err) => console.error('WebSocket 오류:', err);
+    this.ws.onclose = () => {
+      console.log('🔌 WebSocket 연결 종료됨, 1초 후 재시도...');
+      setTimeout(() => this._connectWebSocket(), 1000);
+    };
   }
 
   _start() {
@@ -60,6 +86,9 @@ class FfmpegStream extends EventEmitter {
   }
 
   _enqueueAudio(chunk) {
+    if (isSilence(chunk)) {
+      return;
+    }
     // 큐에 청크 추가
     this.audioQueue.push({
       data: chunk,
@@ -67,7 +96,7 @@ class FfmpegStream extends EventEmitter {
     });
     this.queueSize += chunk.length;
 
-    console.log(`➕ 큐에 추가됨: ${chunk.length} bytes, 현재 큐 크기: ${this.queueSize} bytes`);
+    console.log(`➕ Queue 추가 : ${this.queueSize} bytes`);
 
     // 큐가 목표 크기에 도달했는지 확인
     if (this.queueSize >= this.targetSize && !this.isProcessing) {
@@ -111,29 +140,19 @@ class FfmpegStream extends EventEmitter {
         return;
       }
 
-      // 디버깅을 위해 파일로 저장
-      /*
-      const fs = require('fs');
-      const filename = `audio_chunk_${Date.now()}.raw`;
-      fs.writeFileSync(filename, combinedBuffer);
-      console.log(`💾 오디오 저장됨: ${filename}`);
-      */
-
       console.log('🚀 Whisper로 전송 시작!');
-      const response = await fetch('http://localhost:5001/whisper/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const chunkStartTime = Date.now() / 1000; // 초 단위 (epoch)
+
+      // WebSocket으로 전송
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({
           meetingId: this.meetingId,
           speaker: this.speaker,
+          chunkStartTime: chunkStartTime,
           audioData: combinedBuffer.toString('base64')
-        })
-      });
-
-      if (!response.ok) {
-        console.error(`Whisper API 오류: ${response.status}`);
+        }));
       } else {
-        console.log('✅ Whisper 전송 성공');
+        console.error('❌ WebSocket이 열려 있지 않음!');
       }
 
       this.lastProcessTime = Date.now();
@@ -162,6 +181,10 @@ a=fmtp:${codec.payloadType} minptime=10;useinbandfec=1
       clearInterval(this.processingInterval);
       this.ffmpegProcess.kill('SIGINT');
       this.ffmpegProcess = null;
+    }
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
     }
   }
 }
