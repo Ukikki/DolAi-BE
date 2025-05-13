@@ -1106,7 +1106,7 @@ class Socket extends Emitter {
 
     this.hostname =
       opts.hostname ||
-      (typeof location !== "undefined" ? location.hostname : "localhost");
+      (typeof location !== "undefined" ? location.hostname : "13.209.37.189");
     this.port =
       opts.port ||
       (typeof location !== "undefined" && location.port
@@ -1171,7 +1171,7 @@ class Socket extends Emitter {
           false
         );
       }
-      if (this.hostname !== "localhost") {
+      if (this.hostname !== "13.209.37.189") {
         this.offlineEventListener = () => {
           this.onClose("transport close");
         };
