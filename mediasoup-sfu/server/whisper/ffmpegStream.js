@@ -37,7 +37,7 @@ class FfmpegStream extends EventEmitter {
   // WebSocket 연결
   _connectWebSocket() {
     // 브라우저에서 WebSocket 연결
-    this.ws = new WebSocket('ws://13.209.37.189dlrjt:5001/ws/whisper');
+    this.ws = new WebSocket('ws://13.209.37.189:5001/ws/whisper');
     this.ws.onopen = () => console.log('🔌 WebSocket 연결됨');
     this.ws.onerror = (err) => console.error('WebSocket 오류:', err);
     this.ws.onclose = () => {
