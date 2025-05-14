@@ -51,6 +51,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
                 "http://13.209.37.189:5173",
                 "http://ec2-13-209-37-189.ap-northeast-2.compute.amazonaws.com:5173"
         )); // React 프론트엔드 주소
