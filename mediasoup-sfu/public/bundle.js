@@ -10245,7 +10245,7 @@ class AnswerMediaSection extends MediaSection {
         this._mediaObject.type = offerMediaObject.type;
         this._mediaObject.protocol = offerMediaObject.protocol;
         if (!plainRtpParameters) {
-            this._mediaObject.connection = { ip: '127.0.0.1', version: 4 };
+            this._mediaObject.connection = { ip: '13.209.37.189', version: 4 };
             this._mediaObject.port = 7;
         }
         else {
@@ -10442,7 +10442,7 @@ class OfferMediaSection extends MediaSection {
         this._mediaObject.mid = String(mid);
         this._mediaObject.type = kind;
         if (!plainRtpParameters) {
-            this._mediaObject.connection = { ip: '127.0.0.1', version: 4 };
+            this._mediaObject.connection = { ip: '13.209.37.189', version: 4 };
             if (!sctpParameters)
                 this._mediaObject.protocol = 'UDP/TLS/RTP/SAVPF';
             else
