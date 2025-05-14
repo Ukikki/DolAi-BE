@@ -6,6 +6,7 @@ import com.dolai.backend.oauth.jwt.filter.TokenExceptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,9 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").authenticated()                     // 👈 나머지 /auth는 인증 필요 (/auth/logout 등)
                         .anyRequest().permitAll())
                 .formLogin(AbstractHttpConfigurer::disable)
-                //.oauth2Login(oauth -> oauth
-                //       .userInfoEndpoint(c -> c.userService(customOAuth2UserService))
-                //)
+                .oauth2Login(Customizer.withDefaults())
                 .addFilterBefore(new TokenExceptionFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
