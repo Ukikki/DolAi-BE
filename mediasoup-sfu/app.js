@@ -2,7 +2,7 @@
  * integrating mediasoup server with a node.js application
  */
 
-const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+const PUBLIC_IP = process.env.PUBLIC_IP || '13.209.37.189';
 
 /* Please follow mediasoup installation requirements */
 /* https://mediasoup.org/documentation/v3/mediasoup/installation/ */
@@ -32,7 +32,7 @@ app.get('*', (req, res, next) => {
 
   if (req.path.indexOf(path) == 0 && req.path.length > path.length) return next()
 
-  res.send(`You need to specify a room name in the path e.g. 'https://127.0.0.1/sfu/room'`)
+  res.send(`You need to specify a room name in the path e.g. 'https://13.209.37.189/sfu/room'`)
 })
 
 app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
@@ -365,7 +365,7 @@ connections.on('connection', async socket => {
 
       try {
         await plainTransport.connect({
-          ip: '127.0.0.1',
+          ip: '13.209.37.189',
           port: 5004,
           rtcpPort: 5005  // Explicitly set RTCP port
         });
@@ -381,7 +381,7 @@ connections.on('connection', async socket => {
         const { meetingId, peerDetails: { name: userName } } = peers[socket.id];
 
         const ffmpegStream = new FfmpegStream({
-          ip: '127.0.0.1',
+          ip: '13.209.37.189',
           port: 5004,
           codec: {
             name: codec.mimeType.split('/')[1],
@@ -534,7 +534,7 @@ app.get('/sfu/:room', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf-8');
 
-  const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+  const PUBLIC_IP = process.env.PUBLIC_IP || '13.209.37.189';
 
   // IP 삽입 스크립트 추가
   html = html.replace(
