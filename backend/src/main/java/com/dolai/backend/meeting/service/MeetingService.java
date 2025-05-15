@@ -49,12 +49,12 @@ public class MeetingService {
     private final WebClient webClient;
     private final Dotenv dotenv;
 
-    private String publicIp;
+    private String publicIp = "13.209.37.189";
 
-    @PostConstruct
-    private void init() {
-        this.publicIp = dotenv.get("PUBLIC_IP");
-    }
+//    @PostConstruct
+//    private void init() {
+//        this.publicIp = dotenv.get("PUBLIC_IP");
+//    }
 
     // 1. 새 화상회의 생성
     public MeetingResponseDto createMeeting(MeetingCreateRequestDto request, String userId, Status status) {
