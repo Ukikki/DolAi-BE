@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").authenticated()                     // 👈 나머지 /auth는 인증 필요 (/auth/logout 등)
                         .anyRequest().permitAll())
                 .formLogin(AbstractHttpConfigurer::disable)
-                .oauth2Login(Customizer.withDefaults())
+                //.oauth2Login(Customizer.withDefaults())
                 .addFilterBefore(new TokenExceptionFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
