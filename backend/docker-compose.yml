@@ -77,10 +77,10 @@ services:
   mediasoup-app:
     image: node:18
     container_name: mediasoup-app
-    working_dir: /app/app
+    working_dir: /app
     volumes:
-      - ../mediasoup-sfu/app:/app/app
-    command: bash -c "npm install && npm start"
+      - ../mediasoup-sfu:/app
+    command: bash -c "npm install && node app.js"
     ports:
       - "3000:3000"
     networks:
