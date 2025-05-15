@@ -10245,7 +10245,7 @@ class AnswerMediaSection extends MediaSection {
         this._mediaObject.type = offerMediaObject.type;
         this._mediaObject.protocol = offerMediaObject.protocol;
         if (!plainRtpParameters) {
-            this._mediaObject.connection = { ip: '13.209.37.189', version: 4 };
+            this._mediaObject.connection = { ip: '127.0.0.1', version: 4 };
             this._mediaObject.port = 7;
         }
         else {
