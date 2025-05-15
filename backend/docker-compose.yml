@@ -63,14 +63,16 @@ services:
       - "8081:8080"  # Spring Boot 포트 매핑
 
   mediasoup-server:
-    image: node:18  # Mediasoup 컨테이너가 Node.js 18 이상 버전을 사용
+    image: node:18
     container_name: mediasoup-server
     working_dir: /app/server
     volumes:
       - ../mediasoup-sfu/server:/app/server
-    command: sh -c "apt update && apt install -y python3-pip && npm install --legacy-peer-deps && npm start"
+    command: bash ./entrypoint.sh
     ports:
-      - "4443:4443"
+      - "4443:4443"  # mediasoup WebRTC 포트
+      - "3478:3478/udp"  # TURN 서버 포트
+      - "5349:5349/tcp"  # TURN over TLS (선택)
     networks:
       - backend_network
 
