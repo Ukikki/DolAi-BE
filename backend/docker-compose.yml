@@ -63,16 +63,13 @@ services:
       - "8081:8080"  # Spring Boot 포트 매핑
 
   mediasoup-server:
-    image: node:18
+    build:
+      context: ../mediasoup-sfu/server
+      dockerfile: Dockerfile
     container_name: mediasoup-server
-    working_dir: /app/server
-    volumes:
-      - ../mediasoup-sfu/server:/app/server
-    command: bash ./entrypoint.sh
     ports:
-      - "4443:4443"  # mediasoup WebRTC 포트
-      - "3478:3478/udp"  # TURN 서버 포트
-      - "5349:5349/tcp"  # TURN over TLS (선택)
+      - "4443:4443"
+      - "3478:3478/udp"
     networks:
       - backend_network
 
