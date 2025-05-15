@@ -68,6 +68,8 @@ public class MeetingService {
         // 초대 링크 생성
         String inviteUrl = "https://" + publicIp + ":3000/sfu/" + roomId;
 
+        log.info("초대 링크 생성 완료: {}", inviteUrl);
+
         // Mediasoup SFU 서버에 방 생성 요청
         if (status == Status.ONGOING) {
             createRoomOnMediasoup(roomId);
