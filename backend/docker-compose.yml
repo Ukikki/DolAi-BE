@@ -64,12 +64,12 @@ services:
 
   mediasoup-server:
     build:
-      context: ../mediasoup-sfu/server
+      context: ../mediasoup-sfu
       dockerfile: Dockerfile
     container_name: mediasoup-server
     ports:
-      - "4443:4443"
-      - "3478:3478/udp"
+      - "4443:4443"           # Mediasoup signaling
+      - "3478:3478/udp"       # TURN server
     networks:
       - backend_network
 
