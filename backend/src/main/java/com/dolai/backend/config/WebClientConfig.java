@@ -20,7 +20,8 @@ public class WebClientConfig {
     public WebClient webClient() {
 
         Dotenv dotenv = Dotenv.load(); // .env 파일 읽기
-        String publicIp = dotenv.get("PUBLIC_IP");
+        //String publicIp = dotenv.get("PUBLIC_IP");
+        String publicIp = "13.209.37.189"; // AWS EC2 퍼블릭 IP // 오류 해결용 하드코딩
 
         X509TrustManager trustAllCerts = new X509TrustManager() {
             @Override public void checkClientTrusted(X509Certificate[] xcs, String string) {}

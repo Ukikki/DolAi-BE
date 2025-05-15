@@ -46,12 +46,10 @@ public class MeetingService {
     private final DocumentPlacementService documentPlacementService;
     private final LlmDocumentService llmDocumentService;
     private final DirectoryService directoryService;
-    private final WebClient webClient;
+    private final WebClient mediasoupWebClient;
     private final Dotenv dotenv;
 
-    private String publicIp = "13.209.37.189";
-
-//    @PostConstruct
+    //    @PostConstruct
 //    private void init() {
 //        this.publicIp = dotenv.get("PUBLIC_IP");
 //    }
@@ -66,6 +64,7 @@ public class MeetingService {
         String roomId = System.currentTimeMillis() + "_" + userId;
 
         // 초대 링크 생성
+        String publicIp = "13.209.37.189";
         String inviteUrl = "https://" + publicIp + ":3000/sfu/" + roomId;
 
         log.info("초대 링크 생성 완료: {}", inviteUrl);
@@ -195,7 +194,7 @@ public class MeetingService {
     // Mediasoup 방 생성
     private void createRoomOnMediasoup(String roomId) {
         try {
-            webClient.post()
+            mediasoupWebClient.post()
                     .uri("/api/create-room")
                     .bodyValue(Map.of("roomId", roomId))
                     .retrieve()
