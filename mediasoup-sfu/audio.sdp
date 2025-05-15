@@ -1,4 +1,4 @@
-const PUBLIC_IP = process.env.PUBLIC_IP || '13.209.37.189';
+const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
 
 const sdp = `
 v=0
