@@ -3,5 +3,5 @@
 # TURN 서버 실행
 turnserver -c /app/turnserver.conf &
 
-# Node 서버 실행
+# Mediasoup 서버 실행
 npm start
