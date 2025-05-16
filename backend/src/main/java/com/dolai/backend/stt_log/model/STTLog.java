@@ -35,4 +35,8 @@ public class STTLog {
     @Builder.Default
     @Column(name = "synced")
     private Boolean synced = false; // 기본값: ArangoDB에 데이터를 옮긴 후 true로 바꿔 중복 저장 방지
+
+    @Builder.Default
+    @Column(name = "todo_checked")
+    private Boolean todoChecked = false;
 }
