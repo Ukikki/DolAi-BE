@@ -3,14 +3,18 @@ services:
     image: redis:6.0.9
     container_name: redis-container
     restart: always
+    env_file:
+      - .env
     ports:
       - "6379:6379"
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    #command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: >
+      sh -c "redis-server --requirepass $${REDIS_PASSWORD}"
     environment:
       - REDIS_DATABASE=dolai
       - REDIS_HOST=redis-container  # 변경된 부분
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=ukikki1212
+      # REDIS_PASSWORD는 .env에서 불러옴
     networks:
       - backend_network
   mysql:
@@ -48,8 +52,12 @@ services:
       - backend_network  # ArangoDB 네트워크 설정
 
   backend:
-    build: . # 백엔드 애플리케이션 빌드 위치
-    container_name: Dockerfile
+    build: ./backend # 백엔드 애플리케이션 빌드 위치
+    container_name: backend-container
+    env_file:
+      - .env
+    volumes:
+      - ./.env:/app/.env
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/dolai  # MySQL 컨테이너의 호스트 이름
@@ -60,11 +68,11 @@ services:
     networks:
       - backend_network  # 백엔드 네트워크 설정
     ports:
-      - "8081:8080"  # Spring Boot 포트 매핑
+      - "8080:8080"  # Spring Boot 포트 매핑
 
   mediasoup-server:
     build:
-      context: ../mediasoup-sfu
+      context: ./mediasoup-sfu
       dockerfile: Dockerfile
     container_name: mediasoup-server
     ports:
@@ -78,7 +86,7 @@ services:
     container_name: mediasoup-app
     working_dir: /app
     volumes:
-      - ../mediasoup-sfu:/app
+      - ./mediasoup-sfu:/app
     command: bash -c "npm install && node app.js"
     ports:
       - "3000:3000"
@@ -87,13 +95,13 @@ services:
 
   whisper:
     build:
-      context: ../whisper-server
+      context: ./whisper-server
       dockerfile: Dockerfile
     container_name: whisper-server
     stdin_open: true
     tty: true
     volumes:
-      - ../whisper-server:/app
+      - ./whisper-server:/app
     ports:
       - "5001:5001"
     networks:
@@ -101,11 +109,29 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
-      - ../whisper-server/.env
+      - ./.env
+
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+      - "443:443" # 선택
+    depends_on:
+      - backend
+      - mediasoup-app
+      - whisper
+    networks:
+      - backend_network
 
 networks:
-  backend_network:
-    driver: bridge  # Docker 브리지 네트워크 설정
+  backend_network:  # DB, 백엔드, Redis 등 내부 통신용
+    name: backend_network
+    driver: bridge
+
+  #dolai-network:  # Nginx, WebClient와의 통신용
+    #name: dolai-network
+    #driver: bridge
 
 volumes:
   mysql_data:

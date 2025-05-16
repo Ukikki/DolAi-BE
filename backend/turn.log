@@ -1,0 +1,673 @@
+nohup: ignoring input
+bind: Address already in use
+Cannot bind local socket to addr: Invalid argument
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+0: : Bad configuration format: no-loopback-peers
+0: : log file opened: /var/log/turn_3043_2025-05-13.log
+0: : Listener address to use: 0.0.0.0
+0: : 0 bytes per second allowed, combined server capacity
+0: : Bad configuration format: no-loopback-peers
+0: : Bad configuration format: no-loopback-peers
+0: : 
+RFC 3489/5389/5766/5780/6062/6156 STUN/TURN Server
+Version Coturn-4.5.2 'dan Eider'
+0: : 
+Max number of open files/sockets allowed for this process: 1048576
+0: : 
+Due to the open files/sockets limitation,
+max supported number of TURN Sessions possible is: 524000 (approximately)
+0: : 
+
+==== Show him the instruments, Practical Frost: ====
+
+0: : TLS supported
+0: : DTLS supported
+0: : DTLS 1.2 supported
+0: : TURN/STUN ALPN supported
+0: : Third-party authorization (oAuth) supported
+0: : GCM (AEAD) supported
+0: : OpenSSL compile-time version: OpenSSL 3.0.2 15 Mar 2022 (0x30000020)
+0: : 
+0: : SQLite supported, default database location is /var/lib/turn/turndb
+0: : Redis supported
+0: : PostgreSQL supported
+0: : MySQL supported
+0: : MongoDB is not supported
+0: : 
+0: : Default Net Engine version: 3 (UDP thread per CPU core)
+
+=====================================================
+
+0: : Domain name: 
+0: : Default realm: mediasoup-sfu
+0: : ERROR: 
+CONFIG ERROR: Empty cli-password, and so telnet cli interface is disabled! Please set a non empty cli-password!
+0: : WARNING: cannot find certificate file: turn_server_cert.pem (1)
+0: : WARNING: cannot start TLS and DTLS listeners because certificate file is not set properly
+0: : WARNING: cannot find private key file: turn_server_pkey.pem (1)
+0: : WARNING: cannot start TLS and DTLS listeners because private key file is not set properly
+0: : Relay address to use: 0.0.0.0
+0: : pid file created: /var/run/turnserver.pid
+0: : IO method (main listener thread): epoll (with changelist)
+0: : WARNING: I cannot support STUN CHANGE_REQUEST functionality because only one IP address is provided
+0: : Wait for relay ports initialization...
+0: :   relay 0.0.0.0 initialization...
+0: :   relay 0.0.0.0 initialization done
+0: : Relay ports initialization done
+0: : IO method (general relay thread): epoll (with changelist)
+0: : IO method (general relay thread): epoll (with changelist)
+0: : turn server id=1 created
+0: : turn server id=0 created
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : IPv4. UDP listener opened on: 0.0.0.0:3478
+0: : Total General servers: 2
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : IO method (auth thread): epoll (with changelist)
+0: : IO method (auth thread): epoll (with changelist)
+0: : IO method (admin thread): epoll (with changelist)
+0: : SQLite DB connection success: /var/lib/turn/turndb
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.bind: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listenebind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+r socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+Cannot bind local socket to addr: Address already in use
+errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying tobind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+ bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket tCannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+Cannot bind local socket to addr: Address already in use
+bind: Address already in use
+o addr 0.0.0.0:3478, again...
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : Trying to bind TLS/TCP listener socket to addr 0.0.0.0:3478, again...
+0: : Trying to bind fd 16 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : ERROR: Fatal final failure: cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+Cannot bind local socket to addr: Address already in use
+0: : Trying to bind fd 17 to <0.0.0.0:3478>: errno=98
+0: : Cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478
+0: : ERROR: Fatal final failure: cannot bind TLS/TCP listener socket to addr 0.0.0.0:3478

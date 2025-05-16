@@ -13,7 +13,7 @@ import webrtcvad
 
 load_dotenv()
 
-SPRING_URL = "http://host.docker.internal:8081/stt/log"
+SPRING_URL = "http://host.docker.internal:8080/stt/log"
 AZURE_TRANSLATOR_KEY = os.getenv("AZURE_TRANSLATOR_KEY")
 AZURE_TRANSLATOR_REGION = os.getenv("AZURE_TRANSLATOR_REGION")
 AZURE_TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
