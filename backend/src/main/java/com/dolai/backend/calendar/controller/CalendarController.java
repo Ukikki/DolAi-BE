@@ -1,20 +1,20 @@
 package com.dolai.backend.calendar.controller;
 
+import com.dolai.backend.calendar.model.CalendarCreateRequestDto;
 import com.dolai.backend.calendar.model.CalendarDto;
 import com.dolai.backend.calendar.model.MonthlyCalendarDto;
 import com.dolai.backend.calendar.service.CalendarService;
 import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.common.success.SuccessDataResponse;
+import com.dolai.backend.meeting.model.MeetingResponseDto;
 import com.dolai.backend.user.model.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -57,4 +57,12 @@ public class CalendarController {
         return ResponseEntity.ok(new SuccessDataResponse<>(dto));
     }
 
+    @PostMapping("/reserve")
+    public ResponseEntity<?> reserveMeetingFromCalendar(
+            @RequestBody @Valid CalendarCreateRequestDto request,
+            @AuthenticationPrincipal User user
+    ) {
+        MeetingResponseDto response = calendarService.reserveMeetingWithParticipants(request, user);
+        return ResponseEntity.ok(new SuccessDataResponse<>(response));
+    }
 }

@@ -74,7 +74,14 @@ async def websocket_endpoint(websocket: WebSocket):
                     continue
                 last_text = text
                 print("🗣️ 자막:", text)
+                # ✅ 1. 특정 키워드 감지 (간단한 예시)
+                if any(kw in text for kw in ["해주세요", "해야 해", "좀 해줘", "처리해"]):
+                    print("📌 투두 감지됨! 백엔드 호출")
 
+                    # Spring Boot의 todo 생성 트리거 호출
+                    requests.post(
+                        f"http://host.docker.internal:8081/llm/todo/extract/{meeting_id}"
+                    )
                 utterance_id = uuid.uuid4().hex
                 segment_start = chunk_start_time + segment.start
                 timestamp = datetime.fromtimestamp(segment_start).isoformat()

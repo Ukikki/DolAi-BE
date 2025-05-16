@@ -1,10 +1,16 @@
 package com.dolai.backend.calendar.model;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class CalendarCreateRequestDto {
-    private String title;          // 새로운 일정 제목
-    private String startTime;       // "14:44" 이런 포맷 (프론트가 24시간 변환해서 줌)
-    private List<String> participants;  // 초대할 사람 이메일 리스트
+    private String title;
+    private String startDateTime; // "2025-05-15T14:44" → LocalDateTime.parse() 가능
+    private List<String> participants;
 }

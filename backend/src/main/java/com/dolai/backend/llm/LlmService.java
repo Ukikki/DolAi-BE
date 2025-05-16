@@ -99,5 +99,10 @@ public class LlmService {
                 .filter(s -> !s.isEmpty())
                 .toList();
     }
+
+    public String cleanJsonResponse(String response) {
+        if (response == null) return null;
+        return response.replaceAll("(?i)```json|```", "").trim();
+    }
 }
 

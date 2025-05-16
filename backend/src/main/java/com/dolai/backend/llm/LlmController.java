@@ -5,15 +5,13 @@ package com.dolai.backend.llm;
  */
 
 import com.dolai.backend.common.success.SuccessDataResponse;
+import com.dolai.backend.common.success.SuccessMessageResponse;
 import com.dolai.backend.graph.service.GraphService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -25,6 +23,8 @@ public class LlmController {
     private final LlmDocumentService llmDocumentService;
     private final LlmService llmService;
     private final GraphService graphService;
+    private final LlmTodoService llmTodoService;
+
 
     // 미팅 발화 context를 가져와서 LLM에 질문을 던짐
     @PostMapping("/ask")
@@ -50,6 +50,7 @@ public class LlmController {
         private String text;
     }
 
+    // 테스트용, 실제로 쓰이지 않음
     @PostMapping("/summarize")
     public ResponseEntity<?> summarize(@RequestBody Map<String, String> body) {
             String meetingId = body.get("meetingId");
@@ -57,5 +58,11 @@ public class LlmController {
             String resultPath = llmDocumentService.summarizeAndGenerateDoc(meetingId);
 
             return ResponseEntity.ok(new SuccessDataResponse<>(resultPath));
+    }
+
+    @PostMapping("/todo/extract/{meetingId}")
+    public ResponseEntity<?> extractTodos(@PathVariable String meetingId) {
+        llmTodoService.extractAndSaveTodos(meetingId);
+        return ResponseEntity.ok(new SuccessMessageResponse("할 일 추출 시도 완료"));
     }
 }

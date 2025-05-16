@@ -13,32 +13,24 @@ import java.util.UUID;
 public interface MeetingRepository extends JpaRepository<Meeting, String> {
     Optional<Meeting> findByInviteUrl(String inviteUrl);
 
-    @Query("""
-            SELECT m FROM Meeting m
-            WHERE DATE(m.startTime) = :date
-            AND m.hostUserId = :userId
-            """)
-    List<Meeting> findHostMeetingsByDate(@Param("date") LocalDate date, @Param("userId") String userId);
 
     @Query("""
-            SELECT m FROM Meeting m
-            JOIN Participant p ON p.meeting.id = m.id
-            WHERE DATE(m.startTime) = :date
-            AND p.user.id = :userId
-            """)
-    List<Meeting> findParticipantMeetingsByDate(@Param("date") LocalDate date, @Param("userId") String userId);
+    SELECT m FROM Meeting m
+    JOIN m.participants p
+    WHERE p.user.id = :userId AND DATE(m.startTime) = :date
+""")
+    List<Meeting> findMeetingsByParticipant(@Param("date") LocalDate date, @Param("userId") String userId);
 
     @Query("""
-            SELECT DAY(m.startTime) AS day, COUNT(m.id) AS count
-            FROM Meeting m
-            LEFT JOIN m.participants p
-            WHERE YEAR(m.startTime) = :year
-              AND MONTH(m.startTime) = :month
-              AND (m.hostUserId = :userId OR p.user.id = :userId)
-            GROUP BY DAY(m.startTime)
-            """)
-    List<Object[]> countMeetingsByDay(@Param("year") int year,
-                                      @Param("month") int month,
-                                      @Param("userId") String userId);
+SELECT DAY(m.startTime), COUNT(m)
+FROM Meeting m
+JOIN m.participants p
+WHERE p.user.id = :userId
+  AND YEAR(m.startTime) = :year
+  AND MONTH(m.startTime) = :month
+GROUP BY DAY(m.startTime)
+""")
+    List<Object[]> countMeetingsByDay(@Param("year") int year, @Param("month") int month, @Param("userId") String userId);
+
 
 }
