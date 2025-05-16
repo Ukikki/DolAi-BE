@@ -26,6 +26,7 @@ app.use('/api', restRoutes)
 // roomManager.js 등록
 import { createWorker, rooms } from './roomManager.js'
 import FfmpegStream from './server/whisper/ffmpegStream.js';
+import portManager from './server/whisper/PortManager.js'
 
 app.get('*', (req, res, next) => {
   const path = '/sfu/'
@@ -48,7 +49,12 @@ httpsServer.listen(3000, () => {
   console.log('listening on port: ' + 3000)
 })
 
-const io = new Server(httpsServer)
+const io = new Server(httpsServer, {
+  cors: { origin: '*' },
+  transports: ['websocket'],
+  pingInterval: 10000,
+  pingTimeout: 30000,
+})
 
 // socket.io namespace (could represent a room?)
 const connections = io.of('/mediasoup')
@@ -68,23 +74,6 @@ let transports = []     // [ { socketId1, roomName1, transport, consumer }, ... 
 let producers = []      // [ { socketId1, roomName1, producer, }, ... ]
 let consumers = []      // [ { socketId1, roomName1, consumer, }, ... ]
 
-/*const createWorker = async () => {
-  worker = await mediasoup.createWorker({
-    rtcMinPort: 10000, // 넓은 범위로 설정
-    rtcMaxPort: 20000,
-  })
-  console.log(`worker pid ${worker.pid}`)
-
-  worker.on('died', error => {
-    // This implies something serious happened, so kill the application
-    console.error('mediasoup worker has died')
-    setTimeout(() => process.exit(1), 2000) // exit in 2 seconds
-  })
-
-  return worker
-}*/
-
-// We create a Worker as soon as our application starts
 worker = await createWorker()
 
 // This is an Array of RtpCapabilities
@@ -109,11 +98,54 @@ const mediaCodecs = [
   },
 ]
 
+// ffmpeg 포트 매니저
+const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingId, userName }) => {
+  const instanceId = `ffmpeg-${socketId}`;
+
+  // 포트 할당
+  const rtpPort = await portManager.getRtpPortPair(instanceId);
+  console.log(`📡 [${instanceId}] 할당된 RTP 포트: ${rtpPort}/${rtpPort + 1}`);
+
+  // plainTransport 생성 및 연결
+  const plainTransport = await router.createPlainTransport({
+    listenIp: { ip: '0.0.0.0', announcedIp: PUBLIC_IP },
+    rtcpMux: false,
+    comedia: true,
+  });
+  await plainTransport.connect({
+    ip: '127.0.0.1',
+    port: rtpPort,
+    rtcpPort: rtpPort + 1,
+  });
+  console.log(`🔗 [${instanceId}] plainTransport 연결 완료`);
+
+  // consumer 생성
+  const consumer = await plainTransport.consume({
+    producerId,
+    rtpCapabilities: router.rtpCapabilities,
+    paused: false,
+  });
+  await consumer.resume();
+  console.log(`🎧 [${instanceId}] consumer 연결됨: ${consumer.id}`);
+
+  // FFmpegStream 인스턴스 생성 및 시작
+  const ffmpegStream = new FfmpegStream({
+    ip: '127.0.0.1',
+    port: rtpPort,
+    codec: {
+      name: codec.name,
+      clockRate: codec.clockRate,
+      payloadType: codec.payloadType,
+    },
+  }, meetingId, userName);
+
+  console.log(`📼 [${instanceId}] FFmpegStream 준비 완료`);
+
+  return { ffmpegStream, plainTransport };
+};
+
 connections.on('connection', async socket => {
-  console.log(socket.id)
-  socket.emit('connection-success', {
-    socketId: socket.id,
-  })
+  console.log('클라이언트 연결됨:', socket.id);
 
   const removeItems = (items, socketId, type) => {
     items.forEach(item => {
@@ -126,16 +158,24 @@ connections.on('connection', async socket => {
     return items
   }
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     // do some cleanup
-    console.log('peer disconnected')
-    consumers = removeItems(consumers, socket.id, 'consumer')
-    producers = removeItems(producers, socket.id, 'producer')
-    transports = removeItems(transports, socket.id, 'transport')
+    console.log('peer disconnected');
+    console.log('서버와 연결 끊김 사유:', reason);
 
-    if (!peers[socket.id]) { // 존재하는지 확인
+    consumers = removeItems(consumers, socket.id, 'consumer');
+    producers = removeItems(producers, socket.id, 'producer');
+    transports = removeItems(transports, socket.id, 'transport');
+
+    if (!peers[socket.id]) {
       console.warn('Peer info not found on disconnect');
       return;
+    }
+    if (peers[socket.id]) {
+      const oldSocket = peers[socket.id].socket;
+      if (oldSocket.id !== socket.id) {
+        oldSocket.disconnect(true); // 기존 소켓 강제 종료
+      }
     }
 
     const { roomName } = peers[socket.id]
@@ -148,31 +188,68 @@ connections.on('connection', async socket => {
     }
   })
 
-  socket.on('joinRoom', async ({ roomName, meetingId, userName }, callback) => {
-    // create Router if it does not exist
-    // const router1 = rooms[roomName] && rooms[roomName].get('data').router || await createRoom(roomName, socket.id)
-    const router1 = await createRoom(roomName, socket.id)
-    console.log("📩 joinRoom 받음:", roomName, meetingId, userName);
+  socket.on('joinRoom',
+      async ({ roomName, meetingId, userName, userId, rtpCapabilities }, callback) => {
 
-    peers[socket.id] = {
-      socket,
-      roomName,           // Name for the Router this Peer joined
-      meetingId,
-      transports: [],
-      producers: [],
-      consumers: [],
-      peerDetails: {
-        name: userName,
-        isAdmin: false,   // Is this Peer the Admin?
+        // ——— 동일 userId로 들어온 기존 세션 정리 ———
+        for (const [oldSocketId, oldPeer] of Object.entries(peers)) {
+          if (oldPeer.peerDetails.userId === userId) {
+            console.log(`🔄 기존 세션 정리: userId=${userId} socketId=${oldSocketId}`);
+
+            // producer 닫기
+            oldPeer.producers?.forEach(producerId => {
+              const found = producers.find(p => p.producer.id === producerId);
+              found?.producer?.close();
+            });
+
+            // consumer 닫기
+            oldPeer.consumers?.forEach(consumerId => {
+              const found = consumers.find(c => c.consumer.id === consumerId);
+              found?.consumer?.close();
+            });
+
+            // transport 닫기
+            oldPeer.transports?.forEach(transportId => {
+              const found = transports.find(t => t.transport.id === transportId);
+              found?.transport?.close();
+            });
+
+            // 소켓 강제 종료
+            oldPeer.socket.disconnect(true);
+
+            // peers, producers, consumers, transports 배열 정리
+            delete peers[oldSocketId];
+            producers  = producers.filter(p => p.socketId !== oldSocketId);
+            consumers  = consumers.filter(c => c.socketId !== oldSocketId);
+            transports = transports.filter(t => t.socketId !== oldSocketId);
+          }
+        }
+
+        // ——— 새 Peer 등록 ———
+        const router1 = await createRoom(roomName, socket.id);
+        peers[socket.id] = {
+          socket,
+          socketId: socket.id,
+          roomName,
+          meetingId,
+          transports: [],
+          producers: [],
+          consumers: [],
+          rtpCapabilities,
+          peerDetails: {
+            name: userName,
+            userId,
+            isAdmin: false,
+          }
+        };
+
+        // **룸에 조인** 반드시 호출
+        socket.join(roomName);
+
+        console.log("📩 joinRoom 완료:", roomName, userName, userId);
+        callback();
       }
-    }
-
-    // get Router RTP Capabilities
-    const rtpCapabilities = router1.rtpCapabilities
-
-    // call callback from the client and send back the rtpCapabilities
-    callback({ rtpCapabilities })
-  })
+  );
 
   const createRoom = async (roomName, socketId) => {
     // worker.createRouter(options)
@@ -188,7 +265,7 @@ connections.on('connection', async socket => {
     } else {
       router1 = await worker.createRouter({ mediaCodecs, })
     }
-    
+
     console.log(`Router ID: ${router1.id}`, peers.length)
 
     rooms[roomName] = {
@@ -199,29 +276,19 @@ connections.on('connection', async socket => {
     return router1
   }
 
-  // socket.on('createRoom', async (callback) => {
-  //   if (router === undefined) {
-  //     // worker.createRouter(options)
-  //     // options = { mediaCodecs, appData }
-  //     // mediaCodecs -> defined above
-  //     // appData -> custom application data - we are not supplying any
-  //     // none of the two are required
-  //     router = await worker.createRouter({ mediaCodecs, })
-  //     console.log(`Router ID: ${router.id}`)
-  //   }
+  // 비디오 rtp
+  socket.on('getRouterRtpCapabilities', ({ roomName }, callback) => {
+    const room = rooms[roomName];
+    if (!room) return callback({ error: 'Room not found' }); // ← 여기 걸림
+    const router = room.router;
+    callback({ routerRtpCapabilities: router.rtpCapabilities });
+  });
 
-  //   getRtpCapabilities(callback)
-  // })
-
-  // const getRtpCapabilities = (callback) => {
-  //   const rtpCapabilities = router.rtpCapabilities
-
-  //   callback({ rtpCapabilities })
-  // }
-
-  // Client emits a request to create server side Transport
-  // We need to differentiate between the producer and consumer transports
   socket.on('createWebRtcTransport', async ({ consumer }, callback) => {
+    if (!peers[socket.id]) {
+      console.warn(`⚠️ createWebRtcTransport: Peer not found for ${socket.id}`);
+      return callback({ error: 'joinRoom을 먼저 호출해주세요.' });
+    }
     // get Room Name from Peer's properties
     const roomName = peers[socket.id].roomName
 
@@ -230,30 +297,42 @@ connections.on('connection', async socket => {
 
 
     createWebRtcTransport(router).then(
-      transport => {
-        callback({
-          params: {
-            id: transport.id,
-            iceParameters: transport.iceParameters,
-            iceCandidates: transport.iceCandidates,
-            dtlsParameters: transport.dtlsParameters,
-          }
-        })
+        transport => {
+          callback({
+            params: {
+              id: transport.id,
+              iceParameters: transport.iceParameters,
+              iceCandidates: transport.iceCandidates,
+              dtlsParameters: transport.dtlsParameters,
+            }
+          })
 
-        // add transport to Peer's properties
-        addTransport(transport, roomName, consumer)
-      },
-      error => {
-        console.log(error)
-      })
+          // add transport to Peer's properties
+          addTransport(transport, roomName, consumer)
+        },
+        error => {
+          console.log(error)
+        })
   })
 
+  // rtp 업데이터
+  socket.on("updateRtpCapabilities", ({ roomName, rtpCapabilities }) => {
+    if (peers[socket.id]) {
+      peers[socket.id].rtpCapabilities = rtpCapabilities;
+      console.log(`✅ RTP Capabilities 업데이트됨 for ${socket.id}`);
+    }
+  });
+
   const addTransport = (transport, roomName, consumer) => {
+    if (!peers[socket.id]) {
+      console.warn('addTransport 호출 시점에 peers에 없음:', socket.id);
+      return;
+    }
 
     transports = [
       ...transports,
       { socketId: socket.id, transport, roomName, consumer, }
-    ]
+    ];
 
     peers[socket.id] = {
       ...peers[socket.id],
@@ -261,8 +340,8 @@ connections.on('connection', async socket => {
         ...peers[socket.id].transports,
         transport.id,
       ]
-    }
-  }
+    };
+  };
 
   const addProducer = (producer, roomName) => {
     producers = [
@@ -297,32 +376,67 @@ connections.on('connection', async socket => {
   }
 
   socket.on('getProducers', callback => {
-    //return all producer transports
-    const { roomName } = peers[socket.id]
+    if (!peers[socket.id]) {
+      console.warn(`⚠️ getProducers: Peer not found for ${socket.id}`);
+      return callback([]);
+    }
 
-    let producerList = []
+    const { roomName, peerDetails: { userId: myUserId } } = peers[socket.id];
+
+    // video 프로듀서만, 같은 userId는 제외
+    const producerList = producers
+        // ① video 인 것만, ② 같은 userId(=내 것)는 빼고, ③ 같은 room
+        .filter(p =>
+            p.producer.kind === 'video' &&
+            peers[p.socketId]?.peerDetails.userId !== myUserId &&
+            p.roomName === roomName
+        )
+        .map(p => {
+          const peer = peers[p.socketId];
+          return {
+            producerId: p.producer.id,
+            peerId:     peer.peerDetails.userId,
+            name:       peer.peerDetails.name || "익명"
+          };
+        });
+
+    callback(producerList);
+  });
+
+
+  // 전역 캐시로 선언 (파일 상단 or connections.on 바깥)
+  const informedCache = new Set(); // key: `${fromSocketId}_${toSocketId}_${producerId}`
+
+  const informConsumers = (roomName, socketId, id, userId, kind) => {
+    if (kind !== 'video') return;
+
+    console.log(`🟡 informConsumers: new producer ${id} from ${socketId}`);
+
     producers.forEach(producerData => {
-      if (producerData.socketId !== socket.id && producerData.roomName === roomName) {
-        producerList = [...producerList, producerData.producer.id]
-      }
-    })
+      const toSocketId = producerData.socketId;
+      const isSameRoom = producerData.roomName === roomName;
+      const isVideo = producerData.producer.kind === 'video';
+      const isNotSelf = toSocketId !== socketId;
 
-    // return the producer list back to the client
-    callback(producerList)
-  })
+      const cacheKey = `${socketId}_${toSocketId}_${id}`;
 
-  const informConsumers = (roomName, socketId, id) => {
-    console.log(`just joined, id ${id} ${roomName}, ${socketId}`)
-    // A new producer just joined
-    // let all consumers to consume this producer
-    producers.forEach(producerData => {
-      if (producerData.socketId !== socketId && producerData.roomName === roomName) {
-        const producerSocket = peers[producerData.socketId].socket
-        // use socket to send producer id to producer
-        producerSocket.emit('new-producer', { producerId: id })
+      if (isSameRoom && isVideo && isNotSelf && !informedCache.has(cacheKey)) {
+        informedCache.add(cacheKey);
+
+        const producerSocket = peers[toSocketId].socket;
+        const { peerDetails: { name } } = peers[socketId];
+
+        producerSocket.emit('new-producer', {
+          producerId: id,
+          peerId:     userId,
+          name:       name || "익명"
+        });
+
+        console.log(`✅ emit 'new-producer' → to ${toSocketId}`);
       }
-    })
-  }
+    });
+  };
+
 
   const getTransport = (socketId) => {
     const [producerTransport] = transports.filter(transport => transport.socketId === socketId && !transport.consumer)
@@ -330,97 +444,173 @@ connections.on('connection', async socket => {
   }
 
   // see client's socket.emit('transport-connect', ...)
-  socket.on('transport-connect', ({ dtlsParameters }) => {
-    console.log('DTLS PARAMS... ', { dtlsParameters })
-    
-    getTransport(socket.id).connect({ dtlsParameters })
-  })
+  socket.on("transport-connect", ({ dtlsParameters, transportId }) => {
+    console.log("🔗 transport-connect 수신됨", transportId);
 
-  // see client's socket.emit('transport-produce', ...)
+    const transportObj = transports.find(t => t.transport.id === transportId);
+    if (transportObj) {
+      transportObj.transport.connect({ dtlsParameters });
+    } else {
+      console.warn("존재하지 않는 transportId:", transportId);
+    }
+  });
+
   socket.on('transport-produce', async ({ kind, rtpParameters, appData }, callback) => {
-    // call produce based on the prameters from the client
-    const producer = await getTransport(socket.id).produce({
-      kind,
-      rtpParameters,
-    })
+    if (!peers[socket.id]) {
+      console.warn(`⚠️ transport-produce: Peer not found for ${socket.id}`);
+      return callback({ error: 'joinRoom을 먼저 호출해주세요.' });
+    }
 
-    // add producer to the producers array
-    const { roomName } = peers[socket.id]
+    if (rtpParameters.mid !== undefined) delete rtpParameters.mid;
+
+    const { roomName } = peers[socket.id];
     const router = rooms[roomName].router;
+    const peer = peers[socket.id];
 
-    if (kind === 'audio') {
-      const codec = producer.rtpParameters.codecs[0];
-      console.log("🎧 Producer Codec Info:", codec); // << 여기!
-      // RTP 스트림을 Whisper로 보내기 위한 FFmpeg 실행
-      const plainTransport = await rooms[roomName].router.createPlainTransport({
-        listenIp: { ip: '0.0.0.0', announcedIp: PUBLIC_IP },
-        rtcpMux: false,  // Changed to false
-        comedia: false   // Changed to false
+    try {
+      // 🎥 기존 videoProducer/screenProducer 정리 (mediaTag로 구분)
+      if (kind === 'video') {
+        const tag = appData?.mediaTag || 'video';
+        if (tag === 'screen' && peer.screenProducer) {
+          peer.screenProducer.close();
+          delete peer.screenProducer;
+        } else if (tag === 'camera' && peer.videoProducer) {
+          peer.videoProducer.close();
+          delete peer.videoProducer;
+        }
+      }
+
+      const producer = await getTransport(socket.id).produce({
+        kind,
+        rtpParameters,
+        appData,
+        trace: true, // ✅ 필수
       });
 
-      // ✅ RTP 패킷 들어오는지 확인 로그
-      plainTransport.on('rtp', packet => {
-        console.log('📡 RTP packet received:', packet.length);
+      // 📡 trace 로그 찍기
+      producer.on('trace', trace => {
+        if (trace.type === 'rtp') {
+          console.log(`📡 [Producer Trace] RTP: kind=${kind}, producerId=${producer.id}`);
+        } else {
+          console.log(`📡 [Producer Trace] 기타 이벤트:`, trace);
+        }
       });
 
-      try {
-        await plainTransport.connect({
-          ip: '127.0.0.1',
-          port: 5004,
-          rtcpPort: 5005  // Explicitly set RTCP port
+      // ✅ 등록
+      addProducer(producer, roomName);
+
+      if (kind === 'video') {
+        const tag = appData?.mediaTag || 'camera';
+        if (tag === 'screen') {
+          peer.screenProducer = producer;
+        } else {
+          peer.videoProducer = producer;
+        }
+
+        producer.on('transportclose', () => {
+          console.log(`🚪 video producer(${tag}) transport closed`);
+          if (tag === 'screen') delete peer.screenProducer;
+          else delete peer.videoProducer;
         });
 
-        const consumer = await plainTransport.consume({
-          producerId: producer.id,
-          rtpCapabilities: router.rtpCapabilities,
-          paused: false,
+        producer.on('trackended', () => {
+          console.log(`📵 video track ended (${tag})`);
+          producer.close();
+          if (tag === 'screen') delete peer.screenProducer;
+          else delete peer.videoProducer;
         });
-        await consumer.resume();
-        console.log("✅ Consumer created on plainTransport for FFmpeg");
+      }
 
-        const { meetingId, peerDetails: { name: userName } } = peers[socket.id];
+      if (kind === 'audio') {
+        const codec = rtpParameters.codecs[0];
+        const { meetingId, peerDetails: { name: userName } } = peer;
 
-        const ffmpegStream = new FfmpegStream({
-          ip: '127.0.0.1',
-          port: 5004,
+        const { ffmpegStream, plainTransport } = await buildFfmpegStream({
+          router,
           codec: {
             name: codec.mimeType.split('/')[1],
             clockRate: codec.clockRate,
             payloadType: codec.payloadType,
-          }
-        }, meetingId, userName);
+          },
+          socketId: socket.id,
+          producerId: producer.id,
+          meetingId,
+          userName,
+        });
 
-        peers[socket.id].ffmpeg = ffmpegStream;
+        peer.audioProducer = producer;
+        peer.ffmpeg = ffmpegStream;
 
-      } catch (err) {
-        console.error("❌ Whisper 관련 설정 실패:", err);
+        producer.on('transportclose', () => {
+          console.log('🚪 audio producer transport closed');
+          ffmpegStream.stop?.();
+          delete peer.ffmpeg;
+        });
       }
 
+      const { userId } = peer.peerDetails;
+      informConsumers(roomName, socket.id, producer.id, userId, kind);
+      console.log('✅ Producer ID:', producer.id, kind);
+
+      callback({ id: producer.id, producersExist: producers.length > 1 });
+
+    } catch (err) {
+      console.error('❌ transport-produce error:', err);
+      callback({ error: err.message });
     }
+  });
 
-    addProducer(producer, roomName)
+  // 마이크 상태 변경
+  socket.on('audio-toggle', async ({ enabled }) => {
+    const peer = peers[socket.id];
+    const producer = peer?.audioProducer;
+    const { roomName } = peer || {};
 
-    informConsumers(roomName, socket.id, producer.id)
+    if (!producer) return;
 
-    console.log('Producer ID: ', producer.id, producer.kind)
+    if (enabled) {
+      await producer.resume();
+      console.log("🔊 마이크 재개됨");
 
-    producer.on('transportclose', () => {
-      console.log('transport for this producer closed ')
-      producer.close()
-    })
+      await new Promise(r => setTimeout(r, 300)); // 🔥 패킷 나오기까지 기다려줘야 함
 
-    // Send back to the client the Producer's id
-    callback({
-      id: producer.id,
-      producersExist: producers.length>1 ? true : false
-    })
-  })
+      if (peer.ffmpeg) peer.ffmpeg.stop?.();
+      const codec = producer.rtpParameters.codecs[0];
+      const router = rooms[roomName].router;
+
+      const { ffmpegStream } = await buildFfmpegStream({
+        router,
+        codec: {
+          name: codec.mimeType.split('/')[1],
+          clockRate: codec.clockRate,
+          payloadType: codec.payloadType,
+        },
+        socketId: socket.id,
+        producerId: producer.id,
+        meetingId: peer.meetingId,
+        userName: peer.peerDetails.name,
+      });
+
+      peer.ffmpeg = ffmpegStream;
+
+      producer.on('transportclose', () => {
+        ffmpegStream.stop?.();
+        delete peer.ffmpeg;
+      });
+
+    } else {
+      await producer.pause();
+      peer.ffmpeg?.stop?.();
+      delete peer.ffmpeg;
+      console.log("🔕 마이크 OFF → ffmpeg 종료");
+    }
+  });
 
   // see client's socket.emit('transport-recv-connect', ...)
   socket.on('transport-recv-connect', async ({ dtlsParameters, serverConsumerTransportId }) => {
     console.log(`DTLS PARAMS: ${dtlsParameters}`)
     const consumerTransport = transports.find(transportData => (
-      transportData.consumer && transportData.transport.id == serverConsumerTransportId
+        transportData.consumer && transportData.transport.id == serverConsumerTransportId
     )).transport
     await consumerTransport.connect({ dtlsParameters })
   })
@@ -431,7 +621,7 @@ connections.on('connection', async socket => {
       const { roomName } = peers[socket.id]
       const router = rooms[roomName].router
       let consumerTransport = transports.find(transportData => (
-        transportData.consumer && transportData.transport.id == serverConsumerTransportId
+          transportData.consumer && transportData.transport.id == serverConsumerTransportId
       )).transport
 
       // check if the router can consume the specified producer
@@ -534,7 +724,7 @@ app.get('/sfu/:room', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf-8');
 
-  const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
+  const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
 
   // IP 삽입 스크립트 추가
   html = html.replace(

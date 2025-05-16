@@ -31,19 +31,19 @@ class FfmpegStream extends EventEmitter {
     this.speaker = speaker;
     this.ws = null;
     this._connectWebSocket();
-    this._start();
   }
 
   // WebSocket 연결
   _connectWebSocket() {
     // 브라우저에서 WebSocket 연결
-    this.ws = new WebSocket('ws://localhost:5001/ws/whisper'); // 배포 시 localhost -> public IP 주소로 변경
+    this.ws = new WebSocket('ws://localhost:5001/ws/whisper');
     this.ws.onopen = () => console.log('🔌 WebSocket 연결됨');
     this.ws.onerror = (err) => console.error('WebSocket 오류:', err);
     this.ws.onclose = () => {
       console.log('🔌 WebSocket 연결 종료됨, 1초 후 재시도...');
       setTimeout(() => this._connectWebSocket(), 1000);
     };
+    this._start();
   }
 
   _start() {
