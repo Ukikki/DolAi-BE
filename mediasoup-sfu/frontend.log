@@ -1,0 +1,7 @@
+nohup: ignoring input
+
+> mediasoup-sfu@1.0.0 start
+> node app.js
+
+listening on port: 3000
+worker pid 3079
