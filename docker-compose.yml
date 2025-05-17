@@ -82,7 +82,9 @@ services:
       - backend_network
 
   mediasoup-app:
-    image: node:18
+    build:
+      context: .
+      dockerfile: Dockerfile.mediasoup
     container_name: mediasoup-app
     working_dir: /app
     volumes:

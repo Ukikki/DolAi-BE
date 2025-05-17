@@ -86,9 +86,21 @@ public class LlmService {
      * context와 질문을 하나의 프롬프트로 결합
      */
     private String buildPrompt(List<String> contextList, String question) {
-        String context = String.join("\n", contextList);
-        return "Context:\n" + context + "\n\nQuestion:\n" + question;
+    	String context = String.join("\n", contextList);
+    	return """
+            당신은 화상 회의 어시스턴트입니다.
+            반드시 한국어로만 대답하세요.
+            아래 정보는 MySQL로부터 가공된 ArangoDB 기반 회의 데이터입니다. 이 정보만 바탕으로 대답하세요.
+            정보에 없는 내용을 말하지 마세요. 허구로 지어내지 마세요.
+            답변은 최대 세 문장으로 간결하게 작성하세요.
+
+            [회의 정보]
+            """ + context + """
+
+            [질문]
+            """ + question;
     }
+
 
     /**
      * "토픽1, 토픽2, ..." → List<String> 변환

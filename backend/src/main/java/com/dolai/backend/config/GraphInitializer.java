@@ -52,7 +52,12 @@ public class GraphInitializer {
     public void init() {
 
         // 0. 기존 dolai DB 제거
-        dropGraphAndCollections(); // TODO: 주의! 실제 운영 DB에서 사용 시 주의
+        //dropGraphAndCollections(); // TODO: 주의! 실제 운영 DB에서 사용 시 주의
+
+	// 0. DB 존재 여부 확인 → 없으면 생성
+	if (!arangoDB.getDatabases().contains(DB_NAME)) {
+            arangoDB.createDatabase(DB_NAME); 
+    	}
 
         ArangoDatabase db = arangoDB.db(arangoConfig.getDatabase());
 
