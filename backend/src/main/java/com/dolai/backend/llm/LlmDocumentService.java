@@ -4,6 +4,8 @@ import com.dolai.backend.document.service.MeetingDocGenerator;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.repository.MeetingRepository;
 import com.dolai.backend.stt_log.service.STTLogService;
+import com.dolai.backend.todo.model.Todo;
+import com.dolai.backend.todo.repository.TodoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ public class LlmDocumentService {
     private final MeetingRepository meetingRepository;
     private final ObjectMapper objectMapper;
     private final AzureTranslationService azureTranslationService;
+    private final TodoRepository todoRepository;
 
     @Value("${doc.template-dir}")
     private String templateDir;
@@ -44,7 +47,7 @@ public class LlmDocumentService {
                 
                 - 각 항목은 주제(title)와 본문(body)으로 구성됩니다.
                 - body는 **한두 문장씩 간결하게 핵심만 정리한 bullet 형식**으로 작성해주세요.
-                - 줄바꿈은 \\n 으로 표현합니다.
+                - 줄바꿈은 <w:br/> 으로 표현합니다.
                 - 결정사항(result)은 핵심만 간결하게 bullet 형식으로 나열해주세요.
                 
                 정확한 JSON 예시 형식:
@@ -115,11 +118,42 @@ public class LlmDocumentService {
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new IllegalArgumentException("회의를 찾을 수 없습니다: " + meetingId));
 
+        //참석자 이름 리스트
         String attendees = meeting.getParticipants().stream()
                 .map(p -> p.getUser().getName())
                 .collect(Collectors.joining(", "));
-        String date = meeting.getStartTime().format(DateTimeFormatter.ofPattern("yyyy년 M월 d일"));
-        String time = meeting.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        String date = meeting.getStartTime().format(DateTimeFormatter.ofPattern("yyyy.M.d"));
+
+        String time = meeting.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")) + " ~ " +
+                meeting.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        List<Todo> todoList = todoRepository.findByMeetingId(meetingId);
+
+        String todoListString = todoList.stream()
+                .map(todo -> "• " + todo.getUser().getName() + ": " + todo.getTitle() + " - " +
+                        todo.getDueDate().format(DateTimeFormatter.ofPattern("MM.dd HH:mm")))
+                .collect(Collectors.joining("<w:br/>"));
+
+        //System.out.println("Todo List String: " + todoListString);
+
+        // 영어 투두
+        String todoListStringEn = todoList.stream()
+                .map(todo -> {
+                    String translatedTitle = azureTranslationService.translate(todo.getTitle(), "en");
+                    return "• " + todo.getUser().getName() + ": " + translatedTitle + " - " +
+                            todo.getDueDate().format(DateTimeFormatter.ofPattern("MM.dd HH:mm"));
+                })
+                .collect(Collectors.joining("<w:br/>"));
+
+        // 중국어 투두
+        String todoListStringZh = todoList.stream()
+                .map(todo -> {
+                    String translatedTitle = azureTranslationService.translate(todo.getTitle(), "zh-Hans");
+                    return "• " + todo.getUser().getName() + ": " + translatedTitle + " - " +
+                            todo.getDueDate().format(DateTimeFormatter.ofPattern("MM.dd HH:mm"));
+                })
+                .collect(Collectors.joining("<w:br/>"));
 
         // 4. 문서에 쓸 값 구성
         String contentText = summary.getOrDefault("content", "(요약 없음)").replace("\n", "<w:br/>");
@@ -131,21 +165,29 @@ public class LlmDocumentService {
                 "title", meeting.getTitle(),
                 "attendees", attendees,
                 "content", contentText,
-                "result", resultText
+                "result", resultText,
+                "todolist", todoListString
         );
 
         // 5. 문서 생성
         File template = new File(templateDir, "meetingDoc.docx");
         String safeTitle = meeting.getTitle().replaceAll("[\\\\/:*?\"<>|\\s]", "_");
-        String dateStr = meeting.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String fileName = safeTitle + "_" + dateStr + ".docx";
+        String fileName = safeTitle + "_" + ".docx";
         File output = new File(outputDir, fileName);
         output.getParentFile().mkdirs();
+
+        System.out.println("Values: " + values);  // values 확인
 
         meetingDocGenerator.generateDocx(values, template, output);
 
         // 6. 번역된 문서 생성
         try {
+            String titleEn = azureTranslationService.translate(meeting.getTitle(), "en");  // 영어로 번역
+            String titleZh = azureTranslationService.translate(meeting.getTitle(), "zh-Hans");  // 중국어로 번역
+
+            String safeTitleEn = titleEn.replaceAll("[\\\\/:*?\"<>|\\s]", "_");
+            String safeTitleZh = titleZh.replaceAll("[\\\\/:*?\"<>|\\s]", "_");
+
             String contentEn = azureTranslationService.translate(contentText, "en");
             String resultEn = azureTranslationService.translate(resultText, "en");
 
@@ -155,29 +197,27 @@ public class LlmDocumentService {
             Map<String, String> valuesEn = Map.of(
                     "date", date,
                     "time", time,
-                    "title", meeting.getTitle(),
+                    "title", titleEn,
                     "attendees", attendees,
                     "content", contentEn,
-                    "result", resultEn
+                    "result", resultEn,
+                    "todolist", todoListStringEn
             );
 
             Map<String, String> valuesZh = Map.of(
                     "date", date,
                     "time", time,
-                    "title", meeting.getTitle(),
+                    "title", titleZh,
                     "attendees", attendees,
                     "content", contentZh,
-                    "result", resultZh
+                    "result", resultZh,
+                    "todolist", todoListStringZh
             );
-
-            generateDocx(valuesEn, safeTitle + "_" + dateStr + ".en.docx", "meetingDoc_en.docx");
-            generateDocx(valuesZh, safeTitle + "_" + dateStr + ".zh.docx", "meetingDoc_zh.docx");
-
+            generateDocx(valuesEn, safeTitleEn + ".docx", "meetingDoc_en.docx");
+            generateDocx(valuesZh, safeTitleZh + ".docx", "meetingDoc_zh.docx");
         } catch (Exception e) {
             log.error("❌ 다국어 번역 또는 문서 생성 실패", e);
         }
-
-
         return output.getAbsolutePath();
     }
 
@@ -187,5 +227,4 @@ public class LlmDocumentService {
         output.getParentFile().mkdirs();
         meetingDocGenerator.generateDocx(values, template, output);
     }
-
 }
