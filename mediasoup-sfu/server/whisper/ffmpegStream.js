@@ -1,7 +1,11 @@
 //ffmpegStream.js
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import { EventEmitter } from 'events';
 import WebSocket from 'ws';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import dgram from 'dgram';
 
 function isSilence(buffer) {
   const threshold = 0.01;
@@ -11,7 +15,6 @@ function isSilence(buffer) {
     sum += val * val;
   }
   const rms = Math.sqrt(sum / (buffer.length / 2));
-  //console.log("🎚️ RMS:", rms);  // 디버깅용
   return rms < threshold;
 }
 
@@ -30,59 +33,211 @@ class FfmpegStream extends EventEmitter {
     this.meetingId = meetingId;
     this.speaker = speaker;
     this.ws = null;
+    this.sdpFilePath = null;
+
+    console.log(`🎙️ FfmpegStream 생성됨:`, {
+      meetingId,
+      speaker,
+      port: rtpParameters.port,
+      codec: rtpParameters.codec.name
+    });
+
+    // 포트 충돌 문제 해결을 위해 포트 정리 먼저 수행
+    this._cleanupPort(rtpParameters.port);
+
+    // 웹소켓 연결 및 FFmpeg 시작
     this._connectWebSocket();
   }
 
-  // WebSocket 연결
-  _connectWebSocket() {
-    // 브라우저에서 WebSocket 연결
-    this.ws = new WebSocket('ws://localhost:5001/ws/whisper');
-    this.ws.onopen = () => console.log('🔌 WebSocket 연결됨');
-    this.ws.onerror = (err) => console.error('WebSocket 오류:', err);
-    this.ws.onclose = () => {
-      console.log('🔌 WebSocket 연결 종료됨, 1초 후 재시도...');
-      setTimeout(() => this._connectWebSocket(), 1000);
-    };
-    this._start();
+  // 포트 정리 메서드
+  _cleanupPort(port) {
+    try {
+      console.log(`🧹 포트 ${port} 정리 시도 중...`);
+
+      if (process.platform === 'win32') {
+        // Windows
+        try {
+          execSync(`for /f "tokens=5" %a in ('netstat -aon ^| findstr :${port}') do taskkill /F /PID %a`, { stdio: 'ignore' });
+        } catch (e) {
+          // 무시 - 프로세스가 없을 수 있음
+        }
+      } else {
+        // macOS/Linux
+        try {
+          // UDP 포트 사용 프로세스 확인 및 종료
+          execSync(`lsof -i udp:${port} | grep -v PID | awk '{print $2}' | xargs -r kill -9 || true`, { stdio: 'ignore' });
+        } catch (e) {
+          // 무시 - 프로세스가 없을 수 있음
+        }
+      }
+
+      // 포트 해제될 시간 확보
+      console.log(`⏱️ 포트 ${port} 해제 대기 중... (500ms)`);
+      const waitUntil = Date.now() + 500;
+      while (Date.now() < waitUntil) {
+        // 짧은 대기
+      }
+
+    } catch (error) {
+      console.error(`⚠️ 포트 정리 오류:`, error);
+    }
   }
 
-  _start() {
-    const sdp = this._createSdp(this.rtpParameters);
-    console.log("📄 [SDP 생성됨]\n" + sdp);
+  // RTP 연결 테스트
+  async _testRtpConnection(port) {
+    return new Promise((resolve, reject) => {
+      try {
+        const server = dgram.createSocket('udp4');
 
-    this.ffmpegProcess = spawn('ffmpeg', [
-      '-protocol_whitelist', 'file,pipe,udp,rtp',
-      '-fflags', '+genpts',
-      '-f', 'sdp',
-      '-i', 'pipe:0',
-      '-map', '0:a:0',
-      '-acodec', 'pcm_s16le',
-      '-ac', '1', // mono
-      '-ar', '16000',
-      '-af', 'aresample=async=1000',
-      '-f', 's16le',
-      'pipe:1'
-    ]);
+        console.log(`🔍 RTP 테스트: 포트 ${port}에서 패킷 리스닝 시작...`);
 
-    this.ffmpegProcess.stdin.write(sdp);
-    this.ffmpegProcess.stdin.end();
+        // 3초 타임아웃
+        const timeout = setTimeout(() => {
+          server.close();
+          console.warn(`⚠️ RTP 테스트: 3초 동안 패킷 없음, 포트 ${port}`);
+          resolve(false);
+        }, 3000);
 
-    this.ffmpegProcess.stdout.on('data', (chunk) => {
-      this._enqueueAudio(chunk);
+        server.on('error', (err) => {
+          clearTimeout(timeout);
+          console.error(`❌ RTP 테스트 오류: ${err.message}`);
+          server.close();
+          resolve(false);
+        });
+
+        server.on('message', (msg, rinfo) => {
+          clearTimeout(timeout);
+          console.log(`✅ RTP 패킷 수신: ${msg.length} bytes, 출처=${rinfo.address}:${rinfo.port}`);
+          server.close();
+          resolve(true);
+        });
+
+        server.bind(port);
+
+      } catch (err) {
+        console.error(`❌ RTP 테스트 실패: ${err.message}`);
+        resolve(false);
+      }
     });
+  }
 
-    this.ffmpegProcess.stderr.on('data', (data) => {
-      console.log('[FFmpeg stderr]', data.toString());
-    });
+  _connectWebSocket() {
+    try {
+      this.ws = new WebSocket('ws://localhost:5001/ws/whisper');
 
-    this.ffmpegProcess.on('close', (code) => {
-      console.log(`FFmpeg 종료됨: 코드 ${code}`);
-      clearInterval(this.processingInterval);
-      this.emit('close');
-    });
+      this.ws.onopen = () => {
+        console.log('🔌 WebSocket 연결됨');
+        // WebSocket 연결 후 FFmpeg 시작
+        this._start();
+      };
 
-    // 주기적으로 큐 상태 확인 및 처리
-    this.processingInterval = setInterval(() => this._checkQueue(), 500);
+      this.ws.onerror = (err) => {
+        console.error('WebSocket 오류:', err);
+      };
+
+      this.ws.onclose = () => {
+        console.log('🔌 WebSocket 연결 종료됨, 1초 후 재시도...');
+        setTimeout(() => this._connectWebSocket(), 1000);
+      };
+    } catch (error) {
+      console.error('WebSocket 연결 오류:', error);
+      setTimeout(() => this._connectWebSocket(), 1000);
+    }
+  }
+
+  // FFmpeg 시작 메서드 수정
+  async _start() {
+    try {
+      // RTP 연결 테스트
+      console.log(`🧪 RTP 연결 테스트 시작...`);
+      const rtpAvailable = await this._testRtpConnection(this.rtpParameters.port);
+
+      // 임시 디렉토리 준비
+      const tempDir = path.join(os.tmpdir(), 'ffmpeg-whisper');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      // 고유한 SDP 파일 생성 (숫자 정확히 처리)
+      const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      this.sdpFilePath = path.join(tempDir, `whisper_${uniqueId}.sdp`);
+
+      // SDP 내용 생성 및 파일로 저장
+      const sdp = this._createSdp(this.rtpParameters);
+      fs.writeFileSync(this.sdpFilePath, sdp);
+      console.log(`📄 SDP 파일 생성됨: ${this.sdpFilePath}`);
+
+      // FFmpeg 명령어 개선 - 옵션들 분리
+      const ffmpegArgs = [
+        '-loglevel', 'debug',
+        '-protocol_whitelist', 'file,pipe,udp,rtp',
+        '-rw_timeout', '30000000',
+        '-analyzeduration', '10000000',
+        '-probesize', '5000000',
+        '-fflags', '+genpts+discardcorrupt+nobuffer',
+        '-f', 'sdp',
+        '-i', this.sdpFilePath,
+        '-map', '0:a:0',
+        '-acodec', 'pcm_s16le',
+        '-ac', '1',
+        '-ar', '16000',
+        '-af', 'aresample=async=1000',
+        '-f', 's16le',
+        'pipe:1'
+      ];
+
+      console.log(`🚀 FFmpeg 명령어: ffmpeg ${ffmpegArgs.join(' ')}`);
+
+      // 별도의 환경 변수 설정
+      const env = { ...process.env, FFREPORT: 'file=/tmp/ffmpeg-report.log:level=32' };
+
+      // FFmpeg 프로세스 시작
+      this.ffmpegProcess = spawn('ffmpeg', ffmpegArgs, { env });
+
+      // 출력 처리
+      this.ffmpegProcess.stdout.on('data', (chunk) => {
+        console.log(`📤 FFmpeg 오디오 데이터 수신: ${chunk.length} bytes`);
+        this._enqueueAudio(chunk);
+      });
+
+      // 오류 스트림 처리
+      let errorLog = '';
+      this.ffmpegProcess.stderr.on('data', (data) => {
+        const text = data.toString();
+        errorLog += text;
+
+        // 중요 로그만 출력하여 로그 과부하 방지
+        if (text.includes('Error') || text.includes('error') ||
+            text.includes('Input #0') || text.includes('Output #0') ||
+            text.includes('demuxing')) {
+          console.log('[FFmpeg stderr]', text.trim());
+        }
+      });
+
+      // 종료 처리
+      this.ffmpegProcess.on('close', (code) => {
+        console.log(`FFmpeg 종료됨: 코드 ${code}`);
+
+        // 오류 검사
+        if (code !== 0) {
+          console.error(`⚠️ FFmpeg이 비정상적으로 종료됨. 코드: ${code}`);
+          if (errorLog.includes('Address already in use')) {
+            console.error('🚨 포트 충돌 감지됨!');
+          }
+        }
+
+        clearInterval(this.processingInterval);
+        this._cleanupFiles();
+        this.emit('close');
+      });
+
+      // 주기적으로 큐 상태 확인 및 처리
+      this.processingInterval = setInterval(() => this._checkQueue(), 500);
+
+    } catch (error) {
+      console.error('FFmpeg 시작 오류:', error);
+      this._cleanupFiles();
+    }
   }
 
   _enqueueAudio(chunk) {
@@ -140,19 +295,23 @@ class FfmpegStream extends EventEmitter {
         return;
       }
 
-      console.log('🚀 Whisper로 전송 시작!');
-      const chunkStartTime = Date.now() / 1000; // 초 단위 (epoch)
+      console.log("📤 Whisper 전송 직전 확인:", {
+        meetingId: this.meetingId,
+        speaker: this.speaker,
+      });
 
       // WebSocket으로 전송
-      if (this.ws.readyState === WebSocket.OPEN) {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({
           meetingId: this.meetingId,
           speaker: this.speaker,
-          chunkStartTime: chunkStartTime,
+          chunkStartTime: Date.now() / 1000,
           audioData: combinedBuffer.toString('base64')
         }));
       } else {
         console.error('❌ WebSocket이 열려 있지 않음!');
+        // WebSocket 재연결 시도
+        this._connectWebSocket();
       }
 
       this.lastProcessTime = Date.now();
@@ -164,28 +323,72 @@ class FfmpegStream extends EventEmitter {
   }
 
   _createSdp({ ip, port, codec }) {
-    return `v=0
-o=- 0 0 IN IP4 ${ip}
+    // 127.0.0.1 대신 실제 PUBLIC_IP 사용
+    const localIp = ip || '127.0.0.1';
+
+    const sdp = `v=0
+o=- ${Date.now()} 1 IN IP4 ${localIp}
 s=WhisperAudio
-c=IN IP4 ${ip}
+c=IN IP4 ${localIp}
 t=0 0
 m=audio ${port} RTP/AVP ${codec.payloadType}
-a=rtcp:${port+1}
 a=rtpmap:${codec.payloadType} ${codec.name}/${codec.clockRate}/${codec.channels || 2}
-a=fmtp:${codec.payloadType} minptime=10;useinbandfec=1
+a=recvonly
+a=rtcp-mux
 `.replace(/\n/g, '\r\n');
+
+    console.log(`📄 [SDP 생성됨]:\n${sdp}`);
+    return sdp;
   }
 
+
+  // 임시 파일 정리
+  _cleanupFiles() {
+    if (this.sdpFilePath && fs.existsSync(this.sdpFilePath)) {
+      try {
+        fs.unlinkSync(this.sdpFilePath);
+        console.log(`🧹 SDP 파일 삭제됨: ${this.sdpFilePath}`);
+      } catch (e) {
+        console.error('SDP 파일 삭제 오류:', e);
+      }
+      this.sdpFilePath = null;
+    }
+  }
+
+  // 리소스 정리
   stop() {
-    if (this.ffmpegProcess) {
+    console.log('🛑 FfmpegStream 정리 중...');
+
+    // 인터벌 정리
+    if (this.processingInterval) {
       clearInterval(this.processingInterval);
-      this.ffmpegProcess.kill('SIGINT');
+      this.processingInterval = null;
+    }
+
+    // FFmpeg 프로세스 정리
+    if (this.ffmpegProcess) {
+      try {
+        this.ffmpegProcess.kill('SIGINT');
+      } catch (e) {
+        console.error('FFmpeg 프로세스 종료 오류:', e);
+      }
       this.ffmpegProcess = null;
     }
+
+    // WebSocket 정리
     if (this.ws) {
-      this.ws.close();
+      try {
+        this.ws.close();
+      } catch (e) {
+        console.error('WebSocket 종료 오류:', e);
+      }
       this.ws = null;
     }
+
+    // 파일 정리
+    this._cleanupFiles();
+
+    console.log('🛑 FfmpegStream 정리 완료');
   }
 }
 
