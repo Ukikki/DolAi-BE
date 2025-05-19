@@ -7,7 +7,7 @@ const app = express()
 import https from 'httpolyglot'
 import fs from 'fs'
 import path from 'path'
-import portManager from './server/whisper/portManager.js';
+import portManager from './server/whisper/PortManager.js';
 const __dirname = path.resolve()
 
 import { Server } from 'socket.io'
