@@ -55,7 +55,11 @@ public enum ErrorCode {
 
     // Metadata
     METADATA_NOT_FOUND(HttpStatus.NOT_FOUND, "디렉터리 메타데이터를 찾을 수 없습니다."),
-    METADATA_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 메타데이터에 접근할 권한이 없습니다.");
+    METADATA_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 메타데이터에 접근할 권한이 없습니다."),
+
+    // Admin
+    INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다.");
+
 
     private final HttpStatus status;
     private final String message;
