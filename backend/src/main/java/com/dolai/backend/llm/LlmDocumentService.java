@@ -3,6 +3,7 @@ package com.dolai.backend.llm;
 import com.dolai.backend.document.service.MeetingDocGenerator;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.repository.MeetingRepository;
+import com.dolai.backend.s3.S3UploadService;
 import com.dolai.backend.stt_log.service.STTLogService;
 import com.dolai.backend.todo.model.Todo;
 import com.dolai.backend.todo.repository.TodoRepository;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.io.File;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,6 +31,7 @@ public class LlmDocumentService {
     private final ObjectMapper objectMapper;
     private final AzureTranslationService azureTranslationService;
     private final TodoRepository todoRepository;
+    private final S3UploadService s3UploadService;
 
     @Value("${doc.template-dir}")
     private String templateDir;
@@ -36,7 +39,7 @@ public class LlmDocumentService {
     @Value("${doc.output-dir}")
     private String outputDir;
 
-    public String summarizeAndGenerateDoc(String meetingId) {
+    public Map<String, Map<String, String>> summarizeAndGenerateDoc(String meetingId) {
         // 1. 회의 로그 가져오기
         String context = sttLogService.getFullTranscriptForLLM(meetingId);
 
@@ -172,21 +175,33 @@ public class LlmDocumentService {
         // 5. 문서 생성
         File template = new File(templateDir, "meetingDoc.docx");
         String safeTitle = meeting.getTitle().replaceAll("[\\\\/:*?\"<>|\\s]", "_");
-        String fileName = safeTitle + "_" + ".docx";
+        String fileName = safeTitle + ".docx";
+
+        Map<String, Map<String, String>> docInfo = new HashMap<>();  // 변경: 중첩 Map 사용
+
         File output = new File(outputDir, fileName);
         output.getParentFile().mkdirs();
 
-        System.out.println("Values: " + values);  // values 확인
-
         meetingDocGenerator.generateDocx(values, template, output);
+        String s3Url = s3UploadService.uploadMeetingDocument(output, meetingId, fileName);
+        Map<String, String> koInfo = new HashMap<>();
+        koInfo.put("url", s3Url);
+        koInfo.put("title", meeting.getTitle());
+        docInfo.put("ko", koInfo);
 
         // 6. 번역된 문서 생성
+        String s3UrlEn = null;
+        String s3UrlZh = null;
+
         try {
             String titleEn = azureTranslationService.translate(meeting.getTitle(), "en");  // 영어로 번역
             String titleZh = azureTranslationService.translate(meeting.getTitle(), "zh-Hans");  // 중국어로 번역
 
             String safeTitleEn = titleEn.replaceAll("[\\\\/:*?\"<>|\\s]", "_");
             String safeTitleZh = titleZh.replaceAll("[\\\\/:*?\"<>|\\s]", "_");
+
+            String fileNameEn = safeTitleEn + ".docx";
+            String fileNameZh = safeTitleZh + ".docx";
 
             String contentEn = azureTranslationService.translate(contentText, "en");
             String resultEn = azureTranslationService.translate(resultText, "en");
@@ -213,18 +228,33 @@ public class LlmDocumentService {
                     "result", resultZh,
                     "todolist", todoListStringZh
             );
-            generateDocx(valuesEn, safeTitleEn + ".docx", "meetingDoc_en.docx");
-            generateDocx(valuesZh, safeTitleZh + ".docx", "meetingDoc_zh.docx");
+
+            // 영어 문서 생성 및 S3 업로드
+            File outputEn = generateDocx(valuesEn, fileNameEn, "meetingDoc_en.docx");
+            s3UrlEn = s3UploadService.uploadMeetingDocument(outputEn, meetingId, fileNameEn);
+            Map<String, String> enInfo = new HashMap<>();
+            enInfo.put("url", s3UrlEn);
+            enInfo.put("title", titleEn);
+            docInfo.put("en", enInfo);
+
+            // 중국어 문서 생성 및 S3 업로드
+            File outputZh = generateDocx(valuesZh, fileNameZh, "meetingDoc_zh.docx");
+            s3UrlZh = s3UploadService.uploadMeetingDocument(outputZh, meetingId, fileNameZh);
+            Map<String, String> zhInfo = new HashMap<>();
+            zhInfo.put("url", s3UrlZh);
+            zhInfo.put("title", titleZh);
+            docInfo.put("zh", zhInfo);
         } catch (Exception e) {
             log.error("❌ 다국어 번역 또는 문서 생성 실패", e);
         }
-        return output.getAbsolutePath();
+        return docInfo;
     }
 
-    private void generateDocx(Map<String, String> values, String filename, String templateFilename) {
+    private File generateDocx(Map<String, String> values, String filename, String templateFilename) {
         File template = new File(templateDir, templateFilename);
         File output = new File(outputDir, filename);
         output.getParentFile().mkdirs();
         meetingDocGenerator.generateDocx(values, template, output);
+        return output;  // 생성된 파일 객체 반환
     }
 }

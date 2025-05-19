@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -43,13 +44,13 @@ public class MeetingController {
     }
 
     // 3. 화상회의 초대
-    @PostMapping("/meetings/{meetingId}/invite")
+    @PostMapping("/meetings/{id}/invite")
     public ResponseEntity<?> inviteUserToMeeting(
-            @PathVariable("meetingId") String meetingId,
+            @PathVariable("id") String id,
             @RequestBody @Valid MeetingInviteRequestDto request,
             @AuthenticationPrincipal User hostUser
     ) {
-        meetingService.inviteUserToMeeting(meetingId, request.getTargetUserId(), hostUser);
+        meetingService.inviteUserToMeeting(id, request.getTargetUserId(), hostUser);
         return ResponseEntity.ok(new SuccessMessageResponse("초대 전송 완료"));
     }
 
@@ -64,9 +65,23 @@ public class MeetingController {
     }
 
     // 5. 화상회의 종료
-    @PatchMapping("/{meetingId}/end")
-    public ResponseEntity<?> endMeeting(@PathVariable("meetingId") String meetingId, @AuthenticationPrincipal User user) {
-        meetingService.endMeeting(meetingId, user);
+    @PatchMapping("/{id}/end")
+    public ResponseEntity<?> endMeeting(@PathVariable("id") String id, @AuthenticationPrincipal User user) {
+        meetingService.endMeeting(id, user);
         return ResponseEntity.ok(Map.of("status", "success"));
+    }
+
+    //최근 사용자가 참여한 회의 3개 조회
+    @GetMapping("/meetings/history-recent")
+    public ResponseEntity<?> getRecentEndedMeetings(@AuthenticationPrincipal User user) {
+        List<MeetingResponseDto> response = meetingService.getRecentEndedMeetings(user);
+        return ResponseEntity.ok(new SuccessDataResponse<>(response));
+    }
+
+    //최근 사용자가 참여한 회의 전체 조회
+    @GetMapping("/meetings/history")
+    public ResponseEntity<?> getAllEndedMeetings(@AuthenticationPrincipal User user) {
+        List<MeetingResponseDto> response = meetingService.getAllEndedMeetings(user);
+        return ResponseEntity.ok(new SuccessDataResponse<>(response));
     }
 }

@@ -17,10 +17,10 @@ import com.dolai.backend.document.service.DocumentService;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.ast.Not;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +28,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.dolai.backend.meeting.model.Participant.Role.PARTICIPANT;
@@ -64,7 +65,10 @@ public class MeetingService {
         String roomId = System.currentTimeMillis() + "_" + userId;
 
         // 초대 링크 생성
-        String publicIp = "13.209.37.189";
+        //String publicIp = "13.209.37.189";
+
+        String publicIp = "223.194.152.240";
+
         String inviteUrl = "https://" + publicIp + ":3000/sfu/" + roomId;
 
         log.info("초대 링크 생성 완료: {}", inviteUrl);
@@ -207,14 +211,55 @@ public class MeetingService {
 
     @Transactional
     public void createMeetingAssets(Meeting meeting, User user) {
-        String docPath = llmDocumentService.summarizeAndGenerateDoc(meeting.getId());
+        Map<String, Map<String, String>> docInfo = llmDocumentService.summarizeAndGenerateDoc(meeting.getId());
         Directory sharedDirectory = directoryService.createSharedDirectory(meeting, user);
-        Document document = documentService.createDocument(meeting, docPath);
-        documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, user);
+        // 각 언어별 문서 생성 및 디렉토리에 연결
+        for (Map.Entry<String, Map<String, String>> entry : docInfo.entrySet()) {
+            Map<String, String> info = entry.getValue();
+            String docUrl = info.get("url");    // S3 URL
+            String title = info.get("title");   // 해당 언어로 번역된 제목
+
+            // 각 언어별 문서 생성
+            Document document = documentService.createDocument(meeting, docUrl, title);
+
+            // 문서를 디렉토리에 연결
+            documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, user);
+        }
     }
 
     // inviteUrl에서 roomId 추출
     private String extractRoomIdFromUrl(String inviteUrl) {
         return inviteUrl.substring(inviteUrl.lastIndexOf("/") + 1);
     }
+
+    //최근 3개의 미팅 내역 조회
+    // 최근 3개의 미팅 내역 조회
+    public List<MeetingResponseDto> getRecentEndedMeetings(User user) {
+        List<Meeting> meetings = meetingRepository.findTop3EndedMeetingsByUserId(user.getId());
+
+        return meetings.stream()
+                .map(m -> new MeetingResponseDto(
+                        m.getId(),
+                        m.getTitle(),
+                        m.getStartTime(),
+                        m.getInviteUrl()
+                ))
+                .toList();
+    }
+
+
+    // 종료된 전체 미팅 내역 조회
+    public List<MeetingResponseDto> getAllEndedMeetings(User user) {
+        List<Meeting> meetings = meetingRepository.findAllEndedMeetingsByUserId(user.getId());
+        return meetings.stream()
+                .map(m -> new MeetingResponseDto(
+                        m.getId(),
+                        m.getTitle(),
+                        m.getStartTime(),
+                        m.getInviteUrl()
+                ))
+                .toList();
+    }
+
+
 }

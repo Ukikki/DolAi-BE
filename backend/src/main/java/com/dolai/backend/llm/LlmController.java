@@ -50,16 +50,6 @@ public class LlmController {
         private String text;
     }
 
-    // 테스트용, 실제로 쓰이지 않음
-    @PostMapping("/summarize")
-    public ResponseEntity<?> summarize(@RequestBody Map<String, String> body) {
-            String meetingId = body.get("meetingId");
-
-            String resultPath = llmDocumentService.summarizeAndGenerateDoc(meetingId);
-
-            return ResponseEntity.ok(new SuccessDataResponse<>(resultPath));
-    }
-
     @PostMapping("/todo/extract/{meetingId}")
     public ResponseEntity<?> extractTodos(@PathVariable String meetingId) {
         llmTodoService.extractAndSaveTodos(meetingId);
