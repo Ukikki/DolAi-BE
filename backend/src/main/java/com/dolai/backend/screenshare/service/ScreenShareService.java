@@ -25,11 +25,13 @@ public class ScreenShareService {
     }
 
     // 화면 공유 종료: 세션 종료
-    public ScreenShare stop(String meetingId) {
+    public ScreenShare stop(String meetingId, String userId, String text, String timestamp) {
         return repository.findById(meetingId)
                 .map(session -> {
                     session.setEndTime(LocalDateTime.now());
                     session.setActive(false);
+                    session.setOcrText(text);
+                    session.setOcrTimestamp(timestamp);
                     return repository.save(session);
                 })
                 .orElseThrow(() -> new IllegalArgumentException("화면 공유 세션을 찾을 수 없습니다: " + meetingId));

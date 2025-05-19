@@ -21,4 +21,8 @@ public class ScreenShare {
     private LocalDateTime endTime;
 
     private boolean active;
+
+    // OCR 결과 저장 필드
+    private String ocrText;
+    private String ocrTimestamp;
 }

@@ -1,9 +1,10 @@
 package com.dolai.backend.screenshare.controller;
 
+import com.dolai.backend.screenshare.model.ScreenShare;
 import com.dolai.backend.screenshare.model.ScreenShareRequestDto;
 import com.dolai.backend.screenshare.model.ScreenShareSocketEvent;
+import com.dolai.backend.screenshare.model.ScreenShareStopRequest;
 import com.dolai.backend.screenshare.model.enums.EventType;
-import com.dolai.backend.screenshare.model.ScreenShare;
 import com.dolai.backend.screenshare.service.ScreenShareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -37,10 +38,20 @@ public class ScreenShareController {
     }
 
     @PostMapping("/{meetingId}/screen-share/stop")
-    public ResponseEntity<?> stopScreenShare(@PathVariable String meetingId, @RequestBody ScreenShareRequestDto request) {
-        ScreenShare session = screenShareService.stop(meetingId);
-        messagingTemplate.convertAndSend("/topic/meeting/" + meetingId + "/screen-share",
-                new ScreenShareSocketEvent(EventType.STOP, request.getUserId()));
+    public ResponseEntity<?> stopScreenShare(@PathVariable String meetingId, @RequestBody ScreenShareStopRequest request) {
+        // OCR 텍스트와 타임스탬프까지 저장
+        ScreenShare session = screenShareService.stop(
+                meetingId,
+                request.getUserId(),
+                request.getText(),
+                request.getTimestamp()
+        );
+
+        // STOP 이벤트 송신
+        messagingTemplate.convertAndSend(
+                "/topic/meeting/" + meetingId + "/screen-share",
+                new ScreenShareSocketEvent(EventType.STOP, request.getUserId())
+        );
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
