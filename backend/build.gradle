@@ -103,6 +103,7 @@ dependencies {
 
 	// docx4j
 	implementation 'org.docx4j:docx4j-JAXB-ReferenceImpl:11.4.10'
+	implementation 'org.docx4j:docx4j-export-fo:11.4.10'
 
 	// JAXB 관련 필수 구성 (Java 11 이상에서 꼭 필요)
 	implementation 'com.sun.xml.bind:jaxb-core:2.3.0.1'

@@ -3,6 +3,7 @@ package com.dolai.backend.meeting.service;
 import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.directory.model.Directory;
+import com.dolai.backend.directory.repository.DirectoryRepository;
 import com.dolai.backend.directory.service.DirectoryService;
 import com.dolai.backend.document.model.Document;
 import com.dolai.backend.document.service.DocumentPlacementService;
@@ -48,6 +49,7 @@ public class MeetingService {
     private final LlmDocumentService llmDocumentService;
     private final DirectoryService directoryService;
     private final WebClient mediasoupWebClient;
+    private final DirectoryRepository directoryRepository;
     private final Dotenv dotenv;
 
     //    @PostConstruct
@@ -218,7 +220,7 @@ public class MeetingService {
             String title = info.get("title");   // 해당 언어로 번역된 제목
 
             // 각 언어별 문서 생성
-            Document document = documentService.createDocument(meeting, docUrl, title);
+            Document document = documentService.createDocument(meeting, docUrl, title, user);
 
             // 문서를 디렉토리에 연결
             documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, user);
@@ -230,34 +232,41 @@ public class MeetingService {
         return inviteUrl.substring(inviteUrl.lastIndexOf("/") + 1);
     }
 
-    //최근 3개의 미팅 내역 조회
-    // 최근 3개의 미팅 내역 조회
-    public List<MeetingResponseDto> getRecentEndedMeetings(User user) {
+    public List<MeetingListResponseDto> getRecentEndedMeetings(User user) {
         List<Meeting> meetings = meetingRepository.findTop3EndedMeetingsByUserId(user.getId());
 
         return meetings.stream()
-                .map(m -> new MeetingResponseDto(
-                        m.getId(),
-                        m.getTitle(),
-                        m.getStartTime(),
-                        m.getInviteUrl()
-                ))
+                .map(meeting -> {
+                    Directory directory = directoryRepository.findByMeetingId(meeting.getId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
+                    return new MeetingListResponseDto(
+                            meeting.getId(),
+                            meeting.getTitle(),
+                            meeting.getStartTime(),
+                            meeting.getInviteUrl(),
+                            directory.getId()
+                    );
+                })
                 .toList();
     }
-
 
     // 종료된 전체 미팅 내역 조회
-    public List<MeetingResponseDto> getAllEndedMeetings(User user) {
+    public List<MeetingListResponseDto> getAllEndedMeetings(User user) {
         List<Meeting> meetings = meetingRepository.findAllEndedMeetingsByUserId(user.getId());
         return meetings.stream()
-                .map(m -> new MeetingResponseDto(
-                        m.getId(),
-                        m.getTitle(),
-                        m.getStartTime(),
-                        m.getInviteUrl()
-                ))
+                .map(meeting -> {
+                    Directory directory = directoryRepository.findByMeetingId(meeting.getId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
+
+                    return new MeetingListResponseDto(
+                            meeting.getId(),
+                            meeting.getTitle(),
+                            meeting.getStartTime(),
+                            meeting.getInviteUrl(),
+                            directory.getId()
+                    );
+                })
                 .toList();
     }
-
 
 }

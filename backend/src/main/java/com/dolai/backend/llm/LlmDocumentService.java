@@ -3,7 +3,7 @@ package com.dolai.backend.llm;
 import com.dolai.backend.document.service.MeetingDocGenerator;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.repository.MeetingRepository;
-import com.dolai.backend.s3.S3UploadService;
+import com.dolai.backend.s3.S3Service;
 import com.dolai.backend.stt_log.service.STTLogService;
 import com.dolai.backend.todo.model.Todo;
 import com.dolai.backend.todo.repository.TodoRepository;
@@ -31,7 +31,7 @@ public class LlmDocumentService {
     private final ObjectMapper objectMapper;
     private final AzureTranslationService azureTranslationService;
     private final TodoRepository todoRepository;
-    private final S3UploadService s3UploadService;
+    private final S3Service s3Service;
 
     @Value("${doc.template-dir}")
     private String templateDir;
@@ -183,7 +183,7 @@ public class LlmDocumentService {
         output.getParentFile().mkdirs();
 
         meetingDocGenerator.generateDocx(values, template, output);
-        String s3Url = s3UploadService.uploadMeetingDocument(output, meetingId, fileName);
+        String s3Url = s3Service.uploadMeetingDocument(output, meetingId, fileName);
         Map<String, String> koInfo = new HashMap<>();
         koInfo.put("url", s3Url);
         koInfo.put("title", meeting.getTitle());
@@ -231,7 +231,7 @@ public class LlmDocumentService {
 
             // 영어 문서 생성 및 S3 업로드
             File outputEn = generateDocx(valuesEn, fileNameEn, "meetingDoc_en.docx");
-            s3UrlEn = s3UploadService.uploadMeetingDocument(outputEn, meetingId, fileNameEn);
+            s3UrlEn = s3Service.uploadMeetingDocument(outputEn, meetingId, fileNameEn);
             Map<String, String> enInfo = new HashMap<>();
             enInfo.put("url", s3UrlEn);
             enInfo.put("title", titleEn);
@@ -239,7 +239,7 @@ public class LlmDocumentService {
 
             // 중국어 문서 생성 및 S3 업로드
             File outputZh = generateDocx(valuesZh, fileNameZh, "meetingDoc_zh.docx");
-            s3UrlZh = s3UploadService.uploadMeetingDocument(outputZh, meetingId, fileNameZh);
+            s3UrlZh = s3Service.uploadMeetingDocument(outputZh, meetingId, fileNameZh);
             Map<String, String> zhInfo = new HashMap<>();
             zhInfo.put("url", s3UrlZh);
             zhInfo.put("title", titleZh);
