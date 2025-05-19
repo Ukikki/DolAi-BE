@@ -1,10 +1,6 @@
 import net from 'net';
 import dgram from 'dgram';
 
-/**
- * 포트 관리를 위한 싱글톤 클래스
- * RTP/RTCP 포트 쌍을 효율적으로 관리합니다.
- */
 class PortManager {
     constructor() {
         // 현재 사용 중인 포트 추적
@@ -55,10 +51,6 @@ class PortManager {
         return true;
     }
 
-    /**
-     * 인스턴스가 사용 중인 포트 해제
-     * @param {string} instanceId - 인스턴스 식별자
-     */
     releaseInstancePorts(instanceId) {
         if (this.instancePorts.has(instanceId)) {
             const ports = this.instancePorts.get(instanceId);
