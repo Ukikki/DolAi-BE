@@ -80,7 +80,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     # Spring Boot의 todo 생성 트리거 호출
                     requests.post(
-                        f"http://host.docker.internal:8081/llm/todo/extract/{meeting_id}"
+                        f"http://host.docker.internal:8080/llm/todo/extract/{meeting_id}"
                     )
                 utterance_id = uuid.uuid4().hex
                 segment_start = chunk_start_time + segment.start

@@ -26,6 +26,7 @@ public class MeetingDocGenerator {
             // 줄바꿈 문단 직접 삽입할 키
             insertMultilineText(mainPart, "content", values.get("content"));
             insertMultilineText(mainPart, "result", values.get("result"));
+            insertMultilineText(mainPart, "todolist", values.get("todolist"));
 
             // 나머지는 기본 텍스트 치환
             manualReplace(mainPart, values);
@@ -101,7 +102,6 @@ public class MeetingDocGenerator {
 
             RPr rPr = new RPr();
 
-            // 👇 여기에서 제목 라인일 경우 스타일 다르게
             if (line.trim().startsWith("■ ")) {
                 HpsMeasure size = new HpsMeasure();
                 size.setVal(BigInteger.valueOf(24)); // 12pt

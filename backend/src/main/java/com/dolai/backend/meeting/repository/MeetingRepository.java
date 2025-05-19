@@ -4,15 +4,12 @@ import com.dolai.backend.meeting.model.Meeting;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface MeetingRepository extends JpaRepository<Meeting, String> {
     Optional<Meeting> findByInviteUrl(String inviteUrl);
-
 
     @Query("""
     SELECT m FROM Meeting m
@@ -32,5 +29,20 @@ GROUP BY DAY(m.startTime)
 """)
     List<Object[]> countMeetingsByDay(@Param("year") int year, @Param("month") int month, @Param("userId") String userId);
 
+    @Query("""
+    select p.meeting from Participant p
+    where p.user.id = :userId
+      and p.meeting.status = 'ENDED'
+    order by p.meeting.startTime desc
+    """)
+    List<Meeting> findTop3EndedMeetingsByUserId(@Param("userId") String userId);
+
+    @Query("""
+    select p.meeting from Participant p
+    where p.user.id = :userId
+      and p.meeting.status = 'ENDED'
+    order by p.meeting.startTime desc
+    """)
+    List<Meeting> findAllEndedMeetingsByUserId(@Param("userId") String userId);
 
 }

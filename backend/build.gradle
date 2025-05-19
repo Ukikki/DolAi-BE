@@ -102,14 +102,16 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.10.1'
 
 	// docx4j
-//	implementation 'org.docx4j:docx4j-JAXB-ReferenceImpl:11.4.10'
+	implementation 'org.docx4j:docx4j-JAXB-ReferenceImpl:11.4.10'
 
 	// JAXB 관련 필수 구성 (Java 11 이상에서 꼭 필요)
 	implementation 'com.sun.xml.bind:jaxb-core:2.3.0.1'
 	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'
 	implementation 'org.glassfish.jaxb:jaxb-runtime:3.0.1'
-	implementation 'org.docx4j:docx4j-JAXB-ReferenceImpl:11.4.10'
 
+	//S3
+	implementation 'software.amazon.awssdk:s3:2.25.3'
+	implementation 'software.amazon.awssdk:auth'
 }
 
 tasks.named('test') {

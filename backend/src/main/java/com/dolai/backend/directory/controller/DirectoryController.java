@@ -25,14 +25,14 @@ public class DirectoryController {
     private final DirectoryService directoryService;
     private final DirectoryUserService directoryUserService;
 
-    //디렉터리 생성
+    //디렉터리 생성(개인)
     @PostMapping
-    public ResponseEntity<DirectoryResponseDto> createDirectory(
+    public ResponseEntity<?> createDirectory(
             @RequestBody DirectoryRequestDto request,
             @AuthenticationPrincipal User user
     ) {
         DirectoryResponseDto response = directoryService.createDirectory(request, user);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new SuccessDataResponse<>(response));
     }
 
     //내 디렉터리 조회
@@ -89,6 +89,13 @@ public class DirectoryController {
     ) {
         String newName = request.get("name");
         directoryUserService.updateDirectoryName(directoryId, newName, user);
-        return ResponseEntity.ok().body(new SuccessMessageResponse("디렉터리 이름 변경 완료"));
+        return ResponseEntity.ok(new SuccessMessageResponse("디렉터리 이름 변경 완료"));
+    }
+
+    //회의와 연결된 디렉터리 경로 반환
+    @GetMapping("/{meetingId}")
+    public ResponseEntity<?> getDirectoryByMeetingId(@PathVariable String meetingId) {
+        DirectoryResponseDto directory = directoryService.getDirectoryByMeetingId(meetingId);
+        return ResponseEntity.ok(new SuccessDataResponse<>(directory));
     }
 }

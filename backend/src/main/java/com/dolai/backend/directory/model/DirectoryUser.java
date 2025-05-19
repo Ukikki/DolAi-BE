@@ -36,5 +36,4 @@ public class DirectoryUser extends BaseTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private DirectoryColor color = DirectoryColor.BLUE;
-
 }

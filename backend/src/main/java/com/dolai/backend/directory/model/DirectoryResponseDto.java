@@ -8,8 +8,6 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class DirectoryResponseDto {
-    private String status;
-    private String message;
     private Long directoryId;
     private String name;
 }
