@@ -233,7 +233,8 @@ public class MeetingService {
     }
 
     public List<MeetingListResponseDto> getRecentEndedMeetings(User user) {
-        List<Meeting> meetings = meetingRepository.findTop3EndedMeetingsByUserId(user.getId());
+        Pageable top4 = PageRequest.of(0, 4);  // ← 여기서 4개 제한
+        List<Meeting> meetings = meetingRepository.findTopEndedMeetingsByUserId(user.getId(), top4);
 
         return meetings.stream()
                 .map(meeting -> {
