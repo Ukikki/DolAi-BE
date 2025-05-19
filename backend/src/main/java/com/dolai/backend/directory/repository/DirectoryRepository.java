@@ -17,4 +17,5 @@ public interface DirectoryRepository extends JpaRepository<Directory, Long> {
     List<Directory> findByParent(Directory parent);
 
     Optional<Directory> findByMeeting(Meeting meeting);
+    Optional<Directory> findByMeetingId(String meetingId);
 }

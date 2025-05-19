@@ -74,14 +74,14 @@ public class MeetingController {
     //최근 사용자가 참여한 회의 3개 조회
     @GetMapping("/meetings/history-recent")
     public ResponseEntity<?> getRecentEndedMeetings(@AuthenticationPrincipal User user) {
-        List<MeetingResponseDto> response = meetingService.getRecentEndedMeetings(user);
+        List<MeetingListResponseDto> response = meetingService.getRecentEndedMeetings(user);
         return ResponseEntity.ok(new SuccessDataResponse<>(response));
     }
 
     //최근 사용자가 참여한 회의 전체 조회
     @GetMapping("/meetings/history")
     public ResponseEntity<?> getAllEndedMeetings(@AuthenticationPrincipal User user) {
-        List<MeetingResponseDto> response = meetingService.getAllEndedMeetings(user);
+        List<MeetingListResponseDto> response = meetingService.getAllEndedMeetings(user);
         return ResponseEntity.ok(new SuccessDataResponse<>(response));
     }
 }

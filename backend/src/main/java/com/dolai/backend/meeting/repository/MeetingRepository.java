@@ -1,6 +1,7 @@
 package com.dolai.backend.meeting.repository;
 
 import com.dolai.backend.meeting.model.Meeting;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,8 +35,8 @@ GROUP BY DAY(m.startTime)
     where p.user.id = :userId
       and p.meeting.status = 'ENDED'
     order by p.meeting.startTime desc
-    """)
-    List<Meeting> findTop3EndedMeetingsByUserId(@Param("userId") String userId);
+""")
+    List<Meeting> findTopEndedMeetingsByUserId(@Param("userId") String userId, Pageable pageable);
 
     @Query("""
     select p.meeting from Participant p

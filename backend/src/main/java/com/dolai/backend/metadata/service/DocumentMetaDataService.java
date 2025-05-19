@@ -4,8 +4,7 @@ import com.dolai.backend.document.model.Document;
 import com.dolai.backend.metadata.model.DocumentMetaData;
 import com.dolai.backend.metadata.model.DocumentMetaDataResponseDto;
 import com.dolai.backend.metadata.repository.DocumentMetaDataRepository;
-import com.dolai.backend.s3.S3UploadService;
-import com.dolai.backend.user.model.User;
+import com.dolai.backend.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DocumentMetaDataService {
 
     private final DocumentMetaDataRepository documentMetaDataRepository;
-    private final S3UploadService s3Service;  // S3 서비스 주입
+    private final S3Service s3Service;  // S3 서비스 주입
 
     @Transactional
     public DocumentMetaData createAndSaveMetaData(Document document) {

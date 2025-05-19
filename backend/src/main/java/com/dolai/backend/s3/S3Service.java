@@ -8,20 +8,20 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.*;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 @Slf4j
 @Service
-public class S3UploadService {
+public class S3Service {
 
     private final S3Client s3Client;
     private final String bucketName;
 
-    public S3UploadService(
+    public S3Service(
             @Value("${aws.accessKeyId}") String accessKeyId,
             @Value("${aws.secretKey}") String secretKey,
             @Value("${aws.s3.bucket}") String bucketName,
@@ -116,6 +116,40 @@ public class S3UploadService {
         } catch (Exception e) {
             log.error("❌ S3 URL에서 키 추출 실패: {}", fileUrl, e);
             throw new IllegalArgumentException("Invalid S3 URL: " + fileUrl);
+        }
+    }
+
+
+    public File downloadTempFile(String fileUrl) {
+        try {
+            // 1. 키 추출
+            String key = extractKeyFromUrl(fileUrl);
+
+            // 2. 임시 파일 생성
+            File tempFile = File.createTempFile("docx-", ".docx");
+
+            // 3. S3에서 파일 다운로드
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            try (InputStream inputStream = s3Client.getObject(getObjectRequest);
+                 FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+
+                log.info("✅ S3 파일 다운로드 완료: {}", tempFile.getAbsolutePath());
+                return tempFile;
+            }
+
+        } catch (Exception e) {
+            log.error("❌ S3 파일 다운로드 실패: {}", fileUrl, e);
+            throw new RuntimeException("S3 파일 다운로드 실패", e);
         }
     }
 }
