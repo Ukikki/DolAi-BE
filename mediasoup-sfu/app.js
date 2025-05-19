@@ -1,5 +1,5 @@
 
-const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
 
 import express from 'express'
 const app = express()
@@ -28,7 +28,7 @@ app.get('*', (req, res, next) => {
 
   if (req.path.indexOf(path) == 0 && req.path.length > path.length) return next()
 
-  res.send(`You need to specify a room name in the path e.g. 'https://127.0.0.1/sfu/room'`)
+  res.send(`You need to specify a room name in the path e.g. 'https://localhost/sfu/room'`)
 })
 
 app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
@@ -106,7 +106,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // plainTransport 설정 조정
   const plainTransport = await router.createPlainTransport({
-    listenIp: { ip: '0.0.0.0', announcedIp: '127.0.0.1' }, // 중요: announcedIp를 localhost로 설정
+    listenIp: { ip: '0.0.0.0', announcedIp: 'PUBLIC_IP' }, // 중요: announcedIp를 localhost로 설정
     rtcpMux: false, // RTCP MUX 활성화하여 단일 포트 사용
     comedia: false,
   });
@@ -812,7 +812,7 @@ app.get('/sfu/:room', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf-8');
 
-  const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
+  const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
 
   // IP 삽입 스크립트 추가
   html = html.replace(

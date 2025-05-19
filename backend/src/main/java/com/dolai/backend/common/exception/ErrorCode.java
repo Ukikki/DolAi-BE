@@ -11,6 +11,7 @@ public enum ErrorCode {
     // Common
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "Invalid request parameters"),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "접근이 거부되었습니다."),
 
     // Auth
     OAUTH_PROVIDER_NOT_FOUND(HttpStatus.NOT_FOUND, "OAuth provider not found"),
@@ -50,7 +51,11 @@ public enum ErrorCode {
     USER_INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
 
     // To-do
-    TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 할 일을 찾을 수 없습니다.");
+    TODO_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 할 일을 찾을 수 없습니다."),
+
+    // Metadata
+    METADATA_NOT_FOUND(HttpStatus.NOT_FOUND, "디렉터리 메타데이터를 찾을 수 없습니다."),
+    METADATA_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 메타데이터에 접근할 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String message;

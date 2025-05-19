@@ -1,66 +1,27 @@
 package com.dolai.backend.document.service;
 
+import com.dolai.backend.metadata.repository.DocumentMetaDataRepository;
+import com.dolai.backend.metadata.service.DocumentMetaDataService;
 import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.document.model.Document;
-import com.dolai.backend.document.model.DocumentResponseDto;
 import com.dolai.backend.document.model.enums.FileType;
 import com.dolai.backend.document.repository.DocumentPlacementRepository;
 import com.dolai.backend.document.repository.DocumentRepository;
-import com.dolai.backend.document.repository.MetaDataRepository;
 import com.dolai.backend.meeting.model.Meeting;
-import com.dolai.backend.meeting.repository.MeetingRepository;
-import com.dolai.backend.todo.service.TodoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.util.List;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
-    private final MeetingRepository meetingRepository;
     private final DocumentRepository documentRepository;
     private final DocumentPlacementRepository documentPlacementRepository;
-    private final MetaDataRepository metaDataRepository;
-    private final S3ServiceStub s3Service;
-    private final TodoService todoService;
-    private final MetaDataService metaDataService;
-
-    @Transactional(readOnly = true)
-    public DocumentResponseDto getDocumentByMeetingId(String meetingId) {
-        Meeting meeting = meetingRepository.findById(meetingId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
-
-        Document document = documentRepository.findTopByMeetingOrderByCreatedAtDesc(meeting)
-                .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
-
-        List<String> participants = meeting.getParticipants().stream()
-                .map(p -> p.getUser().getEmail())
-                .toList();
-
-        // 예시 URL들 (실제론 Document에 저장된 경로일 수 있음)
-        String detailedContentUrl = document.getFileUrl().replace(".pdf", ".json");
-        String graphImageUrl = document.getFileUrl().replace(".pdf", "_graph.png");
-        String notesUrl = document.getFileUrl().replace(".pdf", "_notes.txt");
-
-        return DocumentResponseDto.builder()
-                .title(document.getTitle())
-                .date(meeting.getStartTime().toLocalDate().toString())
-                .participants(participants)
-                .duration(String.valueOf(Duration.between(meeting.getStartTime(), meeting.getEndTime()).toMinutes()))
-                .organizer("김철수") // 예시, 실제 hostUserId → User 이름 매핑 가능
-                .detailedContent(s3Service.fetchDetailedContent(detailedContentUrl))
-                .graphs(s3Service.fetchGraphImageBase64(graphImageUrl))
-                .notes(s3Service.fetchNotes(notesUrl))
-                .todoList(todoService.getTodosByMeeting(meetingId))
-                .documentUrl(document.getFileUrl()) // PDF 다운로드 링크
-                .build();
-    }
+    private final DocumentMetaDataRepository documentMetaDataRepository;
+    private final DocumentMetaDataService documentMetaDataService;
 
     @Transactional
     public void deleteDocument(Long documentId) {
@@ -69,22 +30,22 @@ public class DocumentService {
 
         // 관련 엔티티 먼저 삭제
         documentPlacementRepository.deleteAllByDocumentId(documentId);
-        metaDataRepository.deleteByDocumentId(documentId);
+        documentMetaDataRepository.deleteByDocumentId(documentId);
 
         // 마지막으로 문서 삭제
         documentRepository.delete(document);
     }
 
     @Transactional
-    public Document createDocument(Meeting meeting, String docPath) {
-        String extension = metaDataService.extractExtension(docPath);
+    public Document createDocument(Meeting meeting, String docUrl, String title) {
+        String extension = documentMetaDataService.extractExtension(docUrl);
         FileType fileType = FileType.fromExtension(extension);
-        String documentName = meeting.getTitle() + "." + fileType;
+        String documentName = title + "." + extension;  // 전달받은 제목 사용
 
-        Document document = Document.create(meeting, docPath, documentName, fileType);
+        Document document = Document.create(meeting, docUrl, documentName, fileType);
         documentRepository.save(document);
 
-        metaDataService.saveMetaData(document);
+        documentMetaDataService.createAndSaveMetaData(document);
 
         return document;
     }

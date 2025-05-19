@@ -2,6 +2,7 @@ package com.dolai.backend.directory.service;
 
 import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
+import com.dolai.backend.common.success.SuccessDataResponse;
 import com.dolai.backend.directory.model.*;
 import com.dolai.backend.directory.model.enums.DirectoryColor;
 import com.dolai.backend.directory.model.enums.DirectoryType;
@@ -11,8 +12,10 @@ import com.dolai.backend.document.repository.DocumentPlacementRepository;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.model.Participant;
 import com.dolai.backend.meeting.repository.MeetingRepository;
+import com.dolai.backend.metadata.service.DirectoryMetaDataService;
 import com.dolai.backend.user.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,24 +29,19 @@ public class DirectoryService {
     private final DirectoryUserRepository directoryUserRepository;
     private final MeetingRepository meetingRepository;
     private final DocumentPlacementRepository documentPlacementRepository;
-
-    @Transactional
-    public Directory createDirectoryEntity(DirectoryRequestDto request, User user) {
-        return createDirectoryCore(request, user);
-    }
+    private final DirectoryMetaDataService directoryMetaDataService;
 
     @Transactional
     public DirectoryResponseDto createDirectory(DirectoryRequestDto request, User user) {
         Directory dir = createDirectoryCore(request, user);
-        return DirectoryResponseDto.builder()
-                .status("success")
-                .message("Directory created successfully")
+        DirectoryResponseDto response = DirectoryResponseDto.builder()
                 .directoryId(dir.getId())
                 .name(dir.getName())
                 .build();
+        return response;
     }
 
-    private Directory createDirectoryCore(DirectoryRequestDto request, User user) {
+    public Directory createDirectoryCore(DirectoryRequestDto request, User user) {
         DirectoryType type = DirectoryType.valueOf(request.getType().toUpperCase());
 
         if (type == DirectoryType.PERSONAL && request.getMeetingId() != null)
@@ -100,11 +98,13 @@ public class DirectoryService {
         }
     }
 
+    //회의 종료 후, 공유 문서 생성
     @Transactional
     public Directory createSharedDirectory(Meeting meeting, User user) {
         String name = meeting.getStartTime().toLocalDate().toString();
         DirectoryRequestDto dto = new DirectoryRequestDto(name, null, "SHARED", meeting.getId());
         Directory directory = createDirectoryCore(dto, user);
+        directoryMetaDataService.createMetadataFor(directory);
         return directory;
     }
 
@@ -175,5 +175,21 @@ public class DirectoryService {
 
         documentPlacementRepository.deleteByDirectory(directory);
         directoryRepository.delete(directory);
+    }
+
+    @Transactional(readOnly = true)
+    public DirectoryResponseDto getDirectoryByMeetingId(String meetingId) {
+        // 회의 존재 확인
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
+
+        // 회의와 연결된 디렉토리 조회
+        Directory directory = directoryRepository.findByMeeting(meeting)
+                .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
+
+        return DirectoryResponseDto.builder()
+                .directoryId(directory.getId())
+                .name(directory.getName())
+                .build();
     }
 }
