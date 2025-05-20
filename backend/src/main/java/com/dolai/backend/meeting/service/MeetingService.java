@@ -86,7 +86,17 @@ public class MeetingService {
         meetingRepository.save(meeting);
 
         log.info("회의 생성 완료: {}", meeting);
+        // ✅ 호스트를 참가자로 등록 (자동으로)
+        User hostUser = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        Participant hostParticipant = Participant.builder()
+                .meeting(meeting)
+                .user(hostUser)
+                .role(PARTICIPANT) // 혹은 HOST로 따로 지정하고 싶으면 Role.HOST로
+                .build();
+
+        participantsRepository.save(hostParticipant);
         return new MeetingResponseDto(meeting.getId(), meeting.getTitle(), meeting.getStartTime(), inviteUrl);
     }
 
@@ -273,16 +283,18 @@ public class MeetingService {
 
         return meetings.stream()
                 .map(meeting -> {
-                    Directory directory = directoryRepository.findByMeetingId(meeting.getId())
-                            .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
-                    return new MeetingListResponseDto(
-                            meeting.getId(),
-                            meeting.getTitle(),
-                            meeting.getStartTime(),
-                            meeting.getInviteUrl(),
-                            directory.getId()
-                    );
+                    // 🔧 변경됨: 예외를 던지지 않고 Optional로 받음
+                    return directoryRepository.findByMeetingId(meeting.getId())
+                            .map(directory -> new MeetingListResponseDto(
+                                    meeting.getId(),
+                                    meeting.getTitle(),
+                                    meeting.getStartTime(),
+                                    meeting.getInviteUrl(),
+                                    directory.getId()
+                            ))
+                            .orElse(null); // 🔧 변경됨: 디렉터리가 없으면 null 반환
                 })
+                .filter(java.util.Objects::nonNull) // 🔧 변경됨: null 필터링
                 .toList();
     }
 
