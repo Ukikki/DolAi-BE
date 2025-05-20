@@ -19,7 +19,7 @@ public class STTLogSyncService {
     private final STTLogRepository sttLogRepository;
     private final GraphService graphService;
 
-    //@Scheduled(fixedDelay = 3000)
+    @Scheduled(fixedDelay = 3000)
     public void syncToArango() {
         List<STTLog> logsToSync = sttLogRepository.findTop10BySyncedFalseOrderByTimestampAsc();
 

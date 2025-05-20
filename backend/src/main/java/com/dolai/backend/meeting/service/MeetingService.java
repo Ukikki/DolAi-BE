@@ -6,6 +6,7 @@ import com.dolai.backend.directory.model.Directory;
 import com.dolai.backend.directory.repository.DirectoryRepository;
 import com.dolai.backend.directory.service.DirectoryService;
 import com.dolai.backend.document.model.Document;
+import com.dolai.backend.document.model.enums.FileType;
 import com.dolai.backend.document.service.DocumentPlacementService;
 import com.dolai.backend.llm.LlmDocumentService;
 import com.dolai.backend.meeting.model.*;
@@ -15,6 +16,7 @@ import com.dolai.backend.meeting.repository.ParticipantsRepository;
 import com.dolai.backend.notification.model.enums.Type;
 import com.dolai.backend.notification.service.NotificationService;
 import com.dolai.backend.document.service.DocumentService;
+import com.dolai.backend.stt_log.service.STTLogService;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -50,6 +52,7 @@ public class MeetingService {
     private final DirectoryService directoryService;
     private final WebClient mediasoupWebClient;
     private final DirectoryRepository directoryRepository;
+    private final STTLogService sttLogService;
     private final Dotenv dotenv;
 
     //    @PostConstruct
@@ -224,6 +227,38 @@ public class MeetingService {
 
             // 문서를 디렉토리에 연결
             documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, user);
+        }
+        String titleKo = docInfo.get("ko").get("title");
+        String titleEn = docInfo.get("en").get("title");
+        String titleZh = docInfo.get("zh").get("title");
+        Map<String, String> titleMap = Map.of(
+                "ko", titleKo,
+                "en", titleEn,
+                "zh", titleZh
+        );
+        // STT 텍스트 문서들 생성 및 저장 (ko, en, zh)
+        Map<String, String> sttTxtUrls = sttLogService.generateTxtFilesAndUpload(meeting.getId(), titleMap);
+        for (Map.Entry<String, String> entry : sttTxtUrls.entrySet()) {
+            String lang = entry.getKey();     // "ko", "en", "zh"
+            String txtUrl = entry.getValue(); // S3 URL
+            String baseTitle = switch (lang) {
+                case "ko" -> titleKo;
+                case "en" -> titleEn;
+                case "zh" -> titleZh;
+                default -> "회의";
+            };
+
+            String label = switch (lang) {
+                case "ko" -> "전체자막";
+                case "en" -> "FullTranscript";
+                case "zh" -> "字幕全文记录";
+                default -> "Transcript";
+            };
+
+            String title = baseTitle + "_" + label;
+
+            Document txtDoc = documentService.createDocument(meeting, txtUrl, title, user);
+            documentPlacementService.linkDocumentToDirectory(txtDoc, sharedDirectory, user);
         }
     }
 
