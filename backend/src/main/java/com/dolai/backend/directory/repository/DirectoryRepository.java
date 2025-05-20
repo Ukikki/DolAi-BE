@@ -1,6 +1,7 @@
 package com.dolai.backend.directory.repository;
 
 import com.dolai.backend.meeting.model.Meeting;
+import com.dolai.backend.user.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.dolai.backend.directory.model.Directory;

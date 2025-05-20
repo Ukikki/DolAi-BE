@@ -316,5 +316,4 @@ public class MeetingService {
                 })
                 .toList();
     }
-
 }
