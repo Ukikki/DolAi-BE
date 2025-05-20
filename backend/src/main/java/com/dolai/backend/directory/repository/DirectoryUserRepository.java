@@ -15,4 +15,5 @@ public interface DirectoryUserRepository extends JpaRepository<DirectoryUser, Lo
     List<DirectoryUser> findByUserAndDirectory_Parent(User user, Directory parent);
     boolean existsByUserIdAndDirectoryParentAndName(String userId, Directory parent, String name);
     Optional<DirectoryUser> findByDirectoryIdAndUserId(Long directoryId, String userId);
+    boolean existsByUserAndName(User user, String name);
 }

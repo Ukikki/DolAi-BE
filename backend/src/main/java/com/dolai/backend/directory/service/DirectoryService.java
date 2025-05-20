@@ -76,24 +76,32 @@ public class DirectoryService {
         return directory;
     }
 
-    private void createDirectoryUsers(Directory directory, User user, String meetingId, String name, DirectoryType type) {
+    private void createDirectoryUsers(Directory directory, User user, String meetingId, String baseName, DirectoryType type) {
         if (type == DirectoryType.PERSONAL) {
-            directoryUserRepository.save(DirectoryUser.builder()
-                    .user(user)
-                    .directory(directory)
-                    .name(name)
-                    .color(DirectoryColor.BLUE)
-                    .build());
+            String userName = generateUserUniqueName(user, baseName);
+            directoryUserRepository.save(
+                    DirectoryUser.builder()
+                            .user(user)
+                            .directory(directory)
+                            .name(userName)
+                            .color(DirectoryColor.BLUE)
+                            .build()
+            );
         } else {
             Meeting meeting = meetingRepository.findById(meetingId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
+
             for (Participant participant : meeting.getParticipants()) {
-                directoryUserRepository.save(DirectoryUser.builder()
-                        .user(participant.getUser())
-                        .directory(directory)
-                        .name(name)
-                        .color(DirectoryColor.BLUE)
-                        .build());
+                User participantUser = participant.getUser();
+                String userName = generateUserUniqueName(participantUser, baseName);
+                directoryUserRepository.save(
+                        DirectoryUser.builder()
+                                .user(participantUser)
+                                .directory(directory)
+                                .name(userName)
+                                .color(DirectoryColor.BLUE)
+                                .build()
+                );
             }
         }
     }
@@ -192,4 +200,20 @@ public class DirectoryService {
                 .name(directory.getName())
                 .build();
     }
+    private String generateUserUniqueName(User user, String baseName) {
+        String name = baseName;
+        int count = 1;
+        boolean exists;
+
+        do {
+            exists = directoryUserRepository.existsByUserAndName(user, name);
+            if (exists) {
+                name = baseName + " (" + count++ + ")";
+            }
+        } while (exists);
+
+        return name;
+    }
+
+
 }
