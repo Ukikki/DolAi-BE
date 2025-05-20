@@ -27,7 +27,7 @@ class FfmpegStream extends EventEmitter {
     this.queueSize = 0;
     this.processingInterval = null;
     this.isProcessing = false;
-    this.targetSize = 640000; // 약 1.5초 분량 (16kHz, 16bit, mono)
+    this.targetSize = 64000; // 약 1.5초 분량 (16kHz, 16bit, mono)
     this.maxWaitTime = 3000; // 최대 대기 시간 (ms)
     this.lastProcessTime = Date.now();
     this.meetingId = meetingId;
@@ -289,7 +289,7 @@ class FfmpegStream extends EventEmitter {
 
       console.log(`🔄 큐 처리: ${combinedBuffer.length} bytes (약 ${(combinedBuffer.length/32000).toFixed(2)}초 오디오)`);
 
-      if (combinedBuffer.length < 8000) {
+      if (combinedBuffer.length < 4000) {
         console.log('🔍 너무 짧은 오디오, 건너뜀');
         this.isProcessing = false;
         return;
