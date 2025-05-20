@@ -15,6 +15,7 @@ public enum Type {
     MEETING_INVITE("회의","‘{{meetingTitle}}’ 회의에 초대되었습니다. (호스트: ‘{{host}}’)"),
     MEETING_RESERVED("회의","‘{{meetingTitle}}’ 회의 일정이 ‘{{date}}’에 예약되었습니다. (호스트: ‘{{host}}’)"),
     MEETING_SOON("회의","‘{{time}}’ 뒤 ‘{{meetingTitle}}’ 회의가 시작됩니다."),
+    MEETING_CANCELLED("회의", "‘{{meetingTitle}}’ 회의가 취소되었습니다. (호스트: ‘{{host}}’)"),
 
     // 일정
     TODO_CREATED("일정","‘{{todo}}’ To Do 일정이 추가되었습니다.");

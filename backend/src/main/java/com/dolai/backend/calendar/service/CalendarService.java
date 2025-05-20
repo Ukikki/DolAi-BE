@@ -5,6 +5,7 @@ import com.dolai.backend.calendar.model.CalendarDto;
 import com.dolai.backend.calendar.model.DayCount;
 import com.dolai.backend.calendar.model.MonthlyCalendarDto;
 import com.dolai.backend.common.exception.CustomException;
+import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.meeting.model.Meeting;
 import com.dolai.backend.meeting.model.MeetingResponseDto;
 import com.dolai.backend.meeting.model.Participant;
@@ -107,7 +108,6 @@ public class CalendarService {
                         ),
                         inviteUrl
                 );
-
             });
         }
 
@@ -119,4 +119,38 @@ public class CalendarService {
         );
     }
 
+    @Transactional
+    public void cancelReservedMeeting(String meetingId, User user) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
+
+        // 예약자인지 확인
+        if (!meeting.getHostUserId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        // 참가자 조회 (호스트 제외)
+        List<Participant> participants = participantsRepository.findByMeetingId(meetingId).stream()
+                .filter(p -> p.getRole() != Participant.Role.HOST)
+                .toList();
+
+        // 알림 전송
+        for (Participant participant : participants) {
+            User invitedUser = participant.getUser();
+
+            notificationService.notify(
+                    invitedUser.getId(),
+                    Type.MEETING_CANCELLED,
+                    Map.of(
+                            "meetingTitle", meeting.getTitle(),
+                            "host", user.getName()
+                    ),
+                    null  // 취소는 링크 필요 없을 수도 있음
+            );
+        }
+
+        participantsRepository.deleteAllByMeetingId(meetingId);
+
+        // 삭제 또는 상태 변경
+        meetingRepository.delete(meeting);
+    }
 }

@@ -7,6 +7,7 @@ import com.dolai.backend.calendar.service.CalendarService;
 import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.common.success.SuccessDataResponse;
+import com.dolai.backend.common.success.SuccessMessageResponse;
 import com.dolai.backend.meeting.model.MeetingResponseDto;
 import com.dolai.backend.user.model.User;
 import jakarta.validation.Valid;
@@ -64,5 +65,14 @@ public class CalendarController {
     ) {
         MeetingResponseDto response = calendarService.reserveMeetingWithParticipants(request, user);
         return ResponseEntity.ok(new SuccessDataResponse<>(response));
+    }
+
+    @DeleteMapping("/reserve/{meetingId}")
+    public ResponseEntity<?> cancelReservedMeeting(
+            @PathVariable("meetingId") String meetingId,
+            @AuthenticationPrincipal User user
+    ) {
+        calendarService.cancelReservedMeeting(meetingId, user);
+        return ResponseEntity.ok(new SuccessMessageResponse("예약이 취소되었습니다."));
     }
 }
