@@ -1,5 +1,5 @@
 
-const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
+const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
 
 import express from 'express'
 const app = express()
@@ -7,7 +7,7 @@ const app = express()
 import https from 'httpolyglot'
 import fs from 'fs'
 import path from 'path'
-import portManager from './server/whisper/PortManager.js';
+import portManager from './server/whisper/portManager.js';
 const __dirname = path.resolve()
 
 import { Server } from 'socket.io'
@@ -28,7 +28,7 @@ app.get('*', (req, res, next) => {
 
   if (req.path.indexOf(path) == 0 && req.path.length > path.length) return next()
 
-  res.send(`You need to specify a room name in the path e.g. 'https://localhost/sfu/room'`)
+  res.send(`You need to specify a room name in the path e.g. 'https://127.0.0.1/sfu/room'`)
 })
 
 app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
@@ -106,7 +106,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // plainTransport 설정 조정
   const plainTransport = await router.createPlainTransport({
-    listenIp: { ip: '0.0.0.0', announcedIp: 'PUBLIC_IP' }, // 중요: announcedIp를 localhost로 설정
+    listenIp: { ip: '0.0.0.0', announcedIp: '127.0.0.1' }, // 중요: announcedIp를 localhost로 설정
     rtcpMux: false, // RTCP MUX 활성화하여 단일 포트 사용
     comedia: false,
   });
@@ -407,11 +407,8 @@ connections.on('connection', async socket => {
 
     const { roomName, peerDetails: { userId: myUserId } } = peers[socket.id];
 
-    // video 프로듀서만, 같은 userId는 제외
     const producerList = producers
-        // ① video 인 것만, ② 같은 userId(=내 것)는 빼고, ③ 같은 room
         .filter(p =>
-            p.producer.kind === 'video' &&
             peers[p.socketId]?.peerDetails.userId !== myUserId &&
             p.roomName === roomName
         )
@@ -419,8 +416,10 @@ connections.on('connection', async socket => {
           const peer = peers[p.socketId];
           return {
             producerId: p.producer.id,
-            peerId:     peer.peerDetails.userId,
-            name:       peer.peerDetails.name || "익명"
+            peerId: peer.peerDetails.userId,
+            name: peer.peerDetails.name || "익명",
+            kind: p.producer.kind,
+            mediaTag: p.producer.appData?.mediaTag || 'camera',
           };
         });
 
@@ -431,8 +430,9 @@ connections.on('connection', async socket => {
   // 전역 캐시로 선언 (파일 상단 or connections.on 바깥)
   const informedCache = new Set(); // key: `${fromSocketId}_${toSocketId}_${producerId}`
 
-  const informConsumers = (roomName, socketId, id, userId, kind) => {
-    if (kind !== 'video') return;
+  const informConsumers = (roomName, socketId, id, userId, kind, mediaTag = 'camera') => {
+    const allowKinds = ['video', 'board', 'screen'];
+    if (!allowKinds.includes(mediaTag)) return;
 
     console.log(`🟡 informConsumers: new producer ${id} from ${socketId}`);
 
@@ -452,8 +452,10 @@ connections.on('connection', async socket => {
 
         producerSocket.emit('new-producer', {
           producerId: id,
-          peerId:     userId,
-          name:       name || "익명"
+          peerId: userId,
+          name: name || "익명",
+          kind: kind,
+          mediaTag: mediaTag,
         });
 
         console.log(`✅ emit 'new-producer' → to ${toSocketId}`);
@@ -477,6 +479,57 @@ connections.on('connection', async socket => {
     } else {
       console.warn("존재하지 않는 transportId:", transportId);
     }
+  });
+
+  // 화이트보드
+  socket.on("tldraw-start", () => {
+    const peer = peers[socket.id];
+    if (!peer) return;
+
+    const { roomName } = peer;
+
+    // 같은 방 전체에 broadcast
+    connections.to(roomName).emit("board-started");
+    console.log(`🧩 화이트보드 모드 시작 broadcast → room=${roomName}`);
+  });
+  socket.on("join-whiteboard", ({ meetingId }) => {
+    const peer = peers[socket.id];
+    if (!peer) {
+      console.warn(`❌ join-whiteboard: Peer not found for ${socket.id}`);
+      return;
+    }
+
+    const { roomName } = peer;
+    console.log(`🧩 ${peer.peerDetails.name} joined whiteboard (room=${roomName}, meeting=${meetingId})`);
+  });
+
+  // 화이트보드 변경
+  socket.on("tldraw-changes", ({ meetingId, records, removed}) => {
+    const peer = peers[socket.id];
+    if (!peer) {
+      console.warn(`❌ tldraw-changes: Peer not found for ${socket.id}`);
+      return;
+    }
+
+    const { roomName } = peer;
+
+    // join된 room으로 broadcast
+    socket.to(roomName).emit("tldraw-changes", {
+      meetingId,
+      records,   // 변경된 도형들
+      removed,   // 삭제된 도형 id들
+    });
+  });
+
+  // 화이트보드 종료
+  socket.on("tldraw-end", ({ meetingId }) => {
+    const peer = peers[socket.id];
+    if (!peer) return;
+
+    const { roomName } = peer;
+
+    connections.to(roomName).emit("board-ended", { meetingId });
+    console.log(`🛑 화이트보드 종료 broadcast → room=${roomName}`);
   });
 
   socket.on('transport-produce', async ({ kind, rtpParameters, appData }, callback) => {
@@ -529,16 +582,7 @@ connections.on('connection', async socket => {
         kind,
         rtpParameters,
         appData,
-        trace: true, // ✅ 필수
-      });
-
-      // 📡 trace 로그 찍기
-      producer.on('trace', trace => {
-        if (trace.type === 'rtp') {
-          console.log(`📡 [Producer Trace] RTP: kind=${kind}, producerId=${producer.id}`);
-        } else {
-          console.log(`📡 [Producer Trace] 기타 이벤트:`, trace);
-        }
+        trace: true,
       });
 
       // ✅ 등록
@@ -596,7 +640,8 @@ connections.on('connection', async socket => {
       }
 
       const { userId } = peer.peerDetails;
-      informConsumers(roomName, socket.id, producer.id, userId, kind);
+      const mediaTag = appData?.mediaTag || kind;
+      informConsumers(roomName, socket.id, producer.id, userId, kind, mediaTag);
       console.log('✅ Producer ID:', producer.id, kind);
 
       callback({ id: producer.id, producersExist: producers.length > 1 });
@@ -608,7 +653,6 @@ connections.on('connection', async socket => {
   });
 
   // 마이크 상태 변경
-// 마이크 상태 변경
   socket.on('audio-toggle', async ({ enabled }) => {
     const peer = peers[socket.id];
     if (!peer) {
@@ -812,7 +856,7 @@ app.get('/sfu/:room', (req, res) => {
   const htmlPath = path.join(__dirname, 'public', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf-8');
 
-  const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
+  const PUBLIC_IP = process.env.PUBLIC_IP || '127.0.0.1';
 
   // IP 삽입 스크립트 추가
   html = html.replace(
