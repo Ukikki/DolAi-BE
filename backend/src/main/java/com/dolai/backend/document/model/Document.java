@@ -37,10 +37,6 @@ public class Document extends BaseTimeEntity {
     @Column(name = "file_type", nullable = false)
     private FileType fileType;
 
-    // private String detailedJsonUrl;
-    // private String graphImageUrl;
-    // private String notesUrl;
-
     public static Document create(Meeting meeting, String fileUrl, String title, FileType fileType) {
         return Document.builder()
                 .meeting(meeting)
