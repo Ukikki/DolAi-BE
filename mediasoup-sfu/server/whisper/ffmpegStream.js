@@ -42,10 +42,18 @@ class FfmpegStream extends EventEmitter {
       codec: rtpParameters.codec.name
     });
 
-    // 포트 충돌 문제 해결을 위해 포트 정리 먼저 수행
-    this._cleanupPort(rtpParameters.port);
+    /*// 포트 충돌 문제 해결을 위해 포트 정리 먼저 수행
+    this._cleanupPort(rtpParameters.port);*/
+
+    // ❗ async 초기화는 여기서 직접 못 함
+    this.init();  // 내부에서 await 사용 가능
 
     // 웹소켓 연결 및 FFmpeg 시작
+    this._connectWebSocket();
+  }
+
+  async init() {
+    await this._cleanupPort(this.rtpParameters.port);
     this._connectWebSocket();
   }
 
