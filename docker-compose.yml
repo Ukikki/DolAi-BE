@@ -83,6 +83,7 @@ services:
     ports:
       - "4443:4443"           # Mediasoup signaling
       - "3478:3478/udp"       # TURN server
+      - "10000-20000:10000-20000/udp"  # UDP 포트 범위 한 번에 지정
     networks:
       backend_network:
         ipv4_address: 172.28.0.4  # MediaSoup Server 고정 IP
