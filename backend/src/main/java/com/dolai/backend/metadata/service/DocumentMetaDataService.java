@@ -19,7 +19,7 @@ public class DocumentMetaDataService {
     private final S3Service s3Service;  // S3 서비스 주입
 
     @Transactional
-    public DocumentMetaData createAndSaveMetaData(Document document) {
+    public DocumentMetaData createAndSaveMetaData(Document document, String summary) {
         String fileType = document.getFileType().name();
         String fileUrl = document.getFileUrl();
         Long fileSize = s3Service.getFileSize(fileUrl);
@@ -29,13 +29,9 @@ public class DocumentMetaDataService {
                 .document(document)
                 .type(fileType)
                 .size(fileSize)
+                .summary(summary)
                 .build();
 
-        // 메타데이터 저장
-        if (document.getMeeting() != null) {
-            String summary = "Meeting document created on " + document.getCreatedAt();
-            metaData.setSummary(summary);
-        }
         return documentMetaDataRepository.save(metaData);
     }
 

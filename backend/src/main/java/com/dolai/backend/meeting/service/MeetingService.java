@@ -226,26 +226,31 @@ public class MeetingService {
     public void createMeetingAssets(Meeting meeting, User user) {
         Map<String, Map<String, String>> docInfo = llmDocumentService.summarizeAndGenerateDoc(meeting.getId());
         Directory sharedDirectory = directoryService.createSharedDirectory(meeting, user);
+
         // 각 언어별 문서 생성 및 디렉토리에 연결
         for (Map.Entry<String, Map<String, String>> entry : docInfo.entrySet()) {
+            String lang = entry.getKey();         // "ko", "en", "zh"
             Map<String, String> info = entry.getValue();
-            String docUrl = info.get("url");    // S3 URL
-            String title = info.get("title");   // 해당 언어로 번역된 제목
+            String docUrl = info.get("url");      // S3 URL
+            String title = info.get("title");     // 해당 언어로 번역된 제목
+            String summary = info.get("summary"); // 한 줄 요약
 
-            // 각 언어별 문서 생성
-            Document document = documentService.createDocument(meeting, docUrl, title, user);
-
-            // 문서를 디렉토리에 연결
+            // summary 파라미터 추가
+            Document document = documentService.createDocument(meeting, docUrl, title, summary, user);
             documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, user);
         }
+
         String titleKo = docInfo.get("ko").get("title");
         String titleEn = docInfo.get("en").get("title");
         String titleZh = docInfo.get("zh").get("title");
-        Map<String, String> titleMap = Map.of(
-                "ko", titleKo,
-                "en", titleEn,
-                "zh", titleZh
-        );
+
+        // 요약 정보도 함께 가져오기
+        String summaryKo = docInfo.get("ko").get("summary");
+        String summaryEn = docInfo.get("en").get("summary");
+        String summaryZh = docInfo.get("zh").get("summary");
+
+        Map<String, String> titleMap = Map.of("ko", titleKo, "en", titleEn, "zh", titleZh);
+
         // STT 텍스트 문서들 생성 및 저장 (ko, en, zh)
         Map<String, String> sttTxtUrls = sttLogService.generateTxtFilesAndUpload(meeting.getId(), titleMap);
         for (Map.Entry<String, String> entry : sttTxtUrls.entrySet()) {
@@ -259,15 +264,24 @@ public class MeetingService {
             };
 
             String label = switch (lang) {
-                case "ko" -> "전체자막";
-                case "en" -> "FullTranscript";
-                case "zh" -> "字幕全文记录";
+                case "ko" -> "자막";
+                case "en" -> "Transcript";
+                case "zh" -> "字幕";
                 default -> "Transcript";
             };
 
             String title = baseTitle + "_" + label;
 
-            Document txtDoc = documentService.createDocument(meeting, txtUrl, title, user);
+            // 언어별 요약 선택
+            String summary = switch (lang) {
+                case "ko" -> summaryKo;
+                case "en" -> summaryEn;
+                case "zh" -> summaryZh;
+                default -> summaryKo;
+            };
+
+            // summary 파라미터 추가
+            Document txtDoc = documentService.createDocument(meeting, txtUrl, title, summary, user);
             documentPlacementService.linkDocumentToDirectory(txtDoc, sharedDirectory, user);
         }
     }

@@ -44,7 +44,7 @@ public class DocumentService {
     }
 
     @Transactional
-    public Document createDocument(Meeting meeting, String docUrl, String title, User user) {
+    public Document createDocument(Meeting meeting, String docUrl, String title, String summary, User user) {
         String extension = documentMetaDataService.extractExtension(docUrl);
         FileType fileType = FileType.fromExtension(extension);
         String documentName = title + "." + extension;  // 전달받은 제목 사용
@@ -52,7 +52,7 @@ public class DocumentService {
         Document document = Document.create(meeting, docUrl, documentName, fileType);
         documentRepository.save(document);
 
-        documentMetaDataService.createAndSaveMetaData(document);
+        documentMetaDataService.createAndSaveMetaData(document, summary);
 
         return document;
     }

@@ -31,6 +31,7 @@ public class DirectoryService {
     private final DocumentPlacementRepository documentPlacementRepository;
     private final DirectoryMetaDataService directoryMetaDataService;
 
+    // 개인 디렉터리 생성
     @Transactional
     public DirectoryResponseDto createDirectory(DirectoryRequestDto request, User user) {
         Directory dir = createDirectoryCore(request, user);
@@ -41,6 +42,7 @@ public class DirectoryService {
         return response;
     }
 
+    // 개인 디렉터리 생성
     public Directory createDirectoryCore(DirectoryRequestDto request, User user) {
         DirectoryType type = DirectoryType.valueOf(request.getType().toUpperCase());
 
@@ -55,10 +57,10 @@ public class DirectoryService {
                     .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
         }
 
-        String finalName = generateUniqueName(request.getName(), type, parent, user.getId(), request.getMeetingId());
+        String directoryName = request.getName();
 
         Directory directory = new Directory();
-        directory.setName(finalName);
+        directory.setName(directoryName);
         directory.setParent(parent);
         directory.setType(type);
 
@@ -69,9 +71,8 @@ public class DirectoryService {
                     .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
             directory.setMeeting(meeting);
         }
-
         directoryRepository.save(directory);
-        createDirectoryUsers(directory, user, request.getMeetingId(), finalName, type);
+        createDirectoryUsers(directory, user, request.getMeetingId(), directoryName, type);
 
         return directory;
     }
@@ -90,7 +91,6 @@ public class DirectoryService {
         } else {
             Meeting meeting = meetingRepository.findById(meetingId)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
-
             for (Participant participant : meeting.getParticipants()) {
                 User participantUser = participant.getUser();
                 String userName = generateUserUniqueName(participantUser, baseName);
@@ -109,30 +109,26 @@ public class DirectoryService {
     //회의 종료 후, 공유 문서 생성
     @Transactional
     public Directory createSharedDirectory(Meeting meeting, User user) {
-        String name = meeting.getStartTime().toLocalDate().toString();
+        String name = meeting.getTitle(); // 미팅 제목으로 설정
         DirectoryRequestDto dto = new DirectoryRequestDto(name, null, "SHARED", meeting.getId());
         Directory directory = createDirectoryCore(dto, user);
         directoryMetaDataService.createMetadataFor(directory);
         return directory;
     }
 
-    private String generateUniqueName(String baseName, DirectoryType type, Directory parent, String userId, String meetingId) {
+    private String generateUserUniqueName(User user, String baseName) {
         String name = baseName;
         int count = 1;
         boolean exists;
 
         do {
-            if (type == DirectoryType.PERSONAL) {
-                exists = directoryUserRepository.existsByUserIdAndDirectoryParentAndName(userId, parent, name);
-            } else {
-                exists = directoryRepository.existsByMeetingIdAndParentAndName(meetingId, parent, name);
-            }
-
+            // 사용자에게 이미 같은 이름의 디렉터리가 있는지 확인
+            exists = directoryUserRepository.existsByUserAndName(user, name);
             if (exists) {
                 name = baseName + " (" + count++ + ")";
             }
-
         } while (exists);
+
         return name;
     }
 
@@ -187,11 +183,8 @@ public class DirectoryService {
 
     @Transactional(readOnly = true)
     public DirectoryResponseDto getDirectoryByMeetingId(String meetingId) {
-        // 회의 존재 확인
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
-
-        // 회의와 연결된 디렉토리 조회
         Directory directory = directoryRepository.findByMeeting(meeting)
                 .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
 
@@ -200,20 +193,4 @@ public class DirectoryService {
                 .name(directory.getName())
                 .build();
     }
-    private String generateUserUniqueName(User user, String baseName) {
-        String name = baseName;
-        int count = 1;
-        boolean exists;
-
-        do {
-            exists = directoryUserRepository.existsByUserAndName(user, name);
-            if (exists) {
-                name = baseName + " (" + count++ + ")";
-            }
-        } while (exists);
-
-        return name;
-    }
-
-
 }
