@@ -324,7 +324,7 @@ class FfmpegStream extends EventEmitter {
 
   _createSdp({ ip, port, codec }) {
     // 127.0.0.1 대신 실제 PUBLIC_IP 사용
-    const localIp = ip || '127.0.0.1';
+    const localIp = ip || '172.28.0.4';
 
     const sdp = `v=0
 o=- ${Date.now()} 1 IN IP4 ${localIp}
