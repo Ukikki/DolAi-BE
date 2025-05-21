@@ -42,8 +42,6 @@ public class SecurityConfig {
                 .cors(c -> c.configurationSource(corsConfigurationSource())) // 명시적 적용
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용하지 않음
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/admin").permitAll()                // ✅ 관리자 로그인 허용
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")         // ✅ 관리자 API 보호
                         .requestMatchers("/auth/reissue").permitAll() // reissue(403) 예외 처리
                         .requestMatchers("/auth/social", "/auth/social/**").permitAll()  // 👈 소셜 로그인 요청은 인증 없이 허용
                         .requestMatchers("/auth/**").authenticated()                     // 👈 나머지 /auth는 인증 필요 (/auth/logout 등)

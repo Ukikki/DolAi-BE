@@ -29,7 +29,7 @@ public class STTLogSyncService {
                 String speaker = sttLog.getSpeakerName();
                 String text = sttLog.getText();
 
-                log.info("Syncing to ArangoDB → [{}] {}: {}", meetingId, speaker, text);
+                //log.info("Syncing to ArangoDB → [{}] {}: {}", meetingId, speaker, text);
 
                 graphService.saveUtterance(
                         meetingId,
@@ -41,7 +41,7 @@ public class STTLogSyncService {
                 sttLog.setSynced(true);
                 sttLogRepository.save(sttLog);
             } catch (Exception e) {
-                log.error("Failed to sync STTLog (ID: {})", sttLog.getId(), e);
+                //log.error("Failed to sync STTLog (ID: {})", sttLog.getId(), e);
             }
         }
     }
