@@ -1,8 +1,6 @@
 // JWT 생성, 검증, 파싱
 package com.dolai.backend.oauth.jwt;
 
-import com.dolai.backend.admin.model.AdminUser;
-import com.dolai.backend.admin.repository.AdminUserRepository;
 import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.oauth.service.TokenService;
@@ -41,8 +39,6 @@ public class TokenProvider {
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24L;  // 30분
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60L * 24 * 7;  // 7일
     private static final String KEY_ROLE = "role";
-
-    private final AdminUserRepository adminUserRepository;
 
     @Value("${jwt.key}")
     private String key;
@@ -177,14 +173,6 @@ public class TokenProvider {
         String role = claims.get(KEY_ROLE, String.class);
 
         log.info("🔍 토큰에서 사용자 정보 추출 - ID: {}", sub);
-
-        if ("ADMIN".equals(role)) {
-            // 관리자 로그인 토큰
-            AdminUser admin = adminUserRepository.findByUsername(sub)
-                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-            return new UsernamePasswordAuthenticationToken(admin.getUsername(), token, authorities);
-        }
 
         User user = userRepository.findById(sub)
                 .orElseThrow(() -> {
