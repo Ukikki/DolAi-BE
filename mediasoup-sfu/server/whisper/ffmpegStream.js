@@ -193,9 +193,9 @@ class FfmpegStream extends EventEmitter {
       fs.writeFileSync(this.sdpFilePath, sdp);
       console.log(`📄 SDP 파일 생성됨: ${this.sdpFilePath}`);
 
-      // FFmpeg 명령어 개선 - 옵션들 분리
+      // FFmpeg 명령어 개선 - loglevel 낮추고 옵션 간소화
       const ffmpegArgs = [
-        '-loglevel', 'debug',
+        '-loglevel', 'error', // ← 핵심 변경: debug → error
         '-protocol_whitelist', 'file,pipe,udp,rtp',
         '-rw_timeout', '30000000',
         '-analyzeduration', '10000000',
@@ -212,50 +212,41 @@ class FfmpegStream extends EventEmitter {
         'pipe:1'
       ];
 
-      console.log(`🚀 FFmpeg 명령어: ffmpeg ${ffmpegArgs.join(' ')}`);
+      console.log(`🚀 FFmpeg 실행: ffmpeg ${ffmpegArgs.join(' ')}`);
 
-      // 별도의 환경 변수 설정
-      const env = { ...process.env, FFREPORT: 'file=/tmp/ffmpeg-report.log:level=32' };
+      const env = {
+        ...process.env,
+        FFREPORT: 'file=/tmp/ffmpeg-report.log:level=32',
+      };
 
-      // FFmpeg 프로세스 시작
       this.ffmpegProcess = spawn('ffmpeg', ffmpegArgs, { env });
 
-      // 출력 처리
+      // stdout 처리
       this.ffmpegProcess.stdout.on('data', (chunk) => {
-        console.log(`📤 FFmpeg 오디오 데이터 수신: ${chunk.length} bytes`);
+        console.log(`📤 오디오 데이터 수신: ${chunk.length} bytes`);
         this._enqueueAudio(chunk);
       });
 
-      // 오류 스트림 처리
-      let errorLog = '';
+      // stderr 필터링 - 심각한 에러만 출력
       this.ffmpegProcess.stderr.on('data', (data) => {
-        const text = data.toString();
-        errorLog += text;
-
-        // 중요 로그만 출력하여 로그 과부하 방지
-        if (text.includes('Error') || text.includes('error') ||
-            text.includes('Input #0') || text.includes('Output #0') ||
-            text.includes('demuxing')) {
-          console.log('[FFmpeg stderr]', text.trim());
+        const text = data.toString().trim();
+        if (text.toLowerCase().includes('error') && !text.includes('non-fatal')) {
+          console.error('[FFmpeg ERROR]', text);
         }
       });
 
-      // 종료 처리
+      // 종료 이벤트
       this.ffmpegProcess.on('close', (code) => {
-        console.log(`FFmpeg 종료됨: 코드 ${code}`);
-
-        // 오류 검사
+        console.log(`FFmpeg 종료됨 (코드 ${code})`);
         if (code !== 0) {
-          console.error(`⚠️ FFmpeg이 비정상적으로 종료됨. 코드: ${code}`);
-          if (errorLog.includes('Address already in use')) {
-            console.error('🚨 포트 충돌 감지됨!');
-          }
+          console.error('⚠️ FFmpeg 비정상 종료!');
         }
 
         clearInterval(this.processingInterval);
         this._cleanupFiles();
         this.emit('close');
       });
+
 
       // 주기적으로 큐 상태 확인 및 처리
       this.processingInterval = setInterval(() => this._checkQueue(), 500);
