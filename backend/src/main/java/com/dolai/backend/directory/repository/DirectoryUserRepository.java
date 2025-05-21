@@ -13,7 +13,6 @@ import java.util.Optional;
 public interface DirectoryUserRepository extends JpaRepository<DirectoryUser, Long> {
     List<DirectoryUser> findByUserAndDirectoryParentIsNull(User user);
     List<DirectoryUser> findByUserAndDirectory_Parent(User user, Directory parent);
-    boolean existsByUserIdAndDirectoryParentAndName(String userId, Directory parent, String name);
     Optional<DirectoryUser> findByDirectoryIdAndUserId(Long directoryId, String userId);
     boolean existsByUserAndName(User user, String name);
 }

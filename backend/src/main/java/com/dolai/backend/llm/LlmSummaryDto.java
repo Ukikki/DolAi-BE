@@ -14,6 +14,7 @@ import java.util.List;
 public class LlmSummaryDto {
     private List<Section> content;
     private List<String> result;
+    private String summary;
 
     @Getter
     @Setter
