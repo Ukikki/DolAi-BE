@@ -115,7 +115,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // plainTransport 연결
   await plainTransport.connect({
-    ip: '127.0.0.1',
+    ip: '172.28.0.4',
     port: rtpPort,
     rtcpPort: rtpPort + 1, // RTCP 포트 명시적 지정
   });
@@ -123,7 +123,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
   console.log(`🔗 [${instanceId}] plainTransport 연결 완료:`, {
     id: plainTransport.id,
     port: rtpPort,
-    ip: '127.0.0.1'
+    ip: '172.28.0.4'
   });
 
   // producer 세부 정보 출력
@@ -160,7 +160,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // 수정된 FFmpegStream 생성 및 시작
   const ffmpegStream = new FfmpegStream({
-    ip: '127.0.0.1',
+    ip: '172.28.0.4',
     port: rtpPort,
     codec: {
       name: codec.name,
