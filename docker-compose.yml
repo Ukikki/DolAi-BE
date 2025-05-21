@@ -16,7 +16,9 @@ services:
       - REDIS_PORT=6379
       # REDIS_PASSWORD는 .env에서 불러옴
     networks:
-      - backend_network
+      backend_network:
+        ipv4_address: 172.28.0.2
+
   mysql:
     image: mysql:8.0
     container_name: mysql-container
@@ -33,7 +35,8 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - backend_network  # MySQL 네트워크 설정
+      backend_network:
+        ipv4_address: 172.28.0.7  # MySQL 고정 IP
 
   arangodb:
     image: arangodb:latest
@@ -49,7 +52,8 @@ services:
     volumes:
       - arangodb_data:/var/lib/arangodb3
     networks:
-      - backend_network  # ArangoDB 네트워크 설정
+      backend_network:
+        ipv4_address: 172.28.0.5  # ArangoDB 고정 IP
 
   backend:
     build: ./backend # 백엔드 애플리케이션 빌드 위치
@@ -66,7 +70,8 @@ services:
       - arangodb
       - redis
     networks:
-      - backend_network  # 백엔드 네트워크 설정
+      backend_network:
+        ipv4_address: 172.28.0.8  # Backend 고정 IP
     ports:
       - "8080:8080"  # Spring Boot 포트 매핑
 
@@ -79,7 +84,8 @@ services:
       - "4443:4443"           # Mediasoup signaling
       - "3478:3478/udp"       # TURN server
     networks:
-      - backend_network
+      backend_network:
+        ipv4_address: 172.28.0.4  # MediaSoup Server 고정 IP
 
   mediasoup-app:
     build:
@@ -93,7 +99,8 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - backend_network
+      backend_network:
+        ipv4_address: 172.28.0.6  # MediaSoup App 고정 IP
 
   whisper:
     build:
@@ -107,7 +114,8 @@ services:
     ports:
       - "5001:5001"
     networks:
-      - backend_network
+      backend_network:
+        ipv4_address: 172.28.0.3  # Whisper 고정 IP
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
@@ -124,16 +132,19 @@ services:
       - mediasoup-app
       - whisper
     networks:
-      - backend_network
+      backend_network:
+        ipv4_address: 172.28.0.9  # Nginx 고정 IP
 
 networks:
-  backend_network:  # DB, 백엔드, Redis 등 내부 통신용
+  backend_network:
     name: backend_network
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1
 
-  #dolai-network:  # Nginx, WebClient와의 통신용
-    #name: dolai-network
-    #driver: bridge
 
 volumes:
   mysql_data:
