@@ -534,6 +534,12 @@ connections.on('connection', async socket => {
     console.log(`🛑 화이트보드 종료 broadcast → room=${roomName}`);
   });
 
+  // EC2 터지는 원인 (3): FFmpeg는 spawn-heavy 프로세스임. 한 소켓에 두 번 이상 생기면 CPU, RAM, 포트 다 터짐
+  if (peer.ffmpeg) {
+    console.warn(`⚠️ FFmpeg 인스턴스 이미 존재 - 중복 생성 방지`);
+    return callback({ error: 'FFmpeg 중복 생성 차단됨' });
+  }
+
   socket.on('transport-produce', async ({ kind, rtpParameters, appData }, callback) => {
     if (kind === 'audio') {
       console.log(`🎤 오디오 프로듀서 생성 시도 - socketId: ${socket.id}`);
@@ -653,6 +659,12 @@ connections.on('connection', async socket => {
       callback({ error: err.message });
     }
   });
+
+  // EC2 터지는 원인 (3): FFmpeg는 spawn-heavy 프로세스임. 한 소켓에 두 번 이상 생기면 CPU, RAM, 포트 다 터짐
+  if (peer.ffmpeg) {
+    console.warn(`⚠️ FFmpeg 인스턴스 이미 존재 - 중복 생성 방지`);
+    return;
+  }
 
   // 마이크 상태 변경
   socket.on('audio-toggle', async ({ enabled }) => {
