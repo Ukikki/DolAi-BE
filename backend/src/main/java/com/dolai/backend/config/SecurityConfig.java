@@ -45,6 +45,10 @@ public class SecurityConfig {
                         .requestMatchers("/auth/reissue").permitAll() // reissue(403) 예외 처리
                         .requestMatchers("/auth/social", "/auth/social/**").permitAll()  // 👈 소셜 로그인 요청은 인증 없이 허용
                         .requestMatchers("/auth/**").authenticated()                     // 👈 나머지 /auth는 인증 필요 (/auth/logout 등)
+                        .requestMatchers(
+                                "/auth/reissue",
+                                "/ws-chat/**", "/ws-stt/**", "/ws-notification/**" // ✅ WebSocket 관련 경로 허용
+                        ).permitAll()
                         .anyRequest().permitAll())
                 .formLogin(AbstractHttpConfigurer::disable)
                 //.oauth2Login(Customizer.withDefaults())
