@@ -145,9 +145,25 @@ class FfmpegStream extends EventEmitter {
         console.error('WebSocket 오류:', err);
       };
 
-      this.ws.onclose = () => {
+      // EC2 터지는 원인 (2)
+      /*this.ws.onclose = () => {
         console.log('🔌 WebSocket 연결 종료됨, 1초 후 재시도...');
         setTimeout(() => this._connectWebSocket(), 1000);
+      };*/
+
+      // 백오프 줘야함 // 수십 개의 FFmpegStream이 동시에 연결 시도할 때, 서버가 감당 못함
+      this.reconnectAttempts = this.reconnectAttempts || 0;
+
+      this.ws.onclose = () => {
+        this.reconnectAttempts++;
+        if (this.reconnectAttempts > 5) {
+          console.error('❌ WebSocket 재연결 5회 초과 → 중단');
+          return;
+        }
+
+        const backoff = 1000 * this.reconnectAttempts;
+        console.log(`🔁 WebSocket 재연결 시도 #${this.reconnectAttempts} (대기 ${backoff}ms)`);
+        setTimeout(() => this._connectWebSocket(), backoff);
       };
     } catch (error) {
       console.error('WebSocket 연결 오류:', error);
