@@ -1,6 +1,6 @@
 
-const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
-
+//const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
+const PUBLIC_IP = '13.209.37.189';
 import express from 'express'
 const app = express()
 
