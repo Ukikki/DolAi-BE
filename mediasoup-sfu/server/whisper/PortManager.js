@@ -12,8 +12,8 @@ class PortManager {
         // 인스턴스와 포트 매핑
         this.instancePorts = new Map();
         // RTP 포트 범위 설정 (짝수 포트는 RTP, 홀수 포트는 RTCP용)
-        this.minPort = 10000;
-        this.maxPort = 20000;
+        this.minPort = 11000;
+        this.maxPort = 11050;
         // 모니터링 인터벌
         this.monitoringInterval = null;
         // 초기화 로그
