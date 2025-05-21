@@ -1,7 +1,7 @@
 
 //const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
 const PUBLIC_IP_CLIENT = '13.209.37.189';      // 브라우저 → WebRTC 연결용
-const PUBLIC_IP_DOCKER = 'mediasoup-server';   // Whisper → Mediasoup RTP 전송용
+const PUBLIC_IP_DOCKER = '172.23.0.6'   // Whisper → Mediasoup RTP 전송용
 
 import express from 'express'
 const app = express()
@@ -108,7 +108,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // plainTransport 설정 조정
   const plainTransport = await router.createPlainTransport({
-    listenIp: { ip: '0.0.0.0', announcedIp: PUBLIC_IP_DOCKER }, // 중요: announcedIp를 localhost로 설정
+    listenIp: { ip: '0.0.0.0', announcedIp: '172.23.0.5'}, // 중요: announcedIp를 localhost로 설정
     rtcpMux: false, // RTCP MUX 활성화하여 단일 포트 사용
     comedia: false,
   });
