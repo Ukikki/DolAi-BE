@@ -1,8 +1,8 @@
 FROM node:18
 
-# coturn 설치
+# coturn, ffmpeg 설치
 RUN apt-get update && \
-    apt-get install -y coturn && \
+    apt-get install -y coturn ffmpeg && \
     apt-get clean
 
 # 앱 소스 복사
