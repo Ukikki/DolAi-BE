@@ -50,7 +50,7 @@ class FfmpegStream extends EventEmitter {
   }
 
   // 포트 정리 메서드
-  _cleanupPort(port) {
+  async _cleanupPort(port) {
     try {
       console.log(`🧹 포트 ${port} 정리 시도 중...`);
 
@@ -73,10 +73,12 @@ class FfmpegStream extends EventEmitter {
 
       // 포트 해제될 시간 확보
       console.log(`⏱️ 포트 ${port} 해제 대기 중... (500ms)`);
-      const waitUntil = Date.now() + 500;
+      // EC2 터지는 원인 (1)
+      /*const waitUntil = Date.now() + 500;
       while (Date.now() < waitUntil) {
         // 짧은 대기
-      }
+      }*/
+      await new Promise(resolve => setTimeout(resolve, 500)); // 안전: 비동기 sleep(Node.js 이벤트 루프 막지 않고 500ms 대기: CPU 사용량 0%에 가까움)
 
     } catch (error) {
       console.error(`⚠️ 포트 정리 오류:`, error);
