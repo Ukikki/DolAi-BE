@@ -58,6 +58,8 @@ services:
   backend:
     build: ./backend # 백엔드 애플리케이션 빌드 위치
     container_name: backend-container
+    expose:
+      - "8080"     # 내부에서만 접근 가능
     env_file:
       - .env
     volumes:
@@ -72,14 +74,14 @@ services:
     networks:
       backend_network:
         ipv4_address: 172.28.0.8  # Backend 고정 IP
-    ports:
-      - "8080:8080"  # Spring Boot 포트 매핑
 
   mediasoup-server:
     build:
       context: ./mediasoup-sfu
       dockerfile: Dockerfile
     restart: always
+    expose:
+      - "3000"
     container_name: mediasoup-server
     ports:
       - "4443:4443"           # Mediasoup signaling
@@ -98,8 +100,8 @@ services:
     volumes:
       - ./mediasoup-sfu:/app
     command: bash -c "npm install && node app.js"
-    ports:
-      - "3000:3000"
+    #ports:
+    #  - "3000:3000"
     networks:
       backend_network:
         ipv4_address: 172.28.0.6  # MediaSoup App 고정 IP
@@ -127,7 +129,7 @@ services:
     build:
       context: ./nginx
     ports:
-      - "8080:80" # EC2 외부 8080 → nginx 컨테이너 내부 80 포트
+      - "8080:80" # EC2 외부 8080 → nginx 컨테이너 내부 80 포트 # nginx만 외부로 노출
       #- "443:443" # 선택
     depends_on:
       - backend
