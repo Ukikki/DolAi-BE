@@ -687,12 +687,6 @@ connections.on('connection', async socket => {
     }
   });
 
-  // EC2 터지는 원인 (3): FFmpeg는 spawn-heavy 프로세스임. 한 소켓에 두 번 이상 생기면 CPU, RAM, 포트 다 터짐
-  if (peer.ffmpeg) {
-    console.warn(`⚠️ FFmpeg 인스턴스 이미 존재 - 중복 생성 방지`);
-    return;
-  }
-
   // 마이크 상태 변경
   socket.on('audio-toggle', async ({ enabled }) => {
     console.log("🎯 audio-toggle 호출 시점 peer 상태:", {
