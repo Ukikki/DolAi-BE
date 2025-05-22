@@ -375,14 +375,20 @@ connections.on('connection', async socket => {
       { socketId: socket.id, producer, roomName, }
     ]
 
+
+    const prev = peers[socket.id] || {};
+
+    // 💥 기존 audioProducer, ffmpeg 등 보존하면서 덮기
     peers[socket.id] = {
-      ...peers[socket.id],
+      ...prev,
       producers: [
-        ...peers[socket.id].producers,
+        ...(prev.producers || []),
         producer.id,
-      ]
-    }
-  }
+      ],
+      audioProducer: prev.audioProducer,
+      ffmpeg: prev.ffmpeg,
+    };
+  };
 
   const addConsumer = (consumer, roomName) => {
     // add the consumer to the consumers list
@@ -392,12 +398,17 @@ connections.on('connection', async socket => {
     ]
 
     // add the consumer id to the peers list
+    const prev = peers[socket.id] || {};
+
     peers[socket.id] = {
-      ...peers[socket.id],
+      ...prev,
       consumers: [
-        ...peers[socket.id].consumers,
-        consumer.id,
-      ]
+        ...(prev.consumers || []),
+        consumer.id
+      ],
+      // audio 관련 필드 유지
+      audioProducer: prev.audioProducer,
+      ffmpeg: prev.ffmpeg,
     }
   }
 
@@ -534,19 +545,7 @@ connections.on('connection', async socket => {
     console.log(`🛑 화이트보드 종료 broadcast → room=${roomName}`);
   });
 
-  // EC2 터지는 원인 (3): FFmpeg는 spawn-heavy 프로세스임. 한 소켓에 두 번 이상 생기면 CPU, RAM, 포트 다 터짐
-  if (peer.ffmpeg) {
-    console.warn(`⚠️ FFmpeg 인스턴스 이미 존재 - 중복 생성 방지`);
-    return callback({ error: 'FFmpeg 중복 생성 차단됨' });
-  }
-
   socket.on('transport-produce', async ({ kind, rtpParameters, appData }, callback) => {
-    const peer = peers[socket.id]; // 이거 선언 먼저 해줘야 함
-
-    if (peer.ffmpeg) {
-      console.warn(`⚠️ FFmpeg 인스턴스 이미 존재 - 중복 생성 방지`);
-      return callback({ error: 'FFmpeg 중복 생성 차단됨' });
-    }
     if (kind === 'audio') {
       console.log(`🎤 오디오 프로듀서 생성 시도 - socketId: ${socket.id}`);
       // RTP 파라미터 검증
@@ -563,7 +562,6 @@ connections.on('connection', async socket => {
       return callback({ error: 'joinRoom을 먼저 호출해주세요.' });
     }
 
-
     // 트랜스포트 찾기 시도
     const producerTransport = getTransport(socket.id);
     if (!producerTransport) {
@@ -571,12 +569,12 @@ connections.on('connection', async socket => {
       return callback({ error: '트랜스포트를 찾을 수 없습니다.' });
     }
 
-
     if (rtpParameters.mid !== undefined) delete rtpParameters.mid;
 
 
     const { roomName } = peers[socket.id];
     const router = rooms[roomName].router;
+    const peer = peers[socket.id];
 
     try {
       // 🎥 기존 videoProducer/screenProducer 정리 (mediaTag로 구분)
@@ -599,27 +597,44 @@ connections.on('connection', async socket => {
       });
 
       // ✅ 등록
-      addProducer(producer, roomName);
+      //addProducer(producer, roomName);
 
       if (kind === 'video') {
         const tag = appData?.mediaTag || 'camera';
         if (tag === 'screen') {
           peer.screenProducer = producer;
+
+          // 화면 공유 시작 broadcast
+          connections.to(roomName).emit("screen-started", {
+            meetingId: peer.meetingId,
+            from: peer.peerDetails.name || "익명",
+          });
+          console.log(`🖥️ 화면 공유 시작 broadcast → room=${roomName}`);
         } else {
           peer.videoProducer = producer;
         }
 
         producer.on('transportclose', () => {
           console.log(`🚪 video producer(${tag}) transport closed`);
-          if (tag === 'screen') delete peer.screenProducer;
+          // ✅ 화면 공유 종료 broadcast
+          if (tag === 'screen') {
+            connections.to(roomName).emit("screen-ended", { meetingId: peer.meetingId });
+            delete peer.screenProducer;
+          }
           else delete peer.videoProducer;
         });
 
         producer.on('trackended', () => {
           console.log(`📵 video track ended (${tag})`);
           producer.close();
-          if (tag === 'screen') delete peer.screenProducer;
-          else delete peer.videoProducer;
+
+          // ✅ 화면 공유 종료 broadcast
+          if (tag === 'screen') {
+            connections.to(roomName).emit("screen-ended", { meetingId: peer.meetingId });
+            delete peer.screenProducer;
+          } else {
+            delete peer.videoProducer;
+          }
         });
       }
 
@@ -656,7 +671,14 @@ connections.on('connection', async socket => {
       const mediaTag = appData?.mediaTag || kind;
       informConsumers(roomName, socket.id, producer.id, userId, kind, mediaTag);
       console.log('✅ Producer ID:', producer.id, kind);
+      console.log("🎯 transport-produce 이후 peer 상태:", {
+        socketId: peers[socket.id]?.socketId,
+        audioProducer: !!peers[socket.id]?.audioProducer,
+        ffmpeg: !!peers[socket.id]?.ffmpeg,
+      });
 
+      // ✅ 등록
+      addProducer(producer, roomName);
       callback({ id: producer.id, producersExist: producers.length > 1 });
 
     } catch (err) {
@@ -673,6 +695,12 @@ connections.on('connection', async socket => {
 
   // 마이크 상태 변경
   socket.on('audio-toggle', async ({ enabled }) => {
+    console.log("🎯 audio-toggle 호출 시점 peer 상태:", {
+      socketId: peers[socket.id]?.socketId,
+          audioProducer: !!peers[socket.id]?.audioProducer,
+          ffmpeg: !!peers[socket.id]?.ffmpeg,
+    });
+
     const peer = peers[socket.id];
     if (!peer) {
       console.error(`⚠️ audio-toggle: 피어를 찾을 수 없음 ${socket.id}`);
