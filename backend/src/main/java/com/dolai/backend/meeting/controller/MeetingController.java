@@ -18,7 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping
+@RequestMapping("/api")
 public class MeetingController {
 
     private final MeetingService meetingService;
@@ -28,7 +28,6 @@ public class MeetingController {
     public ResponseEntity<?> createMeeting(
             @RequestBody @Valid MeetingCreateRequestDto request,
             @AuthenticationPrincipal User user) {
-
         MeetingResponseDto response = meetingService.createMeeting(request, user.getId(), Status.ONGOING);
         return ResponseEntity.ok(response);
     }
