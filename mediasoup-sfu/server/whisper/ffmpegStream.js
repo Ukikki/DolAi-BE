@@ -42,15 +42,23 @@ class FfmpegStream extends EventEmitter {
       codec: rtpParameters.codec.name
     });
 
-    // 포트 충돌 문제 해결을 위해 포트 정리 먼저 수행
-    this._cleanupPort(rtpParameters.port);
+    /*// 포트 충돌 문제 해결을 위해 포트 정리 먼저 수행
+    this._cleanupPort(rtpParameters.port);*/
+
+    // ❗ async 초기화는 여기서 직접 못 함
+    this.init();  // 내부에서 await 사용 가능
 
     // 웹소켓 연결 및 FFmpeg 시작
     this._connectWebSocket();
   }
 
+  async init() {
+    await this._cleanupPort(this.rtpParameters.port);
+    this._connectWebSocket();
+  }
+
   // 포트 정리 메서드
-  _cleanupPort(port) {
+  async _cleanupPort(port) {
     try {
       console.log(`🧹 포트 ${port} 정리 시도 중...`);
 
@@ -73,10 +81,12 @@ class FfmpegStream extends EventEmitter {
 
       // 포트 해제될 시간 확보
       console.log(`⏱️ 포트 ${port} 해제 대기 중... (500ms)`);
-      const waitUntil = Date.now() + 500;
+      // EC2 터지는 원인 (1)
+      /*const waitUntil = Date.now() + 500;
       while (Date.now() < waitUntil) {
         // 짧은 대기
-      }
+      }*/
+      await new Promise(resolve => setTimeout(resolve, 500)); // 안전: 비동기 sleep(Node.js 이벤트 루프 막지 않고 500ms 대기: CPU 사용량 0%에 가까움)
 
     } catch (error) {
       console.error(`⚠️ 포트 정리 오류:`, error);
@@ -123,7 +133,7 @@ class FfmpegStream extends EventEmitter {
 
   _connectWebSocket() {
     try {
-      this.ws = new WebSocket('ws://172.28.0.3:5001/ws/whisper');
+      this.ws = new WebSocket('ws://192.168.0.26:5001/ws/whisper');
 
       this.ws.onopen = () => {
         console.log('🔌 WebSocket 연결됨');
@@ -135,9 +145,25 @@ class FfmpegStream extends EventEmitter {
         console.error('WebSocket 오류:', err);
       };
 
-      this.ws.onclose = () => {
+      // EC2 터지는 원인 (2)
+      /*this.ws.onclose = () => {
         console.log('🔌 WebSocket 연결 종료됨, 1초 후 재시도...');
         setTimeout(() => this._connectWebSocket(), 1000);
+      };*/
+
+      // 백오프 줘야함 // 수십 개의 FFmpegStream이 동시에 연결 시도할 때, 서버가 감당 못함
+      this.reconnectAttempts = this.reconnectAttempts || 0;
+
+      this.ws.onclose = () => {
+        this.reconnectAttempts++;
+        if (this.reconnectAttempts > 5) {
+          console.error('❌ WebSocket 재연결 5회 초과 → 중단');
+          return;
+        }
+
+        const backoff = 1000 * this.reconnectAttempts;
+        console.log(`🔁 WebSocket 재연결 시도 #${this.reconnectAttempts} (대기 ${backoff}ms)`);
+        setTimeout(() => this._connectWebSocket(), backoff);
       };
     } catch (error) {
       console.error('WebSocket 연결 오류:', error);
@@ -167,9 +193,9 @@ class FfmpegStream extends EventEmitter {
       fs.writeFileSync(this.sdpFilePath, sdp);
       console.log(`📄 SDP 파일 생성됨: ${this.sdpFilePath}`);
 
-      // FFmpeg 명령어 개선 - 옵션들 분리
+      // FFmpeg 명령어 개선 - loglevel 낮추고 옵션 간소화
       const ffmpegArgs = [
-        '-loglevel', 'debug',
+        '-loglevel', 'error', // ← 핵심 변경: debug → error
         '-protocol_whitelist', 'file,pipe,udp,rtp',
         '-rw_timeout', '30000000',
         '-analyzeduration', '10000000',
@@ -186,44 +212,34 @@ class FfmpegStream extends EventEmitter {
         'pipe:1'
       ];
 
-      console.log(`🚀 FFmpeg 명령어: ffmpeg ${ffmpegArgs.join(' ')}`);
+      console.log(`🚀 FFmpeg 실행: ffmpeg ${ffmpegArgs.join(' ')}`);
 
-      // 별도의 환경 변수 설정
-      const env = { ...process.env, FFREPORT: 'file=/tmp/ffmpeg-report.log:level=32' };
+      const env = {
+        ...process.env,
+        FFREPORT: 'file=/tmp/ffmpeg-report.log:level=32',
+      };
 
-      // FFmpeg 프로세스 시작
       this.ffmpegProcess = spawn('ffmpeg', ffmpegArgs, { env });
 
-      // 출력 처리
+      // stdout 처리
       this.ffmpegProcess.stdout.on('data', (chunk) => {
-        console.log(`📤 FFmpeg 오디오 데이터 수신: ${chunk.length} bytes`);
+        console.log(`📤 오디오 데이터 수신: ${chunk.length} bytes`);
         this._enqueueAudio(chunk);
       });
 
-      // 오류 스트림 처리
-      let errorLog = '';
+      // stderr 필터링 - 심각한 에러만 출력
       this.ffmpegProcess.stderr.on('data', (data) => {
-        const text = data.toString();
-        errorLog += text;
-
-        // 중요 로그만 출력하여 로그 과부하 방지
-        if (text.includes('Error') || text.includes('error') ||
-            text.includes('Input #0') || text.includes('Output #0') ||
-            text.includes('demuxing')) {
-          console.log('[FFmpeg stderr]', text.trim());
+        const text = data.toString().trim();
+        if (text.toLowerCase().includes('error') && !text.includes('non-fatal')) {
+          console.error('[FFmpeg ERROR]', text);
         }
       });
 
-      // 종료 처리
+      // 종료 이벤트
       this.ffmpegProcess.on('close', (code) => {
-        console.log(`FFmpeg 종료됨: 코드 ${code}`);
-
-        // 오류 검사
+        console.log(`FFmpeg 종료됨 (코드 ${code})`);
         if (code !== 0) {
-          console.error(`⚠️ FFmpeg이 비정상적으로 종료됨. 코드: ${code}`);
-          if (errorLog.includes('Address already in use')) {
-            console.error('🚨 포트 충돌 감지됨!');
-          }
+          console.error('⚠️ FFmpeg 비정상 종료!');
         }
 
         clearInterval(this.processingInterval);
@@ -324,20 +340,21 @@ class FfmpegStream extends EventEmitter {
 
   _createSdp({ ip, port, codec }) {
     // 127.0.0.1 대신 실제 PUBLIC_IP 사용
-    const localIp = ip || '172.28.0.4';
+    const localIp = ip || '192.168.0.26';
+    const payloadType = 100;  // ✅ 하드코딩으로 100 사용
 
     const sdp = `v=0
 o=- ${Date.now()} 1 IN IP4 ${localIp}
 s=WhisperAudio
 c=IN IP4 ${localIp}
 t=0 0
-m=audio ${port} RTP/AVP ${codec.payloadType}
-a=rtpmap:${codec.payloadType} ${codec.name}/${codec.clockRate}/${codec.channels || 2}
+m=audio ${port} RTP/AVP ${payloadType}
+a=rtpmap:${payloadType} ${codec.name}/${codec.clockRate}/${codec.channels || 2}
 a=recvonly
 a=rtcp-mux
 `.replace(/\n/g, '\r\n');
 
-    console.log(`📄 [SDP 생성됨]:\n${sdp}`);
+    console.log(`📄 [SDP 생성됨 - Payload Type ${payloadType}]:\n${sdp}`);
     return sdp;
   }
 

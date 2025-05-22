@@ -45,7 +45,7 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("https://13.209.37.189:3000") // Mediasoup 기본 주소 지정
+                .baseUrl("https://localhost:3000") // Mediasoup 기본 주소 지정
                 .build();
     }
 }
