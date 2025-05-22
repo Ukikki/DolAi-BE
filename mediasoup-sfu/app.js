@@ -108,14 +108,14 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // plainTransport 설정 조정
   const plainTransport = await router.createPlainTransport({
-    listenIp: { ip: '0.0.0.0', announcedIp: '172.28.0.4'}, // 중요: announcedIp를 localhost로 설정
+    listenIp: { ip: '0.0.0.0', announcedIp: '192.168.1.33'}, // 중요: announcedIp를 localhost로 설정
     rtcpMux: false, // RTCP MUX 활성화하여 단일 포트 사용
     comedia: false,
   });
 
   // plainTransport 연결
   await plainTransport.connect({
-    ip: '172.28.0.4',
+    ip: '192.168.1.33',
     port: rtpPort,
     rtcpPort: rtpPort + 1, // RTCP 포트 명시적 지정
   });
@@ -123,7 +123,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
   console.log(`🔗 [${instanceId}] plainTransport 연결 완료:`, {
     id: plainTransport.id,
     port: rtpPort,
-    ip: '172.28.0.4'
+    ip: '192.168.1.33'
   });
 
   // producer 세부 정보 출력
@@ -535,6 +535,12 @@ connections.on('connection', async socket => {
   });
 
   socket.on('transport-produce', async ({ kind, rtpParameters, appData }, callback) => {
+    const peer = peers[socket.id]; // 이거 선언 먼저 해줘야 함
+
+    if (peer.ffmpeg) {
+      console.warn(`⚠️ FFmpeg 인스턴스 이미 존재 - 중복 생성 방지`);
+      return callback({ error: 'FFmpeg 중복 생성 차단됨' });
+    }
     if (kind === 'audio') {
       console.log(`🎤 오디오 프로듀서 생성 시도 - socketId: ${socket.id}`);
       // RTP 파라미터 검증
@@ -565,7 +571,6 @@ connections.on('connection', async socket => {
 
     const { roomName } = peers[socket.id];
     const router = rooms[roomName].router;
-    const peer = peers[socket.id];
 
     try {
       // 🎥 기존 videoProducer/screenProducer 정리 (mediaTag로 구분)
