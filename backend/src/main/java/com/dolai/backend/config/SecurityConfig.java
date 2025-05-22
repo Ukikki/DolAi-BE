@@ -61,6 +61,7 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://13.209.37.189:5173",
                 "http://ec2-13-209-37-189.ap-northeast-2.compute.amazonaws.com:5173",
+                "http://ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:5173", // ✅ 추가
                 "https://74ca-113-198-83-192.ngrok-free.app",
                 "http://15.165.34.239:5173",
                 "https://mymeeting-backend.loca.lt"
