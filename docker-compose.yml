@@ -84,8 +84,6 @@ services:
     restart: always
 #    expose:
 #      - "3000"
-    ports:
-      - "3000:3000" # (임시)
     container_name: mediasoup-server
     ports:
       - "4443:4443"           # Mediasoup signaling
