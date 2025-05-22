@@ -104,8 +104,8 @@ services:
     volumes:
       - ./mediasoup-sfu:/app
     command: bash -c "npm install && node app.js"
-    #ports:
-    #  - "3000:3000"
+    ports:
+      - "3000:3000"
     networks:
       backend_network:
         ipv4_address: 172.28.0.6  # MediaSoup App 고정 IP
