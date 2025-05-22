@@ -1,6 +1,5 @@
-
 //const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
-const PUBLIC_IP_CLIENT = '192.168.0.26';      // 브라우저 → WebRTC 연결용
+const PUBLIC_IP_CLIENT = '15.165.34.239';      // 브라우저 → WebRTC 연결용
 const PUBLIC_IP_DOCKER = '172.28.0.4'   // mediasoup-server 고정 IP
 
 import express from 'express'
@@ -37,8 +36,8 @@ app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
 
 // SSL cert for HTTPS access
 const options = {
-  key: fs.readFileSync('./server/ssl/key.pem', 'utf-8'),
-  cert: fs.readFileSync('./server/ssl/cert.pem', 'utf-8')
+  key: fs.readFileSync('/etc/letsencrypt/live/ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com/privkey.pem', 'utf-8'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com/fullchain.pem', 'utf-8')
 }
 
 const httpsServer = https.createServer(options, app)
@@ -341,7 +340,7 @@ connections.on('connection', async socket => {
         })
   })
 
-  // rtp 업데이터
+  // rtp 업데이트
   socket.on("updateRtpCapabilities", ({ roomName, rtpCapabilities }) => {
     if (peers[socket.id]) {
       peers[socket.id].rtpCapabilities = rtpCapabilities;

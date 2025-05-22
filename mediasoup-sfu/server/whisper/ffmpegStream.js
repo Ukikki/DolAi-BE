@@ -133,7 +133,7 @@ class FfmpegStream extends EventEmitter {
 
   _connectWebSocket() {
     try {
-      this.ws = new WebSocket('ws://192.168.0.26:5001/ws/whisper');
+      this.ws = new WebSocket('ws://172.28.0.3:5001/ws/whisper');
 
       this.ws.onopen = () => {
         console.log('🔌 WebSocket 연결됨');
@@ -340,7 +340,7 @@ class FfmpegStream extends EventEmitter {
 
   _createSdp({ ip, port, codec }) {
     // 127.0.0.1 대신 실제 PUBLIC_IP 사용
-    const localIp = ip || '192.168.0.26';
+    const localIp = ip || '172.28.0.3';
     const payloadType = 100;  // ✅ 하드코딩으로 100 사용
 
     const sdp = `v=0

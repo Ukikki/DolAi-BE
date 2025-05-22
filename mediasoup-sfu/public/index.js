@@ -134,13 +134,14 @@ const createDevice = async () => {
     console.log('Device RTP Capabilities', device.rtpCapabilities)
 
     // 🔐 TURN credentials
-    const secret = 'mysecretkey';
-    const turnCreds = await generateTurnCredentials(secret);
-
     turnIceServer = {
-      urls: 'turn:${process.env.TURN_IP}:3478?transport=udp',
-      username: turnCreds.username,
-      credential: turnCreds.credential,
+      urls: [
+        'turn:ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:3478?transport=udp',
+        'turn:ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:3478?transport=tcp',
+        'turns:ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:5349?transport=tcp'
+      ],
+      username: 'myuser',
+      credential: 'mypassword'
     };
 
     // once the device loads, create transport
