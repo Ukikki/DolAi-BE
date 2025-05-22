@@ -443,35 +443,38 @@ connections.on('connection', async socket => {
   // 전역 캐시로 선언 (파일 상단 or connections.on 바깥)
   const informedCache = new Set(); // key: `${fromSocketId}_${toSocketId}_${producerId}`
 
-  const informConsumers = (roomName, socketId, id, userId, kind, mediaTag = 'camera') => {
+// 수정된 informConsumers 함수
+  const informConsumers = (roomName, newProducerSocketId, producerId, userId, kind, mediaTag = 'camera') => {
     const allowKinds = ['video', 'board', 'screen'];
     if (!allowKinds.includes(mediaTag)) return;
 
-    console.log(`🟡 informConsumers: new producer ${id} from ${socketId}`);
+    console.log(`🟡 informConsumers: new producer ${producerId} from ${newProducerSocketId}, mediaTag: ${mediaTag}`);
 
-    producers.forEach(producerData => {
-      const toSocketId = producerData.socketId;
-      const isSameRoom = producerData.roomName === roomName;
-      const isVideo = producerData.producer.kind === 'video';
-      const isNotSelf = toSocketId !== socketId;
+    // 같은 룸의 모든 다른 피어들에게 알림
+    Object.keys(peers).forEach(socketId => {
+      const peer = peers[socketId];
 
-      const cacheKey = `${socketId}_${toSocketId}_${id}`;
+      // 조건 확인
+      const isSameRoom = peer.roomName === roomName;
+      const isNotSelf = socketId !== newProducerSocketId;
+      const isVideoKind = kind === 'video';
 
-      if (isSameRoom && isVideo && isNotSelf && !informedCache.has(cacheKey)) {
+      const cacheKey = `${newProducerSocketId}_${socketId}_${producerId}`;
+
+      if (isSameRoom && isNotSelf && isVideoKind && !informedCache.has(cacheKey)) {
         informedCache.add(cacheKey);
 
-        const producerSocket = peers[toSocketId].socket;
-        const { peerDetails: { name } } = peers[socketId];
+        const { peerDetails: { name } } = peers[newProducerSocketId];
 
-        producerSocket.emit('new-producer', {
-          producerId: id,
+        peer.socket.emit('new-producer', {
+          producerId: producerId,
           peerId: userId,
           name: name || "익명",
           kind: kind,
           mediaTag: mediaTag,
         });
 
-        console.log(`✅ emit 'new-producer' → to ${toSocketId}`);
+        console.log(`✅ emit 'new-producer' → to ${socketId} (producer: ${producerId}, mediaTag: ${mediaTag})`);
       }
     });
   };
@@ -669,6 +672,9 @@ connections.on('connection', async socket => {
 
       const { userId } = peer.peerDetails;
       const mediaTag = appData?.mediaTag || kind;
+
+      // ✅ 등록
+      addProducer(producer, roomName);
       informConsumers(roomName, socket.id, producer.id, userId, kind, mediaTag);
       console.log('✅ Producer ID:', producer.id, kind);
       console.log("🎯 transport-produce 이후 peer 상태:", {
@@ -677,8 +683,6 @@ connections.on('connection', async socket => {
         ffmpeg: !!peers[socket.id]?.ffmpeg,
       });
 
-      // ✅ 등록
-      addProducer(producer, roomName);
       callback({ id: producer.id, producersExist: producers.length > 1 });
 
     } catch (err) {
