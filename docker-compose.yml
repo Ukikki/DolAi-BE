@@ -127,8 +127,8 @@ services:
     build:
       context: ./nginx
     ports:
-      - "80:80"
-      - "443:443" # 선택
+      - "8080:80" # EC2 외부 8080 → nginx 컨테이너 내부 80 포트
+      #- "443:443" # 선택
     depends_on:
       - backend
       - mediasoup-app
