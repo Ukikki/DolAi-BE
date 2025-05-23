@@ -35,18 +35,18 @@ public class STTLogService {
     private final S3Service s3Service;
 
     public void saveLog(STTLogRequest request) {
-        STTLog log = saveLogToDB(request);
+        STTLog savedLog = saveLogToDB(request);
 
-        System.out.println("STTLog saved: " + log); // log
+        log.info("STTLog saved: {}", savedLog); // log
 
-        broadcastLog(request.getMeetingId(), log);
+        broadcastLog(request.getMeetingId(), savedLog);
     }
 
     private STTLog saveLogToDB(STTLogRequest request) {
         Meeting meeting = meetingRepository.findById(request.getMeetingId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
 
-        System.out.println("Meeting found: " + meeting); // log
+        log.info("Meeting found: " + meeting); // log
 
         STTLog log = STTLog.builder()
                 .meeting(meeting)
