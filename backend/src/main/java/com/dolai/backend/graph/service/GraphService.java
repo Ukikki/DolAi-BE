@@ -131,22 +131,7 @@ public class GraphService {
     }
 
     public GraphResponse getGraphVisualization(String meetingId) {
-        // 1. meetings 컬렉션에서 title 조회
-        String meetingDocQuery = "RETURN DOCUMENT(@id)";
-        Map<String, Object> meetingVars = Map.of("id", "meetings/" + meetingId);
-        ArangoCursor<BaseDocument> meetingCursor = arangoDatabase.query(meetingDocQuery, meetingVars, null, BaseDocument.class);
-
-        String meetingTitle = meetingId; // 기본값
-        if (meetingCursor.hasNext()) {
-            BaseDocument doc = meetingCursor.next();
-            Object titleAttr = doc.getAttribute("title");
-            if (titleAttr != null) {
-                meetingTitle = titleAttr.toString();
-            }
-        }
-
-        // 2. 회의 노드 생성
-        GraphNode meetingNode = new GraphNode("meetings/" + meetingId, "meetings", meetingTitle, null, null);
+        GraphNode meetingNode = new GraphNode("meetings/" + meetingId, "meetings", meetingId, null, null);
         List<UtteranceNode> utterances = new ArrayList<>();
 
         String query = "FOR u IN utterances FILTER u.meetingId == @meetingId RETURN u";
