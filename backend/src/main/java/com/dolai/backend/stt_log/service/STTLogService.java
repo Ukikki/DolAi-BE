@@ -36,12 +36,17 @@ public class STTLogService {
 
     public void saveLog(STTLogRequest request) {
         STTLog log = saveLogToDB(request);
+
+        System.out.println("STTLog saved: " + log); // log
+
         broadcastLog(request.getMeetingId(), log);
     }
 
     private STTLog saveLogToDB(STTLogRequest request) {
         Meeting meeting = meetingRepository.findById(request.getMeetingId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
+
+        System.out.println("Meeting found: " + meeting); // log
 
         STTLog log = STTLog.builder()
                 .meeting(meeting)
