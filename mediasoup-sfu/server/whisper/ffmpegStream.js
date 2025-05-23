@@ -247,6 +247,7 @@ class FfmpegStream extends EventEmitter {
         this.emit('close');
       });
 
+
       // 주기적으로 큐 상태 확인 및 처리
       this.processingInterval = setInterval(() => this._checkQueue(), 500);
 

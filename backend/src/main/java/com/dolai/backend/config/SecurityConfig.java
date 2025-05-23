@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/reissue").permitAll() // reissue(403) 예외 처리
                         .requestMatchers("/auth/social", "/auth/social/**", "/auth/callback").permitAll()  // 👈 소셜 로그인 요청은 인증 없이 허용
+                        .requestMatchers("/ws-chat/**", "/ws-stt/**", "/ws-notification/**").permitAll()
                         .requestMatchers("/auth/**").authenticated()                     // 👈 나머지 /auth는 인증 필요 (/auth/logout 등)
                         .anyRequest().permitAll())
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -58,15 +59,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-		"http://3.34.92.187.nip.io",
-		"https://3.34.92.187.nip.io",
-                "http://localhost:5173",
-                "http://3.34.92.187.nip.io:5173",
-                "http://3.34.92.187:5173",
-                "https://74ca-113-198-83-192.ngrok-free.app",
-                "https://3.34.92.187.nip.io:5173",
-                "https://3.34.92.187:5173",
-                "https://mymeeting-backend.loca.lt"
+                "http://3.34.92.187.nip.io",
+                "https://3.34.92.187.nip.io"
                 )); // React 프론트엔드 주소
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
