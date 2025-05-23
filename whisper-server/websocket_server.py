@@ -84,7 +84,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                 utterance_id = uuid.uuid4().hex
                 segment_start = chunk_start_time + segment.start
-                timestamp = datetime.fromtimestamp(segment_start).isoformat()
+                timestamp = datetime.fromtimestamp(segment_start).strftime('%Y-%m-%dT%H:%M:%S')
 
                 await websocket.send_json({"text": text})
 
@@ -135,6 +135,7 @@ async def translate_and_resend(text, lang, speaker, meeting_id, utterance_id, ti
             "textZh": result.get("zh", ""),
             "timestamp": timestamp
         }
+        print("📤 Spring 전송 payload:", payload)
 
         requests.post(SPRING_URL, json=payload)
         print("✅ 번역 전송 완료")
