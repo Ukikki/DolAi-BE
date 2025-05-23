@@ -21,7 +21,7 @@ public class WebClientConfig {
 
         Dotenv dotenv = Dotenv.load(); // .env 파일 읽기
         //String publicIp = dotenv.get("PUBLIC_IP");
-        String publicIp = "13.209.37.189"; // AWS EC2 퍼블릭 IP // 오류 해결용 하드코딩
+        //String publicIp = "13.209.37.189"; // AWS EC2 퍼블릭 IP // 오류 해결용 하드코딩
 
         X509TrustManager trustAllCerts = new X509TrustManager() {
             @Override public void checkClientTrusted(X509Certificate[] xcs, String string) {}
@@ -45,7 +45,7 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("https://13.209.37.189:3000") // Mediasoup 기본 주소 지정
+                .baseUrl("https://3.34.92.187.nip.io:3000") // Mediasoup 기본 주소 지정
                 .build();
     }
 }

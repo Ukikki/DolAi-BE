@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용하지 않음
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/reissue").permitAll() // reissue(403) 예외 처리
-                        .requestMatchers("/auth/social", "/auth/social/**").permitAll()  // 👈 소셜 로그인 요청은 인증 없이 허용
+                        .requestMatchers("/auth/social", "/auth/social/**", "/auth/callback").permitAll()  // 👈 소셜 로그인 요청은 인증 없이 허용
                         .requestMatchers("/ws-chat/**", "/ws-stt/**", "/ws-notification/**").permitAll()
                         .requestMatchers("/auth/**").authenticated()                     // 👈 나머지 /auth는 인증 필요 (/auth/logout 등)
                         .anyRequest().permitAll())
@@ -59,10 +59,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://13.209.37.189:5173",
-                "http://ec2-13-209-37-189.ap-northeast-2.compute.amazonaws.com:5173"
-        )); // React 프론트엔드 주소
+                "http://3.34.92.187.nip.io",
+                "https://3.34.92.187.nip.io"
+                )); // React 프론트엔드 주소
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

@@ -13,7 +13,7 @@ import webrtcvad
 
 load_dotenv()
 
-SPRING_URL = "http://172.28.0.8:8080/stt/log"
+SPRING_URL = "http://host.docker.internal:8081/stt/log"
 AZURE_TRANSLATOR_KEY = os.getenv("AZURE_TRANSLATOR_KEY")
 AZURE_TRANSLATOR_REGION = os.getenv("AZURE_TRANSLATOR_REGION")
 AZURE_TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
@@ -80,7 +80,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     # Spring Boot의 todo 생성 트리거 호출
                     requests.post(
-                        f"http://172.28.0.8:8080/llm/todo/extract/{meeting_id}"
+                        f"http://host.docker.internal:8081/llm/todo/extract/{meeting_id}"
                     )
                 utterance_id = uuid.uuid4().hex
                 segment_start = chunk_start_time + segment.start

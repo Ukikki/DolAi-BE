@@ -341,20 +341,21 @@ class FfmpegStream extends EventEmitter {
 
   _createSdp({ ip, port, codec }) {
     // 127.0.0.1 대신 실제 PUBLIC_IP 사용
-    const localIp = ip || '172.28.0.4';
+    const localIp = ip || '172.28.0.3';
+    const payloadType = 100;  // ✅ 하드코딩으로 100 사용
 
     const sdp = `v=0
 o=- ${Date.now()} 1 IN IP4 ${localIp}
 s=WhisperAudio
 c=IN IP4 ${localIp}
 t=0 0
-m=audio ${port} RTP/AVP ${codec.payloadType}
-a=rtpmap:${codec.payloadType} ${codec.name}/${codec.clockRate}/${codec.channels || 2}
+m=audio ${port} RTP/AVP ${payloadType}
+a=rtpmap:${payloadType} ${codec.name}/${codec.clockRate}/${codec.channels || 2}
 a=recvonly
 a=rtcp-mux
 `.replace(/\n/g, '\r\n');
 
-    console.log(`📄 [SDP 생성됨]:\n${sdp}`);
+    console.log(`📄 [SDP 생성됨 - Payload Type ${payloadType}]:\n${sdp}`);
     return sdp;
   }
 

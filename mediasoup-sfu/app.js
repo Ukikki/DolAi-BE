@@ -1,6 +1,5 @@
-
 //const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
-const PUBLIC_IP_CLIENT = '13.209.37.189';      // 브라우저 → WebRTC 연결용
+const PUBLIC_IP_CLIENT = '3.34.92.187';      // 브라우저 → WebRTC 연결용
 const PUBLIC_IP_DOCKER = '172.28.0.4'   // mediasoup-server 고정 IP
 
 import express from 'express'
@@ -37,8 +36,8 @@ app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
 
 // SSL cert for HTTPS access
 const options = {
-  key: fs.readFileSync('./server/ssl/key.pem', 'utf-8'),
-  cert: fs.readFileSync('./server/ssl/cert.pem', 'utf-8')
+  key: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/privkey.pem', 'utf-8'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/fullchain.pem', 'utf-8')
 }
 
 const httpsServer = https.createServer(options, app)
@@ -73,7 +72,7 @@ const mediaCodecs = [
   {
     kind: 'audio',
     mimeType: 'audio/opus',
-    preferredPayloadType: 111,
+    preferredPayloadType: 100,
     clockRate: 48000,
     channels: 2,
   },
@@ -108,14 +107,14 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // plainTransport 설정 조정
   const plainTransport = await router.createPlainTransport({
-    listenIp: { ip: '0.0.0.0', announcedIp: '192.168.1.33'}, // 중요: announcedIp를 localhost로 설정
+    listenIp: { ip: '0.0.0.0', announcedIp: PUBLIC_IP_CLIENT}, // 중요: announcedIp를 localhost로 설정
     rtcpMux: false, // RTCP MUX 활성화하여 단일 포트 사용
     comedia: false,
   });
 
   // plainTransport 연결
   await plainTransport.connect({
-    ip: '192.168.1.33',
+    ip: PUBLIC_IP_CLIENT,
     port: rtpPort,
     rtcpPort: rtpPort + 1, // RTCP 포트 명시적 지정
   });
@@ -123,7 +122,7 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
   console.log(`🔗 [${instanceId}] plainTransport 연결 완료:`, {
     id: plainTransport.id,
     port: rtpPort,
-    ip: '192.168.1.33'
+    ip: PUBLIC_IP_CLIENT
   });
 
   // producer 세부 정보 출력
@@ -160,12 +159,12 @@ const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingI
 
   // 수정된 FFmpegStream 생성 및 시작
   const ffmpegStream = new FfmpegStream({
-    ip: '172.28.0.4',
+    ip: PUBLIC_IP_CLIENT,
     port: rtpPort,
     codec: {
       name: codec.name,
       clockRate: codec.clockRate,
-      payloadType: codec.payloadType,
+      payloadType: 100,
       channels: codec.name === 'opus' ? 2 : 1, // opus는 기본적으로 스테레오
     },
   }, meetingId, userName);
@@ -341,7 +340,7 @@ connections.on('connection', async socket => {
         })
   })
 
-  // rtp 업데이터
+  // rtp 업데이트
   socket.on("updateRtpCapabilities", ({ roomName, rtpCapabilities }) => {
     if (peers[socket.id]) {
       peers[socket.id].rtpCapabilities = rtpCapabilities;
@@ -690,6 +689,9 @@ connections.on('connection', async socket => {
       callback({ error: err.message });
     }
   });
+
+  // EC2 터지는 원인 (3): FFmpeg는 spawn-heavy 프로세스임. 한 소켓에 두 번 이상 생기면 CPU, RAM, 포트 다 터짐
+
 
   // 마이크 상태 변경
   socket.on('audio-toggle', async ({ enabled }) => {
