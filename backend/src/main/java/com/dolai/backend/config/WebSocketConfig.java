@@ -24,7 +24,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "https://74ca-113-198-83-192.ngrok-free.app",
                         "http://3.34.92.187.nip.io:5173",
                         "http://3.34.92.187:5173",
-                        "https://3.34.92.187.nip.io:5173",
+                        "https://3.34.92.187.nip.io", //
                         "https://3.34.92.187:5173",
                         "http://localhost:5173"
                 )
@@ -36,7 +36,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "https://74ca-113-198-83-192.ngrok-free.app",
                         "http://3.34.92.187.nip.io:5173",
                         "http://3.34.92.187:5173",
-                        "https://3.34.92.187.nip.io:5173",
+                        "https://3.34.92.187.nip.io", //
                         "https://3.34.92.187:5173",
                         "http://localhost:5173"
                 )
@@ -48,7 +48,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "https://74ca-113-198-83-192.ngrok-free.app",
                         "http://3.34.92.187.nip.io:5173",
                         "http://3.34.92.187:5173",
-                        "https://3.34.92.187.nip.io:5173",
+                        "https://3.34.92.187.nip.io", //
                         "https://3.34.92.187:5173",
                         "http://localhost:5173"
                 )
