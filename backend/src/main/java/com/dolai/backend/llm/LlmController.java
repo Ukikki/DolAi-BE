@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/llm")
+@RequestMapping("/api/llm")
 @RequiredArgsConstructor
 public class LlmController {
 

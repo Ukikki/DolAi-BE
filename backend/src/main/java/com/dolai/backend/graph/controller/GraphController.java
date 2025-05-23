@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/graph")
+@RequestMapping("/api/graph")
 @RequiredArgsConstructor
 public class GraphController {
 

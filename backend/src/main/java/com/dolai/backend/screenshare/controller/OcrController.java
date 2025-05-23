@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/azure-ocr")
+@RequestMapping("/api/azure-ocr")
 public class OcrController {
 
     private final AzureOcrService azureOcrService;

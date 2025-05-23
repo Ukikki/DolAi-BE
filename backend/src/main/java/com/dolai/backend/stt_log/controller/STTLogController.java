@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/stt")
+@RequestMapping("/api/stt")
 @RequiredArgsConstructor
 public class STTLogController {
     private final STTLogService sttLogService;

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/whiteboard")
+@RequestMapping("/api/whiteboard")
 @RequiredArgsConstructor
 public class WhiteboardController {
     private final WhiteboardService whiteboardService;
