@@ -17,7 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/directories")
+@RequestMapping("/api/directories")
 public class DocumentPlacementController {
     private final DocumentPlacementService documentPlacementService;
 

@@ -18,7 +18,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/directories")
+@RequestMapping("/api/directories")
 @RequiredArgsConstructor
 public class DirectoryController {
 

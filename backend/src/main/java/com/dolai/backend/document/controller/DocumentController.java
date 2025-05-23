@@ -16,21 +16,21 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-@RestController
+@RestController("/api/documents")
 @RequiredArgsConstructor
 public class DocumentController {
     private final DocumentService documentService;
     private final S3Service s3Service;
 
     //문서 삭제
-    @DeleteMapping("/documents/{documentId}")
+    @DeleteMapping("/{documentId}")
     public ResponseEntity<SuccessMessageResponse> deleteDocument(@PathVariable("documentId") Long documentId, @AuthenticationPrincipal User user) {
         documentService.deleteDocument(documentId, user);
         return ResponseEntity.ok(new SuccessMessageResponse("Document deleted successfully"));
     }
 
     // docx 파일을 뷰어로 보기
-    @GetMapping("/documents/{documentId}/view-office")
+    @GetMapping("/{documentId}/view-office")
     public ResponseEntity<SuccessDataResponse> viewDocxOnline(@PathVariable("documentId") Long documentId, @AuthenticationPrincipal User user) {
         String fileUrl = documentService.getS3FileUrl(documentId, user);
         String officeViewerUrl = "https://view.officeapps.live.com/op/view.aspx?src=" +
@@ -39,14 +39,14 @@ public class DocumentController {
     }
 
     // docx 파일을 다운로드
-    @GetMapping("/documents/{documentId}/download-docx")
+    @GetMapping("/{documentId}/download-docx")
     public ResponseEntity<SuccessDataResponse> downloadDocx(@PathVariable("documentId") Long documentId, @AuthenticationPrincipal User user) {
         String fileUrl = documentService.getS3FileUrl(documentId, user);
         return ResponseEntity.ok(new SuccessDataResponse<>(fileUrl));
     }
 
     // docx 파일 pdf 변환
-    @GetMapping("/documents/{documentId}/view-pdf")
+    @GetMapping("/{documentId}/view-pdf")
     public ResponseEntity<byte[]> viewAsPdf(@PathVariable("documentId") Long documentId, @AuthenticationPrincipal User user) {
         Document doc = documentService.getById(documentId);
         File docxFile = s3Service.downloadTempFile(doc.getFileUrl()); // S3에서 docx 파일 다운로드
