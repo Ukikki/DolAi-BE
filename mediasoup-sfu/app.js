@@ -29,7 +29,7 @@ app.get('*', (req, res, next) => {
 
   if (req.path.indexOf(path) == 0 && req.path.length > path.length) return next()
 
-  res.send(`You need to specify a room name in the path e.g. 'https://localhost/sfu/room'`)
+  res.send(`You need to specify a room name in the path e.g. 'https://3.34.92.187.nip.io/sfu/room'`)
 })
 
 app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
