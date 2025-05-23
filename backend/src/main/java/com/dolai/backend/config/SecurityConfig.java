@@ -62,6 +62,8 @@ public class SecurityConfig {
                 "http://3.34.92.187.nip.io:5173",
                 "http://3.34.92.187:5173",
                 "https://74ca-113-198-83-192.ngrok-free.app",
+                "https://3.34.92.187.nip.io:5173",
+                "https://3.34.92.187:5173",
                 "https://mymeeting-backend.loca.lt"
                 )); // React 프론트엔드 주소
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
