@@ -223,7 +223,7 @@ class FfmpegStream extends EventEmitter {
 
       // stdout 처리
       this.ffmpegProcess.stdout.on('data', (chunk) => {
-        console.log(`📤 오디오 데이터 수신: ${chunk.length} bytes`);
+       // console.log(`📤 오디오 데이터 수신: ${chunk.length} bytes`);
         this._enqueueAudio(chunk);
       });
 

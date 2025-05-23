@@ -3,6 +3,7 @@ package com.dolai.backend.stt_log.model;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Getter
 @Setter
@@ -16,5 +17,6 @@ public class STTLogRequest {
     private String textKo;
     private String textEn;
     private String textZh;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;
 }
