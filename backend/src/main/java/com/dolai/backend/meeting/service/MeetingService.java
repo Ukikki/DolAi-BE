@@ -212,7 +212,7 @@ public class MeetingService {
     private void createRoomOnMediasoup(String roomId) {
         try {
             mediasoupWebClient.post()
-                    .uri("/create-room")
+                    .uri("/api/create-room")
                     .bodyValue(Map.of("roomId", roomId))
                     .retrieve()
                     .bodyToMono(Void.class)
