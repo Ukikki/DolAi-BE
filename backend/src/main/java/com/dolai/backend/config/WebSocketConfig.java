@@ -22,9 +22,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-stt")
                 .setAllowedOrigins(
                         "https://74ca-113-198-83-192.ngrok-free.app",
-                        "http://15.165.34.239:5173",
-                        "http://localhost:5173",
-                        "http://ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:5173"
+                        "http://3.34.92.187.nip.io",
+                        "http://3.34.92.187",
+                        "http://localhost:5173"
                 )
                 .withSockJS();
 
@@ -32,9 +32,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-notification")
                 .setAllowedOrigins(
                         "https://74ca-113-198-83-192.ngrok-free.app",
-                        "http://15.165.34.239:5173",
-                        "http://localhost:5173",
-                        "http://ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:5173"
+                        "http://3.34.92.187.nip.io",
+                        "http://3.34.92.187",
+                        "http://localhost:5173"
 
                 )
                 .withSockJS();
@@ -43,9 +43,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-chat")
                 .setAllowedOrigins(
                         "https://74ca-113-198-83-192.ngrok-free.app",
-                        "http://15.165.34.239:5173",
-                        "http://localhost:5173",
-                        "http://ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:5173"
+                        "http://3.34.92.187.nip.io",
+                        "http://3.34.92.187",
+                        "http://localhost:5173"
                 )
                 .withSockJS();
     }

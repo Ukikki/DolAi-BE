@@ -70,7 +70,7 @@ public class MeetingService {
         String roomId = System.currentTimeMillis() + "_" + userId;
 
         // 초대 링크 생성
-        String publicIp = "15.165.34.239";
+        String publicIp = "3.34.92.187";
 
         String inviteUrl = "https://" + publicIp + ":3000/sfu/" + roomId;
 

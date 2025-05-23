@@ -45,7 +45,7 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("https://ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com:3000") // Mediasoup 기본 주소 지정
+                .baseUrl("https://3.34.92.187.nip.io:3000")
                 .build();
     }
 }

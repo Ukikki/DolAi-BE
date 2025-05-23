@@ -1,5 +1,5 @@
 //const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
-const PUBLIC_IP_CLIENT = '15.165.34.239';      // 브라우저 → WebRTC 연결용
+const PUBLIC_IP_CLIENT = '3.34.92.187';      // 브라우저 → WebRTC 연결용
 const PUBLIC_IP_DOCKER = '172.28.0.4'   // mediasoup-server 고정 IP
 
 import express from 'express'
@@ -36,8 +36,8 @@ app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
 
 // SSL cert for HTTPS access
 const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com/privkey.pem', 'utf-8'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/ec2-15-165-34-239.ap-northeast-2.compute.amazonaws.com/fullchain.pem', 'utf-8')
+  key: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/privkey.pem', 'utf-8'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/fullchain.pem', 'utf-8')
 }
 
 const httpsServer = https.createServer(options, app)
