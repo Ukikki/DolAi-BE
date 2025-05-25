@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 import requests
 import webrtcvad
 
+from hallucination_remover import HallucinationRemover
+
 load_dotenv()
 
 SPRING_URL = "https://3.34.92.187.nip.io/stt/log"
@@ -18,6 +20,17 @@ AZURE_TRANSLATOR_KEY = os.getenv("AZURE_TRANSLATOR_KEY")
 AZURE_TRANSLATOR_REGION = os.getenv("AZURE_TRANSLATOR_REGION")
 AZURE_TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
 
+# websocket_server.py 상단
+remover = HallucinationRemover(
+    stopwords=["はい", "ㅎ", "핳", "시청자 여러분"],
+    allowed_languages=["korean", "english", "chinese"]
+)
+TODO_KEYWORDS = [
+    "해줘", "해주세요", "해야 해", "완료해", "처리해", "해볼게", "할게요",
+    "할 필요가 있어", "필요합니다", "조치", "진행", "정리해", "확인해", "해야겠어",
+    "해야겠다", "일정", "마감", "하세요", "추가해", "등록해", "남겨", "정리",
+    "assign", "need to", "must", "should", "complete", "submit", "handle", "todo"
+]
 app = FastAPI()
 vad = webrtcvad.Vad(2)  # aggressiveness: 0 (느슨) ~ 3 (엄격)
 model = WhisperModel("small", device="cpu", compute_type="int8")
@@ -65,17 +78,22 @@ async def websocket_endpoint(websocket: WebSocket):
             if not is_speech(audio_bytes):
                 continue
             audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-            segments, info = model.transcribe(audio_np, beam_size=1, vad_filter=True)
+            segments, info = model.transcribe(audio_np, beam_size=1, vad_filter=True, temperature=0.0)
             detected_lang = info.language
 
             for segment in segments:
                 text = segment.text.strip()
                 if not text or text == last_text:
                     continue
+
+                cleaned_text = remover.remove_hallucinations(text)
+                   if not cleaned_text or cleaned_text == last_text:
+                       continue
+
                 last_text = text
                 print("🗣️ 자막:", text)
-                # ✅ 1. 특정 키워드 감지 (간단한 예시)
-                if any(kw in text for kw in ["해주세요", "해야 해", "좀 해줘", "처리해"]):
+
+                if any(kw in cleaned_text.lower() for kw in TODO_KEYWORDS):
                     print("📌 투두 감지됨! 백엔드 호출")
 
                     # Spring Boot의 todo 생성 트리거 호출
@@ -86,7 +104,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 segment_start = chunk_start_time + segment.start
                 timestamp = datetime.fromtimestamp(segment_start).strftime('%Y-%m-%dT%H:%M:%S')
 
-                await websocket.send_json({"text": text})
+                await websocket.send_json({"text": cleaned_text})
 
                 asyncio.create_task(translate_and_resend(
                     text, detected_lang, speaker, meeting_id, utterance_id, timestamp
