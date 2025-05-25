@@ -13,7 +13,7 @@ import webrtcvad
 
 load_dotenv()
 
-SPRING_URL = "https://3.34.92.187.nip.io/stt/log"
+SPRING_URL = "https://3.34.92.187.nip.io/api/stt/log"
 AZURE_TRANSLATOR_KEY = os.getenv("AZURE_TRANSLATOR_KEY")
 AZURE_TRANSLATOR_REGION = os.getenv("AZURE_TRANSLATOR_REGION")
 AZURE_TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
