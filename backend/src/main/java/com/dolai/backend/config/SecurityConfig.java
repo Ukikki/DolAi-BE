@@ -60,7 +60,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "http://3.34.92.187.nip.io",
-                "https://3.34.92.187.nip.io"
+                "https://3.34.92.187.nip.io",
+                "http://localhost:5173"
                 )); // React 프론트엔드 주소
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
