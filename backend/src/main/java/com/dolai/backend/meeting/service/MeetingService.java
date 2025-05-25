@@ -292,42 +292,34 @@ public class MeetingService {
     }
 
     public List<MeetingListResponseDto> getRecentEndedMeetings(User user) {
-        Pageable top4 = PageRequest.of(0, 4);  // ← 여기서 4개 제한
+        Pageable top4 = PageRequest.of(0, 4);
         List<Meeting> meetings = meetingRepository.findTopEndedMeetingsByUserId(user.getId(), top4);
 
         return meetings.stream()
-                .map(meeting -> {
-                    // 🔧 변경됨: 예외를 던지지 않고 Optional로 받음
-                    return directoryRepository.findByMeetingId(meeting.getId())
-                            .map(directory -> new MeetingListResponseDto(
-                                    meeting.getId(),
-                                    meeting.getTitle(),
-                                    meeting.getStartTime(),
-                                    meeting.getInviteUrl(),
-                                    directory.getId()
-                            ))
-                            .orElse(null); // 🔧 변경됨: 디렉터리가 없으면 null 반환
-                })
-                .filter(java.util.Objects::nonNull) // 🔧 변경됨: null 필터링
+                .map(this::toDtoAllowingNullDir)
                 .toList();
     }
 
-    // 종료된 전체 미팅 내역 조회
     public List<MeetingListResponseDto> getAllEndedMeetings(User user) {
         List<Meeting> meetings = meetingRepository.findAllEndedMeetingsByUserId(user.getId());
-        return meetings.stream()
-                .map(meeting -> {
-                    Directory directory = directoryRepository.findByMeetingId(meeting.getId())
-                            .orElseThrow(() -> new CustomException(ErrorCode.DIRECTORY_NOT_FOUND));
 
-                    return new MeetingListResponseDto(
-                            meeting.getId(),
-                            meeting.getTitle(),
-                            meeting.getStartTime(),
-                            meeting.getInviteUrl(),
-                            directory.getId()
-                    );
-                })
+        return meetings.stream()
+                .map(this::toDtoAllowingNullDir)
                 .toList();
+    }
+
+
+    private MeetingListResponseDto toDtoAllowingNullDir(Meeting meeting) {
+        Long directoryId = directoryRepository.findByMeetingId(meeting.getId())
+                .map(Directory::getId)
+                .orElse(null); // 디렉터리가 없어도 null
+
+        return new MeetingListResponseDto(
+                meeting.getId(),
+                meeting.getTitle(),
+                meeting.getStartTime(),
+                meeting.getInviteUrl(),
+                directoryId
+        );
     }
 }

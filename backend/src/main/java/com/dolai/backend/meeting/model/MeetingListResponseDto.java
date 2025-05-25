@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class MeetingListResponseDto {
     private String id;
     private String title;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM-dd")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd")
     private LocalDateTime startTime;
     private String inviteUrl;
     private Long directoryId;
