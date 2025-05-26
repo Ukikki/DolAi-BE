@@ -16,7 +16,8 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-@RestController("/api/documents")
+@RestController
+@RequestMapping("/api/documents")
 @RequiredArgsConstructor
 public class DocumentController {
     private final DocumentService documentService;

@@ -57,3 +57,18 @@ package-lock.json
 mediasoup-sfu/node_modules
 node_modules/
 mediasoup-sfu/package-lock.json
+
+# 로그 및 출력 파일
+*.log
+backend/spring.log
+spring.log
+
+# 생성된 파일 (업로드/문서)
+backend/output/
+backend/uploads/
+
+# Python 캐시
+__pycache__/
+*.pyc
+whisper-server/*.log
+whisper-server/__pycache__/

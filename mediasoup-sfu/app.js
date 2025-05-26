@@ -86,8 +86,9 @@ const mediaCodecs = [
   },
 ]
 
-const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingId, userName }) => {
-  const instanceId = `ffmpeg-${socketId}`;
+const buildFfmpegStream = async ({ router, codec, socketId, producerId, meetingId, userName, userId }) => {
+ // const instanceId = `ffmpeg-${socketId}`;
+  const instanceId = `ffmpeg-${meetingId}-${userId}`;
 
   // 기존 FFmpeg 리소스 정리
   try {
@@ -657,6 +658,7 @@ connections.on('connection', async socket => {
           producerId: producer.id,
           meetingId,
           userName,
+	  userId: peer.peerDetails.userId
         });
 
         peer.audioProducer = producer;

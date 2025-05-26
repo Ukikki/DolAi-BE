@@ -226,6 +226,7 @@ public class MeetingService {
     public void createMeetingAssets(Meeting meeting, User user) {
         Map<String, Map<String, String>> docInfo = llmDocumentService.summarizeAndGenerateDoc(meeting.getId());
         Directory sharedDirectory = directoryService.createSharedDirectory(meeting, user);
+        List<Participant> participants = meeting.getParticipants();
 
         // 각 언어별 문서 생성 및 디렉토리에 연결
         for (Map.Entry<String, Map<String, String>> entry : docInfo.entrySet()) {
@@ -237,7 +238,11 @@ public class MeetingService {
 
             // summary 파라미터 추가
             Document document = documentService.createDocument(meeting, docUrl, title, summary, user);
-            documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, user);
+            for (Participant participant : participants) {
+                User participantUser = participant.getUser();
+                // DocumentPlacement 연결
+                documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, participantUser);
+            }
         }
 
         String titleKo = docInfo.get("ko").get("title");
@@ -282,7 +287,10 @@ public class MeetingService {
 
             // summary 파라미터 추가
             Document txtDoc = documentService.createDocument(meeting, txtUrl, title, summary, user);
-            documentPlacementService.linkDocumentToDirectory(txtDoc, sharedDirectory, user);
+            for (Participant participant : participants) {
+                User participantUser = participant.getUser();
+                documentPlacementService.linkDocumentToDirectory(txtDoc, sharedDirectory, participantUser);
+            }
         }
     }
 

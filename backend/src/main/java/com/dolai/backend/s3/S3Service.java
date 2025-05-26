@@ -3,6 +3,7 @@ package com.dolai.backend.s3;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -13,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -150,6 +152,27 @@ public class S3Service {
         } catch (Exception e) {
             log.error("❌ S3 파일 다운로드 실패: {}", fileUrl, e);
             throw new RuntimeException("S3 파일 다운로드 실패", e);
+        }
+    }
+
+    public String uploadProfileImage(MultipartFile multipartFile, String userId) {
+        try {
+            String fileName = UUID.randomUUID() + "_" + multipartFile.getOriginalFilename();
+            String key = String.format("profiles/%s/%s", userId, fileName);
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .contentType(multipartFile.getContentType())
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(multipartFile.getInputStream(), multipartFile.getSize()));
+
+            log.info("프로필 이미지 업로드 완료: key={}", key);
+            return String.format("https://%s.s3.amazonaws.com/%s", bucketName, key);
+        } catch (Exception e) {
+            log.error("❌ 프로필 이미지 업로드 실패", e);
+            throw new RuntimeException("S3 업로드 실패", e);
         }
     }
 }

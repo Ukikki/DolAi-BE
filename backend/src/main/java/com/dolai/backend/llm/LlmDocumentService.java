@@ -11,8 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import java.io.File;
+
+import java.io.*;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -32,12 +34,8 @@ public class LlmDocumentService {
     private final AzureTranslationService azureTranslationService;
     private final TodoRepository todoRepository;
     private final S3Service s3Service;
+    private static final String outputDir = "/home/ubuntu/DolAi-BE/backend/output"; // 직접 지정
 
-    @Value("${doc.template-dir}")
-    private String templateDir;
-
-    @Value("${doc.output-dir}")
-    private String outputDir;
 
     public Map<String, Map<String, String>> summarizeAndGenerateDoc(String meetingId) {
         Meeting meeting = meetingRepository.findById(meetingId)
@@ -185,7 +183,17 @@ public class LlmDocumentService {
         );
 
         // 5. 문서 생성
-        File template = new File(templateDir, "meetingDoc.docx");
+        File template;
+        try {
+            ClassPathResource resource = new ClassPathResource("meetingDoc.docx");
+            template = File.createTempFile("meetingDoc", ".docx");
+            try (InputStream in = resource.getInputStream(); OutputStream out = new FileOutputStream(template)) {
+                in.transferTo(out);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("❌ 템플릿 파일 복사 실패", e);
+        }
+
         String safeTitle = meeting.getTitle().replaceAll("[\\\\/:*?\"<>|\\s]", "_");
         String fileName = safeTitle + ".docx";
 
@@ -299,8 +307,16 @@ public class LlmDocumentService {
     }
 
     private File generateDocx(Map<String, String> values, String filename, String templateFilename) {
-        File template = new File(templateDir, templateFilename);
-        File output = new File(outputDir, filename);
+        File template;
+        try {
+            ClassPathResource resource = new ClassPathResource(templateFilename);
+            template = File.createTempFile("template", ".docx");
+            try (InputStream in = resource.getInputStream(); OutputStream out = new FileOutputStream(template)) {
+                in.transferTo(out);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("❌ 템플릿 로딩 실패: " + templateFilename, e);
+        }        File output = new File(outputDir, filename);
         output.getParentFile().mkdirs();
         meetingDocGenerator.generateDocx(values, template, output);
         return output;  // 생성된 파일 객체 반환

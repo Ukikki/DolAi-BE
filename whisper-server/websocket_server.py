@@ -87,8 +87,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     continue
 
                 cleaned_text = remover.remove_hallucinations(text)
-                   if not cleaned_text or cleaned_text == last_text:
-                       continue
+                if not cleaned_text or cleaned_text == last_text:
+                    continue
 
                 last_text = text
                 print("🗣️ 자막:", text)
