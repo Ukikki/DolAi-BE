@@ -3,6 +3,7 @@ package com.dolai.backend.user.controller;
 import com.dolai.backend.common.exception.CustomException;
 import com.dolai.backend.common.exception.ErrorCode;
 import com.dolai.backend.common.success.SuccessDataResponse;
+import com.dolai.backend.s3.S3Service;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.model.UserDto;
 import com.dolai.backend.user.model.enums.Language;
@@ -14,14 +15,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
@@ -29,6 +24,7 @@ import java.util.UUID;
 public class UserController {
     private final UserService userService;
     private final UserRepository userRepository;
+    private final S3Service s3Service;
 
     @GetMapping("/me")
     public ResponseEntity<SuccessDataResponse<UserDto>> getMyInfo(@AuthenticationPrincipal User user) {
@@ -57,32 +53,14 @@ public class UserController {
     
     @PatchMapping("/profile")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal User user, @RequestPart("image") MultipartFile imageFile) {
-
-        // backend/uploads 폴더로 절대 경로 지정
         try {
-            String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-
-            String currentDir = System.getProperty("user.dir");
-            String uploadDir;
-
-            if (currentDir.endsWith("backend")) {
-                uploadDir = currentDir + "/uploads";
-            } else {
-                uploadDir = currentDir + "/backend/uploads";
-            }
-
-            Path uploadPath = Paths.get(uploadDir);
-            Files.createDirectories(uploadPath);
-
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String imageUrl = "/static/" + fileName;
+            // S3Service로 업로드
+            String imageUrl = s3Service.uploadProfileImage(imageFile, user.getId());
             user.setProfileImageUrl(imageUrl);
             userRepository.save(user);
 
             return ResponseEntity.ok(new SuccessDataResponse<>(Map.of("profileImage", imageUrl)));
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new CustomException(ErrorCode.USER_FILE_UPLOAD_FAILED);
         }
     }

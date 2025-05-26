@@ -1,6 +1,5 @@
 //const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
-const PUBLIC_IP_CLIENT = '3.34.92.187';      // 브라우저 → WebRTC 연결용
-const PUBLIC_IP_DOCKER = '172.28.0.4'   // mediasoup-server 고정 IP
+const PUBLIC_IP_CLIENT = '127.0.0.1';      // 브라우저 → WebRTC 연결용
 
 import express from 'express'
 const app = express()
@@ -24,20 +23,12 @@ app.use('/api', restRoutes)
 import { createWorker, rooms } from './roomManager.js'
 import FfmpegStream from './server/whisper/ffmpegStream.js';
 
-app.get('*', (req, res, next) => {
-  const path = '/sfu/'
-
-  if (req.path.indexOf(path) == 0 && req.path.length > path.length) return next()
-
-  res.send(`You need to specify a room name in the path e.g. 'https://3.34.92.187.nip.io/sfu/room'`)
-})
-
 app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
 
 // SSL cert for HTTPS access
 const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/privkey.pem', 'utf-8'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/fullchain.pem', 'utf-8')
+  key: fs.readFileSync('./server/ssl/key.pem', 'utf-8'),
+  cert: fs.readFileSync('./server/ssl/cert.pem', 'utf-8')
 }
 
 const httpsServer = https.createServer(options, app)

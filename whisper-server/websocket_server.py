@@ -13,7 +13,8 @@ import webrtcvad
 
 load_dotenv()
 
-SPRING_URL = "https://3.34.92.187.nip.io/stt/log"
+#SPRING_URL = "https://3.34.92.187.nip.io/api/stt/log"
+SPRING_URL = "http://localhost:8081/api/stt/log"
 AZURE_TRANSLATOR_KEY = os.getenv("AZURE_TRANSLATOR_KEY")
 AZURE_TRANSLATOR_REGION = os.getenv("AZURE_TRANSLATOR_REGION")
 AZURE_TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
@@ -80,7 +81,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     # Spring Boot의 todo 생성 트리거 호출
                     requests.post(
-                        f"http://3.34.92.187.nip.io/llm/todo/extract/{meeting_id}"
+                        #f"http://3.34.92.187.nip.io/llm/todo/extract/{meeting_id}"
+                        f"http://localhost:8081/api/llm/todo/extract/{meeting_id}"
                     )
                 utterance_id = uuid.uuid4().hex
                 segment_start = chunk_start_time + segment.start

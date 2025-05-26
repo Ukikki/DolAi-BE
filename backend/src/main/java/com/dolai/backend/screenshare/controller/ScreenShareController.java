@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/meetings")
+@RequestMapping("/api/meetings")
 public class ScreenShareController {
 
     private final ScreenShareService screenShareService;
