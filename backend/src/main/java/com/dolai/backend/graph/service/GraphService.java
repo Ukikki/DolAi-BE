@@ -5,6 +5,8 @@ import com.arangodb.ArangoDatabase;
 import com.arangodb.entity.BaseDocument;
 import com.dolai.backend.graph.edge.*;
 import com.dolai.backend.graph.model.*;
+import com.dolai.backend.meeting.model.Meeting;
+import com.dolai.backend.meeting.repository.MeetingRepository;
 import com.dolai.backend.nlp.service.KeywordExtractionService;
 import com.dolai.backend.nlp.service.TopicExtractionService;
 import com.dolai.backend.stt_log.model.STTLog;
@@ -31,8 +33,11 @@ public class GraphService {
     private final KeywordService keywordService;
     private final TopicService topicService;
 
+    private final MeetingRepository meetingRepository;
+
     private final ArangoDatabase arangoDatabase;
 
+    // MySQL -> ArangoDB 데이터 동기화 로직
     public void syncGraphFromMysql(String meetingId) {
         List<STTLog> logs = sttLogRepository.findByMeetingIdOrderByTimestampAsc(meetingId);
         for (STTLog log : logs) {
@@ -130,37 +135,50 @@ public class GraphService {
         return Mono.just(contexts);
     }
 
+    // ArangoDB로부터 그래프 데이터 조회 (meetingTitle 포함)
     public GraphResponse getGraphVisualization(String meetingId) {
-        GraphNode meetingNode = new GraphNode("meetings/" + meetingId, "meetings", meetingId, null, null);
+        // 1. 회의 제목을 MySQL에서 조회 (없으면 "Untitled Meeting" 사용)
+        Optional<Meeting> meetingOpt = meetingRepository.findById(meetingId);
+        String meetingTitle = meetingOpt.map(Meeting::getTitle).orElse("Untitled Meeting");
+
+        // 2. 회의 노드 생성
+        GraphNode meetingNode = new GraphNode("meetings/" + meetingId, "meetings", meetingTitle, null, null);
         List<UtteranceNode> utterances = new ArrayList<>();
 
+        // 3. ArangoDB에서 해당 회의의 발화(utterance) 리스트 조회
         String query = "FOR u IN utterances FILTER u.meetingId == @meetingId RETURN u";
         Map<String, Object> bindVars = Map.of("meetingId", meetingId);
         ArangoCursor<UtteranceNode> cursor = arangoDatabase.query(query, bindVars, null, UtteranceNode.class);
         cursor.forEachRemaining(utterances::add);
 
+        // 4. 그래프 노드와 엣지 초기화
         List<GraphNode> nodes = new ArrayList<>(List.of(meetingNode));
         List<GraphEdge> edges = new ArrayList<>();
 
+        // 5. 각 발화 노드 처리
         for (UtteranceNode utterance : utterances) {
             String utteranceId = "utterances/" + utterance.getId();
             List<String> keywords = utterance.getKeywords() != null ? utterance.getKeywords() : List.of();
             List<String> topics = utterance.getTopics() != null ? utterance.getTopics() : List.of();
 
+            // 5-1. 발화 노드 추가
             nodes.add(new GraphNode(utteranceId, "utterances", utterance.getText(), keywords, topics));
 
+            // 5-2. 키워드 노드 및 엣지 추가
             for (String keyword : keywords) {
                 String keywordId = "keywords/" + keyword;
                 nodes.add(new GraphNode(keywordId, "keywords", keyword, null, null));
                 edges.add(new GraphEdge(utteranceId, keywordId, "utterance_to_keyword"));
             }
 
+            // 5-3. 토픽 노드 및 엣지 추가
             for (String topic : topics) {
                 String topicId = "topics/" + topic;
                 nodes.add(new GraphNode(topicId, "topics", topic, null, null));
                 edges.add(new GraphEdge(utteranceId, topicId, "utterance_to_topic"));
             }
 
+            // 5-4. 화자 노드 및 엣지 추가 (화자 정보가 있는 경우)
             if (utterance.getSpeaker() != null) {
                 String speakerId = safeArangoKey(utterance.getSpeaker());
                 String speakerNodeId = "speakers/" + speakerId;
@@ -168,21 +186,11 @@ public class GraphService {
                 edges.add(new GraphEdge(utteranceId, speakerNodeId, "utterance_to_speaker"));
             }
 
+            // 5-5. 발화와 회의 간 엣지 추가
             edges.add(new GraphEdge(meetingNode.getId(), utteranceId, "meeting_to_utterance"));
         }
 
-        return new GraphResponse("success", "Graph data retrieved successfully", meetingId, nodes, edges);
-    }
-
-    public GraphResponse syncAndGetGraph(String meetingId) {
-        syncGraphFromMysql(meetingId);
-        return getGraphVisualization(meetingId);
-    }
-
-    public List<BaseDocument> getUtterances(String meetingId) {
-        String query = "FOR u IN utterances FILTER u.meetingId == @meetingId RETURN u";
-        Map<String, Object> bindVars = Map.of("meetingId", meetingId);
-        ArangoCursor<BaseDocument> cursor = arangoDatabase.query(query, bindVars, null, BaseDocument.class);
-        return StreamSupport.stream(cursor.spliterator(), false).collect(Collectors.toList());
+        // 6. 최종 그래프 응답 반환
+        return new GraphResponse("success", "Graph data retrieved successfully", meetingTitle, nodes, edges);
     }
 }

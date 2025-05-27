@@ -24,7 +24,7 @@ public class GraphController {
         return Map.of(
                 "status", graph.getStatus(),
                 "message", graph.getMessage(),
-                "meetingId", graph.getMeetingId(),
+                "meetingTitle", graph.getMeetingTitle(),
                 "nodes", graph.getNodes(),
                 "edges", graph.getEdges()
         );
@@ -37,7 +37,7 @@ public class GraphController {
         return Map.of(
                 "status", graph.getStatus(),
                 "message", graph.getMessage(),
-                "meetingId", graph.getMeetingId(),
+                "meetingTitle", graph.getMeetingTitle(),
                 "nodes", graph.getNodes(),
                 "edges", graph.getEdges()
         );
