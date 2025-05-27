@@ -13,7 +13,7 @@ import java.util.List;
 public class GraphResponse {
     private String status;
     private String message;
-    private String meetingId;
+    private String meetingTitle;
     private List<GraphNode> nodes;
     private List<GraphEdge> edges;
 }
