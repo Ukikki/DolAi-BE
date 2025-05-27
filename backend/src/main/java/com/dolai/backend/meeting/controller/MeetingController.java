@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -82,5 +83,15 @@ public class MeetingController {
     public ResponseEntity<?> getAllEndedMeetings(@AuthenticationPrincipal User user) {
         List<MeetingListResponseDto> response = meetingService.getAllEndedMeetings(user);
         return ResponseEntity.ok(new SuccessDataResponse<>(response));
+    }
+
+    // 6. 회의 그래프 이미지 업로드
+    @PostMapping("/meetings/{id}/graph-image")
+    public ResponseEntity<?> uploadGraphImage(
+            @PathVariable("id") String id,
+            @RequestPart("image") MultipartFile imageFile
+    ) {
+        meetingService.saveGraphImageUrl(id, imageFile);
+        return ResponseEntity.ok(Map.of("status", "success"));
     }
 }

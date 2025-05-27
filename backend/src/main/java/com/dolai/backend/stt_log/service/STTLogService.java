@@ -90,8 +90,10 @@ public class STTLogService {
     // txt 파일 생성
     public Map<String, String> generateTxtFilesAndUpload(String meetingId, Map<String, String> titleMap) {
         List<STTLog> logs = sttLogRepository.findByMeetingIdOrderByTimestampAsc(meetingId);
-        if (logs.isEmpty()) throw new CustomException(ErrorCode.TODO_NOT_FOUND);
-
+        if (logs.isEmpty()) {
+            log.warn("📭 자막 로그 없음: meetingId={}", meetingId);
+            return Map.of();
+        }
         Map<String, StringBuilder> builders = Map.of(
                 "ko", new StringBuilder(), "en", new StringBuilder(), "zh", new StringBuilder()
         );

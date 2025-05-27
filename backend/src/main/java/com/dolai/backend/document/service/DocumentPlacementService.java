@@ -32,7 +32,7 @@ public class DocumentPlacementService {
 
     // DocumentPlacement → DocumentSummaryDto로 변환
     @Transactional
-    private DocumentSummaryDto toSummaryDto(DocumentPlacement placement) {
+    public DocumentSummaryDto toSummaryDto(DocumentPlacement placement) {
         Document doc = placement.getDocument();
         if (doc == null) throw new CustomException(ErrorCode.DOCUMENT_NOT_FOUND);
 
@@ -55,5 +55,4 @@ public class DocumentPlacementService {
         placement.setUser(user);
         documentPlacementRepository.save(placement);
     }
-
 }

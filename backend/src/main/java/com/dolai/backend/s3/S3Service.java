@@ -175,4 +175,26 @@ public class S3Service {
             throw new RuntimeException("S3 업로드 실패", e);
         }
     }
+
+    public String uploadGraphImage(MultipartFile imageFile, String meetingId) {
+        try {
+            String fileName = "graph-" + meetingId + ".png";
+            String key = String.format("graphs/%s", fileName);
+
+            // S3 업로드 요청 생성
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .contentType(imageFile.getContentType())
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(imageFile.getInputStream(), imageFile.getSize()));
+
+            log.info("✅ 그래프 이미지 업로드 완료: {}", key);
+            return String.format("https://%s.s3.amazonaws.com/%s", bucketName, key);
+        } catch (Exception e) {
+            log.error("❌ 그래프 이미지 업로드 실패", e);
+            throw new RuntimeException("그래프 이미지 업로드 실패", e);
+        }
+    }
 }

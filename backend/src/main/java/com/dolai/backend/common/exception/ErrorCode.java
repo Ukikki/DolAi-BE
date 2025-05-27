@@ -30,12 +30,14 @@ public enum ErrorCode {
 
     // Document
     DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의에 연결된 문서를 찾을 수 없습니다."),
+    INVALID_IMAGE(HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."),
 
     // Meeting
     MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의를 찾을 수 없습니다."),
     MEETING_ALREADY_STARTED(HttpStatus.BAD_REQUEST, "호스트가 회의를 시작하지 않았습니다."),
     MEETING_ENDED(HttpStatus.BAD_REQUEST, "종료된 회의입니다."),
     MEETING_HOST_ONLY(HttpStatus.FORBIDDEN, "회의 주최자만 회의를 종료할 수 있습니다."),
+    STT_LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 회의의 자막 로그를 찾을 수 없습니다."),
 
     //Friends
     FRIEND_ALREADY_REQUESTED(HttpStatus.CONFLICT, "이미 친구 요청이 존재합니다."),
