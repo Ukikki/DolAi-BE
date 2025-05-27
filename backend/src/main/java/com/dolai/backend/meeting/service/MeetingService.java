@@ -295,20 +295,23 @@ public class MeetingService {
                 User participantUser = participant.getUser();
                 documentPlacementService.linkDocumentToDirectory(txtDoc, sharedDirectory, participantUser);
             }
+        }
 
-            String graphUrl = graphImageMap.get(meeting.getId());
-            if (graphUrl != null) {
-                String graphTitle = meeting.getTitle() + "_graph";
-                String graphSummary = "'" + meeting.getTitle() +"' 회의에서 생성된 그래프입니다.";
+        // ✅ 그래프 도큐먼트 생성 로직을 반복문 밖으로 이동
+        String graphUrl = graphImageMap.get(meeting.getId());
+        if (graphUrl != null) {
+            String graphTitle = meeting.getTitle() + "_graph";
+            String graphSummary = "'" + meeting.getTitle() +"' 회의에서 생성된 그래프입니다.";
 
-                Document graphDoc = documentService.createDocument(meeting, graphUrl, graphTitle, graphSummary, user);
-                for (Participant participant : participants) {
-                    documentPlacementService.linkDocumentToDirectory(graphDoc, sharedDirectory, participant.getUser());
-                }
-
-                graphImageMap.remove(meeting.getId());
-                log.info("🧠 그래프 문서 생성 및 디렉터리 연결 완료: {}", graphUrl);
+            Document graphDoc = documentService.createDocument(meeting, graphUrl, graphTitle, graphSummary, user);
+            for (Participant participant : participants) {
+                documentPlacementService.linkDocumentToDirectory(graphDoc, sharedDirectory, participant.getUser());
             }
+
+            graphImageMap.remove(meeting.getId());
+            log.info("🧠 그래프 문서 생성 및 디렉터리 연결 완료: {}", graphUrl);
+        } else {
+            log.warn("⚠️ 그래프 이미지가 저장되지 않음: meetingId={}", meeting.getId());
         }
     }
 
