@@ -16,6 +16,7 @@ import com.dolai.backend.meeting.repository.ParticipantsRepository;
 import com.dolai.backend.notification.model.enums.Type;
 import com.dolai.backend.notification.service.NotificationService;
 import com.dolai.backend.document.service.DocumentService;
+import com.dolai.backend.s3.S3Service;
 import com.dolai.backend.stt_log.service.STTLogService;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.repository.UserRepository;
@@ -27,12 +28,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.dolai.backend.meeting.model.Participant.Role.PARTICIPANT;
 import static com.dolai.backend.meeting.model.enums.Status.ENDED;
@@ -54,6 +57,8 @@ public class MeetingService {
     private final DirectoryRepository directoryRepository;
     private final STTLogService sttLogService;
     private final Dotenv dotenv;
+    private final S3Service s3Service;
+    private final Map<String, String> graphImageMap = new ConcurrentHashMap<>();
 
     //    @PostConstruct
 //    private void init() {
@@ -240,7 +245,6 @@ public class MeetingService {
             Document document = documentService.createDocument(meeting, docUrl, title, summary, user);
             for (Participant participant : participants) {
                 User participantUser = participant.getUser();
-                // DocumentPlacement 연결
                 documentPlacementService.linkDocumentToDirectory(document, sharedDirectory, participantUser);
             }
         }
@@ -291,6 +295,20 @@ public class MeetingService {
                 User participantUser = participant.getUser();
                 documentPlacementService.linkDocumentToDirectory(txtDoc, sharedDirectory, participantUser);
             }
+
+            String graphUrl = graphImageMap.get(meeting.getId());
+            if (graphUrl != null) {
+                String graphTitle = meeting.getTitle() + "_graph";
+                String graphSummary = "'" + meeting.getTitle() +"' 회의에서 생성된 그래프입니다.";
+
+                Document graphDoc = documentService.createDocument(meeting, graphUrl, graphTitle, graphSummary, user);
+                for (Participant participant : participants) {
+                    documentPlacementService.linkDocumentToDirectory(graphDoc, sharedDirectory, participant.getUser());
+                }
+
+                graphImageMap.remove(meeting.getId());
+                log.info("🧠 그래프 문서 생성 및 디렉터리 연결 완료: {}", graphUrl);
+            }
         }
     }
 
@@ -329,5 +347,14 @@ public class MeetingService {
                 meeting.getInviteUrl(),
                 directoryId
         );
+    }
+
+    public void saveGraphImageUrl(String meetingId, MultipartFile imageFile) {
+        if (imageFile.isEmpty() || !imageFile.getContentType().startsWith("image/")) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+        String url = s3Service.uploadGraphImage(imageFile, meetingId);
+        graphImageMap.put(meetingId, url);
+        log.info("🖼️ 그래프 이미지 저장: {}", url);
     }
 }
