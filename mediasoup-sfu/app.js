@@ -697,94 +697,11 @@ connections.on('connection', async socket => {
 
   // 마이크 상태 변경
   socket.on('audio-toggle', async ({ enabled }) => {
-    console.log("🎯 audio-toggle 호출 시점 peer 상태:", {
-      socketId: peers[socket.id]?.socketId,
-          audioProducer: !!peers[socket.id]?.audioProducer,
-          ffmpeg: !!peers[socket.id]?.ffmpeg,
-    });
-
     const peer = peers[socket.id];
-    if (!peer) {
-      console.error(`⚠️ audio-toggle: 피어를 찾을 수 없음 ${socket.id}`);
-      return;
-    }
-
-    const producer = peer?.audioProducer;
-    const { roomName } = peer || {};
-
-    if (!producer) {
-      console.error(`⚠️ audio-toggle: 오디오 프로듀서를 찾을 수 없음 ${socket.id}`);
-      return;
-    }
-
-    if (enabled) {
-      console.log(`🎙️ [${socket.id}] 마이크 활성화 중...`);
-
-      // 생산자 재개
-      await producer.resume();
-      console.log("🔊 마이크 재개됨");
-
-      // 기존 FFmpeg 정리
-      if (peer.ffmpeg) {
-        try {
-          peer.ffmpeg.stop?.();
-          delete peer.ffmpeg;
-          console.log("🧹 기존 FFmpeg 인스턴스 정리");
-        } catch (e) {
-          console.error("FFmpeg 정리 오류:", e);
-        }
-      }
-
-      // 약간의 지연 - RTP 패킷이 시작될 때까지
-      await new Promise(r => setTimeout(r, 500));
-
-      const codec = producer.rtpParameters.codecs[0];
-      const router = rooms[roomName].router;
-
-      console.log(`🎛️ 오디오 코덱 정보:`, codec);
-
-      try {
-        const { ffmpegStream } = await buildFfmpegStream({
-          router,
-          codec: {
-            name: codec.mimeType.split('/')[1],
-            clockRate: codec.clockRate,
-            payloadType: codec.payloadType,
-            channels: codec.channels || 2,
-          },
-          socketId: socket.id,
-          producerId: producer.id,
-          meetingId: peer.meetingId,
-          userName: peer.peerDetails.name || "익명",
-        });
-
-        peer.ffmpeg = ffmpegStream;
-
-        // 종료 이벤트 처리
-        producer.on('transportclose', () => {
-          console.log("🚪 오디오 프로듀서 트랜스포트 종료됨");
-          if (peer.ffmpeg) {
-            peer.ffmpeg.stop?.();
-            delete peer.ffmpeg;
-          }
-        });
-
-      } catch (err) {
-        console.error("❌ FFmpeg 설정 오류:", err);
-      }
-
-    } else {
-      // 마이크 비활성화
-      await producer.pause();
-
-      // FFmpeg 정리
-      if (peer.ffmpeg) {
-        peer.ffmpeg.stop?.();
-        delete peer.ffmpeg;
-      }
-
-      console.log("🔕 마이크 OFF → ffmpeg 종료");
-    }
+    if (!peer) return;
+    const userName = peer.peerDetails?.name || "익명";
+    console.log(`🎙️ ${userName}님 마이크 상태: ${enabled ? 'ON' : 'OFF'}`);
+    peer.micEnabled = enabled;
   });
 
   // see client's socket.emit('transport-recv-connect', ...)
