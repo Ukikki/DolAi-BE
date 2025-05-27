@@ -34,21 +34,24 @@ class FfmpegStream extends EventEmitter {
     this.speaker = speaker;
     this.ws = null;
     this.sdpFilePath = null;
+    this.processLock = false;
 
-    console.log(`🎙️ FfmpegStream 생성됨:`, {
+    // 🎯 오버래핑을 위한 버퍼들
+    this.previousBuffer = null; // 이전 청크의 마지막 부분
+    this.overlapSize = 16000; // 0.5초 오버랩 (16kHz * 0.5초 * 2bytes)
+    this.maxOverlapSize = 32000; // 최대 1초 오버랩
+    this.sentChunks = []; // 전송된 청크들의 해시 (중복 방지)
+    this.maxSentChunksHistory = 10; // 최근 10개 청크 해시 저장
+
+    console.log(`🎙️ FfmpegStream 생성됨 (오버래핑 방식):`, {
       meetingId,
       speaker,
       port: rtpParameters.port,
-      codec: rtpParameters.codec.name
+      codec: rtpParameters.codec.name,
+      overlapSeconds: this.overlapSize / 32000
     });
 
-    /*// 포트 충돌 문제 해결을 위해 포트 정리 먼저 수행
-    this._cleanupPort(rtpParameters.port);*/
-
-    // ❗ async 초기화는 여기서 직접 못 함
-    this.init();  // 내부에서 await 사용 가능
-
-    // 웹소켓 연결 및 FFmpeg 시작
+    this.init();
     this._connectWebSocket();
   }
 
@@ -63,30 +66,21 @@ class FfmpegStream extends EventEmitter {
       console.log(`🧹 포트 ${port} 정리 시도 중...`);
 
       if (process.platform === 'win32') {
-        // Windows
         try {
           execSync(`for /f "tokens=5" %a in ('netstat -aon ^| findstr :${port}') do taskkill /F /PID %a`, { stdio: 'ignore' });
         } catch (e) {
-          // 무시 - 프로세스가 없을 수 있음
+          // 무시
         }
       } else {
-        // macOS/Linux
         try {
-          // UDP 포트 사용 프로세스 확인 및 종료
           execSync(`lsof -i udp:${port} | grep -v PID | awk '{print $2}' | xargs -r kill -9 || true`, { stdio: 'ignore' });
         } catch (e) {
-          // 무시 - 프로세스가 없을 수 있음
+          // 무시
         }
       }
 
-      // 포트 해제될 시간 확보
       console.log(`⏱️ 포트 ${port} 해제 대기 중... (500ms)`);
-      // EC2 터지는 원인 (1)
-      /*const waitUntil = Date.now() + 500;
-      while (Date.now() < waitUntil) {
-        // 짧은 대기
-      }*/
-      await new Promise(resolve => setTimeout(resolve, 500)); // 안전: 비동기 sleep(Node.js 이벤트 루프 막지 않고 500ms 대기: CPU 사용량 0%에 가까움)
+      await new Promise(resolve => setTimeout(resolve, 500));
 
     } catch (error) {
       console.error(`⚠️ 포트 정리 오류:`, error);
@@ -95,13 +89,12 @@ class FfmpegStream extends EventEmitter {
 
   // RTP 연결 테스트
   async _testRtpConnection(port) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       try {
         const server = dgram.createSocket('udp4');
 
         console.log(`🔍 RTP 테스트: 포트 ${port}에서 패킷 리스닝 시작...`);
 
-        // 3초 타임아웃
         const timeout = setTimeout(() => {
           server.close();
           console.warn(`⚠️ RTP 테스트: 3초 동안 패킷 없음, 포트 ${port}`);
@@ -137,7 +130,6 @@ class FfmpegStream extends EventEmitter {
 
       this.ws.onopen = () => {
         console.log('🔌 WebSocket 연결됨');
-        // WebSocket 연결 후 FFmpeg 시작
         this._start();
       };
 
@@ -145,13 +137,6 @@ class FfmpegStream extends EventEmitter {
         console.error('WebSocket 오류:', err);
       };
 
-      // EC2 터지는 원인 (2)
-      /*this.ws.onclose = () => {
-        console.log('🔌 WebSocket 연결 종료됨, 1초 후 재시도...');
-        setTimeout(() => this._connectWebSocket(), 1000);
-      };*/
-
-      // 백오프 줘야함 // 수십 개의 FFmpegStream이 동시에 연결 시도할 때, 서버가 감당 못함
       this.reconnectAttempts = this.reconnectAttempts || 0;
 
       this.ws.onclose = () => {
@@ -171,31 +156,26 @@ class FfmpegStream extends EventEmitter {
     }
   }
 
-  // FFmpeg 시작 메서드 수정
+  // FFmpeg 시작 메서드
   async _start() {
     try {
-      // RTP 연결 테스트
       console.log(`🧪 RTP 연결 테스트 시작...`);
       const rtpAvailable = await this._testRtpConnection(this.rtpParameters.port);
 
-      // 임시 디렉토리 준비
       const tempDir = path.join(os.tmpdir(), 'ffmpeg-whisper');
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
-      // 고유한 SDP 파일 생성 (숫자 정확히 처리)
       const uniqueId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       this.sdpFilePath = path.join(tempDir, `whisper_${uniqueId}.sdp`);
 
-      // SDP 내용 생성 및 파일로 저장
       const sdp = this._createSdp(this.rtpParameters);
       fs.writeFileSync(this.sdpFilePath, sdp);
       console.log(`📄 SDP 파일 생성됨: ${this.sdpFilePath}`);
 
-      // FFmpeg 명령어 개선 - loglevel 낮추고 옵션 간소화
       const ffmpegArgs = [
-        '-loglevel', 'error', // ← 핵심 변경: debug → error
+        '-loglevel', 'error',
         '-protocol_whitelist', 'file,pipe,udp,rtp',
         '-rw_timeout', '30000000',
         '-analyzeduration', '10000000',
@@ -221,13 +201,10 @@ class FfmpegStream extends EventEmitter {
 
       this.ffmpegProcess = spawn('ffmpeg', ffmpegArgs, { env });
 
-      // stdout 처리
       this.ffmpegProcess.stdout.on('data', (chunk) => {
-       // console.log(`📤 오디오 데이터 수신: ${chunk.length} bytes`);
         this._enqueueAudio(chunk);
       });
 
-      // stderr 필터링 - 심각한 에러만 출력
       this.ffmpegProcess.stderr.on('data', (data) => {
         const text = data.toString().trim();
         if (text.toLowerCase().includes('error') && !text.includes('non-fatal')) {
@@ -235,7 +212,6 @@ class FfmpegStream extends EventEmitter {
         }
       });
 
-      // 종료 이벤트
       this.ffmpegProcess.on('close', (code) => {
         console.log(`FFmpeg 종료됨 (코드 ${code})`);
         if (code !== 0) {
@@ -246,7 +222,6 @@ class FfmpegStream extends EventEmitter {
         this._cleanupFiles();
         this.emit('close');
       });
-
 
       // 주기적으로 큐 상태 확인 및 처리
       this.processingInterval = setInterval(() => this._checkQueue(), 500);
@@ -261,60 +236,155 @@ class FfmpegStream extends EventEmitter {
     if (isSilence(chunk)) {
       return;
     }
-    // 큐에 청크 추가
+
     this.audioQueue.push({
       data: chunk,
       timestamp: Date.now()
     });
     this.queueSize += chunk.length;
 
-    console.log(`➕ Queue 추가 : ${this.queueSize} bytes`);
+    console.log(`➕ Queue 추가: ${this.queueSize} bytes (큐길이: ${this.audioQueue.length})`);
 
-    // 큐가 목표 크기에 도달했는지 확인
-    if (this.queueSize >= this.targetSize && !this.isProcessing) {
+    if (this.queueSize >= this.targetSize && !this.isProcessing && !this.processLock) {
+      console.log(`🎯 목표 크기 도달 → 즉시 처리 시작`);
       this._processQueue();
     }
   }
 
   _checkQueue() {
-    if (this.isProcessing || this.audioQueue.length === 0) return;
+    if (this.isProcessing || this.processLock || this.audioQueue.length === 0) {
+      return;
+    }
 
     const now = Date.now();
     const oldestChunk = this.audioQueue[0];
     const timeWaiting = now - oldestChunk.timestamp;
 
-    // 오래 기다린 데이터가 있거나, 마지막 처리 후 일정 시간이 지났으면 처리
-    if (timeWaiting >= this.maxWaitTime || (now - this.lastProcessTime >= this.maxWaitTime && this.queueSize > 0)) {
+    const shouldProcess = (
+        timeWaiting >= this.maxWaitTime ||
+        (now - this.lastProcessTime >= this.maxWaitTime && this.queueSize > 0)
+    );
+
+    if (shouldProcess) {
       console.log(`⏱️ 시간 기반 처리 트리거: ${timeWaiting}ms 대기, 큐 크기: ${this.queueSize} bytes`);
       this._processQueue();
     }
   }
 
-  async _processQueue() {
-    if (this.isProcessing || this.audioQueue.length === 0) return;
+  // 🎯 오버래핑 청크 생성 함수
+  _createOverlappingChunk(currentBuffer) {
+    let finalBuffer = currentBuffer;
 
+    // 🔄 1. 이전 청크의 마지막 부분을 앞에 붙이기
+    if (this.previousBuffer && this.previousBuffer.length > 0) {
+      // 이전 버퍼의 마지막 부분 추출
+      const overlapStart = Math.max(0, this.previousBuffer.length - this.overlapSize);
+      const previousOverlap = this.previousBuffer.slice(overlapStart);
+
+      console.log(`🔗 이전 청크 오버랩 추가: ${previousOverlap.length} bytes (${(previousOverlap.length/32000).toFixed(2)}초)`);
+
+      // 이전 오버랩 + 현재 버퍼 결합
+      finalBuffer = Buffer.concat([previousOverlap, currentBuffer]);
+    }
+
+    // 🔄 2. 현재 버퍼를 다음을 위해 저장 (최대 크기 제한)
+    if (currentBuffer.length > this.maxOverlapSize) {
+      // 버퍼가 너무 크면 마지막 부분만 저장
+      const saveStart = currentBuffer.length - this.maxOverlapSize;
+      this.previousBuffer = currentBuffer.slice(saveStart);
+    } else {
+      this.previousBuffer = Buffer.from(currentBuffer); // 복사본 저장
+    }
+
+    return finalBuffer;
+  }
+
+  // 🎯 청크 중복 검사 (해시 기반)
+  _generateChunkHash(buffer) {
+    // 간단한 해시 생성 (처음, 중간, 끝 부분 샘플링)
+    const start = buffer.readUInt32LE(0);
+    const middle = buffer.length > 8 ? buffer.readUInt32LE(Math.floor(buffer.length / 2)) : 0;
+    const end = buffer.length > 4 ? buffer.readUInt32LE(buffer.length - 4) : 0;
+
+    return `${start}-${middle}-${end}-${buffer.length}`;
+  }
+
+  _isDuplicateChunk(buffer) {
+    const hash = this._generateChunkHash(buffer);
+
+    if (this.sentChunks.includes(hash)) {
+      console.log(`🚫 중복 청크 감지 (해시: ${hash.slice(0, 20)}...)`);
+      return true;
+    }
+
+    // 해시 히스토리에 추가
+    this.sentChunks.push(hash);
+
+    // 히스토리 크기 제한
+    if (this.sentChunks.length > this.maxSentChunksHistory) {
+      this.sentChunks.shift(); // 가장 오래된 것 제거
+    }
+
+    return false;
+  }
+
+  async _processQueue() {
+    if (this.isProcessing || this.processLock) {
+      console.log(`🚫 _processQueue 스킵: isProcessing=${this.isProcessing}, processLock=${this.processLock}`);
+      return;
+    }
+
+    if (this.audioQueue.length === 0) {
+      console.log(`🚫 _processQueue 스킵: 큐가 비어있음`);
+      return;
+    }
+
+    this.processLock = true;
     this.isProcessing = true;
 
     try {
-      // 모든 큐 데이터를 하나의 버퍼로 결합
-      const chunks = this.audioQueue.map(item => item.data);
-      const combinedBuffer = Buffer.concat(chunks);
+      // 큐 스냅샷 생성 후 즉시 초기화
+      const queueSnapshot = [...this.audioQueue];
+      const sizeSnapshot = this.queueSize;
 
-      // 큐 초기화
       this.audioQueue = [];
       this.queueSize = 0;
 
-      console.log(`🔄 큐 처리: ${combinedBuffer.length} bytes (약 ${(combinedBuffer.length/32000).toFixed(2)}초 오디오)`);
+      console.log(`🔄 큐 처리 시작: ${sizeSnapshot} bytes (${queueSnapshot.length} chunks)`);
 
-      if (combinedBuffer.length < 4000) {
+      if (queueSnapshot.length === 0) {
+        console.log('🚫 스냅샷이 비어있음, 처리 중단');
+        return;
+      }
+
+      // 청크들을 하나의 버퍼로 결합
+      const chunks = queueSnapshot.map(item => item.data);
+      const currentBuffer = Buffer.concat(chunks);
+
+      console.log(`📦 현재 청크: ${currentBuffer.length} bytes (약 ${(currentBuffer.length/32000).toFixed(2)}초)`);
+
+      if (currentBuffer.length < 4000) {
         console.log('🔍 너무 짧은 오디오, 건너뜀');
-        this.isProcessing = false;
+        return;
+      }
+
+      // 🎯 오버래핑 청크 생성
+      const overlappingBuffer = this._createOverlappingChunk(currentBuffer);
+
+      console.log(`🔗 오버래핑 적용: ${currentBuffer.length} → ${overlappingBuffer.length} bytes (오버랩: ${overlappingBuffer.length - currentBuffer.length} bytes)`);
+
+      // 🎯 중복 청크 검사
+      if (this._isDuplicateChunk(overlappingBuffer)) {
+        console.log('🚫 중복 청크 스킵');
         return;
       }
 
       console.log("📤 Whisper 전송 직전 확인:", {
         meetingId: this.meetingId,
         speaker: this.speaker,
+        originalSize: currentBuffer.length,
+        overlappedSize: overlappingBuffer.length,
+        overlapRatio: ((overlappingBuffer.length - currentBuffer.length) / currentBuffer.length * 100).toFixed(1) + '%'
       });
 
       // WebSocket으로 전송
@@ -323,26 +393,34 @@ class FfmpegStream extends EventEmitter {
           meetingId: this.meetingId,
           speaker: this.speaker,
           chunkStartTime: Date.now() / 1000,
-          audioData: combinedBuffer.toString('base64')
+          audioData: overlappingBuffer.toString('base64') // 오버래핑된 버퍼 전송
         }));
+        console.log('✅ 오버래핑 청크 WebSocket 전송 완료');
       } else {
         console.error('❌ WebSocket이 열려 있지 않음!');
-        // WebSocket 재연결 시도
+
+        // 전송 실패 시 데이터를 다시 큐에 넣기
+        console.log('🔄 전송 실패 → 데이터를 큐 앞쪽에 다시 추가');
+        this.audioQueue.unshift(...queueSnapshot);
+        this.queueSize += sizeSnapshot;
+
         this._connectWebSocket();
       }
 
       this.lastProcessTime = Date.now();
+
     } catch (err) {
-      console.error('Whisper 전송 오류:', err);
+      console.error('❌ Whisper 전송 오류:', err);
     } finally {
       this.isProcessing = false;
+      this.processLock = false;
+      console.log(`✅ _processQueue 완료`);
     }
   }
 
   _createSdp({ ip, port, codec }) {
-    // 127.0.0.1 대신 실제 PUBLIC_IP 사용
     const localIp = ip || '172.28.0.3';
-    const payloadType = 100;  // ✅ 하드코딩으로 100 사용
+    const payloadType = 100;
 
     const sdp = `v=0
 o=- ${Date.now()} 1 IN IP4 ${localIp}
@@ -359,8 +437,6 @@ a=rtcp-mux
     return sdp;
   }
 
-
-  // 임시 파일 정리
   _cleanupFiles() {
     if (this.sdpFilePath && fs.existsSync(this.sdpFilePath)) {
       try {
@@ -373,17 +449,17 @@ a=rtcp-mux
     }
   }
 
-  // 리소스 정리
   stop() {
     console.log('🛑 FfmpegStream 정리 중...');
 
-    // 인터벌 정리
+    this.processLock = true;
+    this.isProcessing = true;
+
     if (this.processingInterval) {
       clearInterval(this.processingInterval);
       this.processingInterval = null;
     }
 
-    // FFmpeg 프로세스 정리
     if (this.ffmpegProcess) {
       try {
         this.ffmpegProcess.kill('SIGINT');
@@ -393,7 +469,6 @@ a=rtcp-mux
       this.ffmpegProcess = null;
     }
 
-    // WebSocket 정리
     if (this.ws) {
       try {
         this.ws.close();
@@ -403,8 +478,13 @@ a=rtcp-mux
       this.ws = null;
     }
 
-    // 파일 정리
     this._cleanupFiles();
+
+    // 🔧 오버래핑 관련 정리
+    this.audioQueue = [];
+    this.queueSize = 0;
+    this.previousBuffer = null;
+    this.sentChunks = [];
 
     console.log('🛑 FfmpegStream 정리 완료');
   }
