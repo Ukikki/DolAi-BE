@@ -126,7 +126,7 @@ class FfmpegStream extends EventEmitter {
 
   _connectWebSocket() {
     try {
-      this.ws = new WebSocket('ws://172.28.0.3:5001/ws/whisper');
+      this.ws = new WebSocket('ws://localhost:5001/ws/whisper');
 
       this.ws.onopen = () => {
         console.log('🔌 WebSocket 연결됨');

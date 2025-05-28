@@ -15,7 +15,7 @@ from hallucination_remover import HallucinationRemover
 
 load_dotenv()
 
-SPRING_URL = "https://3.34.92.187.nip.io/api/stt/log"
+SPRING_URL = "https://host.docker.internal:8081/api/stt/log"
 AZURE_TRANSLATOR_KEY = os.getenv("AZURE_TRANSLATOR_KEY")
 AZURE_TRANSLATOR_REGION = os.getenv("AZURE_TRANSLATOR_REGION")
 AZURE_TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com"
@@ -345,7 +345,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if any(kw in cleaned_text.lower() for kw in TODO_KEYWORDS):
                 print("📌 투두 감지됨! 백엔드 호출")
                 try:
-                    requests.post(f"http://3.34.92.187.nip.io/llm/todo/extract/{meeting_id}", timeout=5)
+                    requests.post(f"http://host.docker.internal:8081/llm/todo/extract/{meeting_id}", timeout=5)
                 except Exception as e:
                     print(f"⚠️ TODO 요청 실패: {e}")
 

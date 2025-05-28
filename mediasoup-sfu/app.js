@@ -1,5 +1,5 @@
 //const PUBLIC_IP = process.env.PUBLIC_IP || 'localhost';
-const PUBLIC_IP_CLIENT = '3.34.92.187';      // 브라우저 → WebRTC 연결용
+const PUBLIC_IP_CLIENT = '127.0.0.1';      // 브라우저 → WebRTC 연결용
 const PUBLIC_IP_DOCKER = '172.28.0.4'   // mediasoup-server 고정 IP
 
 import express from 'express'
@@ -23,21 +23,12 @@ app.use('/api', restRoutes)
 // roomManager.js 등록
 import { createWorker, rooms } from './roomManager.js'
 import FfmpegStream from './server/whisper/ffmpegStream.js';
-
-app.get('*', (req, res, next) => {
-  const path = '/sfu/'
-
-  if (req.path.indexOf(path) == 0 && req.path.length > path.length) return next()
-
-  res.send(`You need to specify a room name in the path e.g. 'https://3.34.92.187.nip.io/sfu/room'`)
-})
-
 app.use('/sfu/:room', express.static(path.join(__dirname, 'public')))
 
 // SSL cert for HTTPS access
 const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/privkey.pem', 'utf-8'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/3.34.92.187.nip.io/fullchain.pem', 'utf-8')
+  key: fs.readFileSync('./server/ssl/key.pem', 'utf-8'),
+  cert: fs.readFileSync('./server/ssl/cert.pem', 'utf-8')
 }
 
 const httpsServer = https.createServer(options, app)
@@ -445,7 +436,7 @@ connections.on('connection', async socket => {
 
 // 수정된 informConsumers 함수
   const informConsumers = (roomName, newProducerSocketId, producerId, userId, kind, mediaTag = 'camera') => {
-    const allowKinds = ['video', 'board', 'screen'];
+    const allowKinds = ['video', 'board', 'screen', 'mic'];
     if (!allowKinds.includes(mediaTag)) return;
 
     console.log(`🟡 informConsumers: new producer ${producerId} from ${newProducerSocketId}, mediaTag: ${mediaTag}`);
@@ -457,8 +448,6 @@ connections.on('connection', async socket => {
       // 조건 확인
       const isSameRoom = peer.roomName === roomName;
       const isNotSelf = socketId !== newProducerSocketId;
-      const isVideoKind = kind === 'video';
-
       const cacheKey = `${newProducerSocketId}_${socketId}_${producerId}`;
 
       if (isSameRoom && isNotSelf && isVideoKind && !informedCache.has(cacheKey)) {

@@ -11,10 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-
-import java.io.*;
+import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
@@ -34,13 +32,14 @@ public class LlmDocumentService {
     private final AzureTranslationService azureTranslationService;
     private final TodoRepository todoRepository;
     private final S3Service s3Service;
-    private static final String outputDir = "/home/ubuntu/DolAi-BE/backend/output"; // 직접 지정
 
+    @Value("${doc.template-dir}")
+    private String templateDir;
+
+    @Value("${doc.output-dir}")
+    private String outputDir;
 
     public Map<String, Map<String, String>> summarizeAndGenerateDoc(String meetingId) {
-        Meeting meeting = meetingRepository.findById(meetingId)
-                .orElseThrow(() -> new IllegalArgumentException("회의를 찾을 수 없습니다: " + meetingId));
-
         // 1. 회의 로그 가져오기
         String context = sttLogService.getFullTranscriptForLLM(meetingId);
 
@@ -53,7 +52,6 @@ public class LlmDocumentService {
                 - body는 **한두 문장씩 간결하게 핵심만 정리한 bullet 형식**으로 작성해주세요.
                 - 줄바꿈은 <w:br/> 으로 표현합니다.
                 - 결정사항(result)은 핵심만 간결하게 bullet 형식으로 나열해주세요.
-                - 한 줄 요약(summary)은 회의 내용을 한 문장으로 간결하게 요약하세요.
                 
                 정확한 JSON 예시 형식:
                 {
@@ -71,8 +69,7 @@ public class LlmDocumentService {
                     "base image를 devel로 변경하여 테스트",
                     "로깅 레벨 조절",
                     "GPU 인식 테스트 진행"
-                  ],
-                  "summary": "Docker 환경에서 Whisper 성능 저하 문제를 해결하기 위한 GPU 설정 관련 회의"
+                  ]
                 }
                 
                 이 형식을 정확히 지켜주세요. **JSON 외 텍스트는 절대 출력하지 마세요.**
@@ -80,11 +77,10 @@ public class LlmDocumentService {
                 회의 로그:
                 """ + context;
 
-        // 4. 기본값 설정
-        String contentText = "(요약 없음)";
-        String resultText = "(결정사항 없음)";
-        String oneSentenceSummary = meeting.getTitle() + " 회의"; // 기본값으로 회의 제목 사용
-
+        Map<String, String> summary = Map.of(
+                "content", "(요약 없음)",
+                "result", "(결정사항 없음)"
+        );
 
         try {
             String llmResponse = llmService.ask(prompt, List.of(prompt)).block();
@@ -108,31 +104,22 @@ public class LlmDocumentService {
 
                     contentBuilder.append("\n"); // 주제 간 공백
                 }
+                String contentText = contentBuilder.toString().trim().replace("\n", "<w:br/>");
 
-                contentText = contentBuilder.toString().trim().replace("\n", "<w:br/>");
+                String resultText = "- " + String.join("\n- ", dto.getResult()).replace("\n", "<w:br/>");
 
-                resultText = "- " + String.join("\n- ", dto.getResult()).replace("\n", "<w:br/>");
-
-                // LLM에서 제공한 한 줄 요약 가져오기
-                if (dto.getSummary() != null && !dto.getSummary().isBlank()) {
-                    oneSentenceSummary = dto.getSummary();
-                } else {
-                    // 요약이 없는 경우 대안 생성
-                    if (!dto.getContent().isEmpty() && !dto.getResult().isEmpty()) {
-                        oneSentenceSummary = dto.getContent().get(0).getTitle() +
-                                "에 대한 회의에서 " +
-                                dto.getResult().get(0) +
-                                " 등을 결정함";
-                    } else if (!dto.getContent().isEmpty()) {
-                        oneSentenceSummary = dto.getContent().get(0).getTitle() + "에 대한 회의";
-                    } else if (!dto.getResult().isEmpty()) {
-                        oneSentenceSummary = dto.getResult().get(0) + " 등을 결정한 회의";
-                    }
-                }
+                summary = Map.of(
+                        "content", contentText,
+                        "result", resultText
+                );
             }
         } catch (Exception e) {
             log.error("❌ Gemini 응답 처리 실패: {}", e.getMessage(), e);
         }
+
+        // 3. 회의 정보 가져오기
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new IllegalArgumentException("회의를 찾을 수 없습니다: " + meetingId));
 
         //참석자 이름 리스트
         String attendees = meeting.getParticipants().stream()
@@ -171,7 +158,10 @@ public class LlmDocumentService {
                 })
                 .collect(Collectors.joining("<w:br/>"));
 
-        // 7. 문서에 쓸 값 구성
+        // 4. 문서에 쓸 값 구성
+        String contentText = summary.getOrDefault("content", "(요약 없음)").replace("\n", "<w:br/>");
+        String resultText = summary.getOrDefault("result", "(결정사항 없음)").replace("\n", "<w:br/>");
+
         Map<String, String> values = Map.of(
                 "date", date,
                 "time", time,
@@ -183,17 +173,7 @@ public class LlmDocumentService {
         );
 
         // 5. 문서 생성
-        File template;
-        try {
-            ClassPathResource resource = new ClassPathResource("meetingDoc.docx");
-            template = File.createTempFile("meetingDoc", ".docx");
-            try (InputStream in = resource.getInputStream(); OutputStream out = new FileOutputStream(template)) {
-                in.transferTo(out);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("❌ 템플릿 파일 복사 실패", e);
-        }
-
+        File template = new File(templateDir, "meetingDoc.docx");
         String safeTitle = meeting.getTitle().replaceAll("[\\\\/:*?\"<>|\\s]", "_");
         String fileName = safeTitle + ".docx";
 
@@ -207,7 +187,6 @@ public class LlmDocumentService {
         Map<String, String> koInfo = new HashMap<>();
         koInfo.put("url", s3Url);
         koInfo.put("title", meeting.getTitle());
-        koInfo.put("summary", oneSentenceSummary);
         docInfo.put("ko", koInfo);
 
         // 6. 번역된 문서 생성
@@ -221,47 +200,14 @@ public class LlmDocumentService {
             String safeTitleEn = titleEn.replaceAll("[\\\\/:*?\"<>|\\s]", "_");
             String safeTitleZh = titleZh.replaceAll("[\\\\/:*?\"<>|\\s]", "_");
 
-            // 제목 중복 확인 및 파일명 결정
-            Map<String, String> titles = new HashMap<>();
-            titles.put("ko", safeTitle);
-            titles.put("en", safeTitleEn);
-            titles.put("zh", safeTitleZh);
-
-            Map<String, String> fileNames = new HashMap<>();
-            Map<String, Integer> titleCount = new HashMap<>();
-
-            // 제목 중복 카운트
-            for (String safeT : List.of(safeTitle, safeTitleEn, safeTitleZh)) {
-                titleCount.put(safeT.toLowerCase(), titleCount.getOrDefault(safeT.toLowerCase(), 0) + 1);
-            }
-
-
-            // 파일명 결정 (중복 시 언어 코드 추가)
-            for (Map.Entry<String, String> entry : titles.entrySet()) {
-                String lang = entry.getKey();
-                String title = entry.getValue();
-
-                if (titleCount.get(title.toLowerCase()) > 1) {
-                    // 중복된 제목이면 언어 코드 추가
-                    fileNames.put(lang, title + "_" + lang + ".docx");
-                } else {
-                    // 중복되지 않으면 그대로 사용
-                    fileNames.put(lang, title + ".docx");
-                }
-            }
-
-            // 결정된 파일명 사용
-            String fileNameEn = fileNames.get("en");
-            String fileNameZh = fileNames.get("zh");
+            String fileNameEn = safeTitleEn + ".docx";
+            String fileNameZh = safeTitleZh + ".docx";
 
             String contentEn = azureTranslationService.translate(contentText, "en");
             String resultEn = azureTranslationService.translate(resultText, "en");
 
             String contentZh = azureTranslationService.translate(contentText, "zh-Hans");
             String resultZh = azureTranslationService.translate(resultText, "zh-Hans");
-
-            String oneSentenceSummaryEn = azureTranslationService.translate(oneSentenceSummary, "en");
-            String oneSentenceSummaryZh = azureTranslationService.translate(oneSentenceSummary, "zh-Hans");
 
             Map<String, String> valuesEn = Map.of(
                     "date", date,
@@ -289,7 +235,6 @@ public class LlmDocumentService {
             Map<String, String> enInfo = new HashMap<>();
             enInfo.put("url", s3UrlEn);
             enInfo.put("title", titleEn);
-            enInfo.put("summary", oneSentenceSummaryEn);
             docInfo.put("en", enInfo);
 
             // 중국어 문서 생성 및 S3 업로드
@@ -298,7 +243,6 @@ public class LlmDocumentService {
             Map<String, String> zhInfo = new HashMap<>();
             zhInfo.put("url", s3UrlZh);
             zhInfo.put("title", titleZh);
-            zhInfo.put("summary", oneSentenceSummaryZh);
             docInfo.put("zh", zhInfo);
         } catch (Exception e) {
             log.error("❌ 다국어 번역 또는 문서 생성 실패", e);
@@ -307,16 +251,8 @@ public class LlmDocumentService {
     }
 
     private File generateDocx(Map<String, String> values, String filename, String templateFilename) {
-        File template;
-        try {
-            ClassPathResource resource = new ClassPathResource(templateFilename);
-            template = File.createTempFile("template", ".docx");
-            try (InputStream in = resource.getInputStream(); OutputStream out = new FileOutputStream(template)) {
-                in.transferTo(out);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("❌ 템플릿 로딩 실패: " + templateFilename, e);
-        }        File output = new File(outputDir, filename);
+        File template = new File(templateDir, templateFilename);
+        File output = new File(outputDir, filename);
         output.getParentFile().mkdirs();
         meetingDocGenerator.generateDocx(values, template, output);
         return output;  // 생성된 파일 객체 반환
