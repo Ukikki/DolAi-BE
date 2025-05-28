@@ -1,11 +1,12 @@
 package com.dolai.backend.stt_log.repository;
 
 import com.dolai.backend.stt_log.model.STTLog;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,22 +25,26 @@ public interface STTLogRepository extends JpaRepository<STTLog, Long> {
     List<STTLog> findUncheckedLogsByMeetingId(@Param("meetingId") String meetingId);
 
     // 목데이터와 연결된 미팅 아이디를 방 생성 시 미팅 아이디로 업뎃
-    @Modifying
-    @Query(value = "UPDATE stt_logs SET meeting_id = :meetingId WHERE id BETWEEN 1 AND 24", nativeQuery = true)
-    void updateDemoLogs(@Param("meetingId") String meetingId);
-
     // 목데이터의 synced 0으로 변경
+    // 목데이터의 meeting_id를 새로 생성된 미팅 ID로 연결
     @Modifying
+    @Transactional(timeout = 30)
     @Query(value = "UPDATE stt_logs SET meeting_id = :meetingId, synced = 0 WHERE id BETWEEN 1 AND 24", nativeQuery = true)
-    void resetDemoLogsSynced();
+    void assignDemoLogsToMeeting(@Param("meetingId") String meetingId);
 
-    // 목데이터의 todo_checked 0으로 변경
+    /**
+     * ✅ 데모 로그 TODO 상태 초기화
+     */
     @Modifying
+    @Transactional(timeout = 15)
     @Query(value = "UPDATE stt_logs SET todo_checked = 0 WHERE id BETWEEN 1 AND 24", nativeQuery = true)
     void resetDemoTodos();
 
-    // 목데이터 제외 쌓인 logs 삭제
+    /**
+     * ✅ 비데모 로그 삭제 (id > 24)
+     */
     @Modifying
+    @Transactional(timeout = 30)
     @Query(value = "DELETE FROM stt_logs WHERE id > 24", nativeQuery = true)
-    void deleteDemoLogsAfterEnd();
+    void deleteLogs();
 }

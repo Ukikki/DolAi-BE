@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,7 +61,7 @@ public class MeetingService {
     private final Dotenv dotenv;
     private final S3Service s3Service;
     private final Map<String, String> graphImageMap = new ConcurrentHashMap<>();
-    private final STTLogRepository sttLogRepository;
+    private final DemoLogAsyncService demoLogAsyncService;
 
     //    @PostConstruct
 //    private void init() {
@@ -109,8 +110,7 @@ public class MeetingService {
         // 데모 버전~~~~~~~~~~~~~~~~~~~~~~!!!!! 발표 후 지울 것입니다.
         // 방 title이 '캡스톤'이면 샘플 데이터 미팅 id 변경, synced 0
         if ("캡스톤".equals(request.getTitle())) {
-            sttLogRepository.updateDemoLogs(meeting.getId());
-            sttLogRepository.resetDemoLogsSynced();
+            demoLogAsyncService.assignDemoLogsAsync(meeting.getId());
         }
 
         return new MeetingResponseDto(meeting.getId(), meeting.getTitle(), meeting.getStartTime(), inviteUrl);
@@ -224,9 +224,7 @@ public class MeetingService {
         }
 
         if ("캡스톤".equals(meeting.getTitle())) {
-            sttLogRepository.deleteDemoLogsAfterEnd();
-            sttLogRepository.resetDemoTodos();
-            log.info("🧹 데모 STT 로그 정리 완료 (id > 24 삭제 + synced, todo 체크 초기화)");
+            demoLogAsyncService.clearDemoLogsAsync();
         }
     }
 
