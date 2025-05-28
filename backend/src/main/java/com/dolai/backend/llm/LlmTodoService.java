@@ -1,6 +1,8 @@
 package com.dolai.backend.llm;
 
 import com.dolai.backend.meeting.model.Meeting;
+import com.dolai.backend.notification.model.enums.Type;
+import com.dolai.backend.notification.service.NotificationService;
 import com.dolai.backend.stt_log.model.STTLog;
 import com.dolai.backend.stt_log.repository.STTLogRepository;
 import com.dolai.backend.todo.model.AiTodoDto;
@@ -19,7 +21,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +35,10 @@ public class LlmTodoService {
     private final TodoRepository todoRepository;
     private final STTLogRepository sttLogRepository;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
-    public void extractAndSaveTodos(String meetingId) {
+    public void extractAndSaveTodos(String meetingId, String speakerId) {
+
         List<STTLog> recentLogs = sttLogRepository.findUncheckedLogsByMeetingId(meetingId);
         log.info("Found {} logs for 미팅아이디: {}", recentLogs.size(), meetingId);
         if (recentLogs.isEmpty()) {
@@ -40,26 +46,46 @@ public class LlmTodoService {
             return;
         }
 
+        Meeting meeting = recentLogs.get(0).getMeeting(); // recentLogs가 비어있지 않으니 안전
+
+        String speakerName = userRepository.findById(speakerId)
+                .map(User::getName)
+                .orElse("이 사용자");
+
+        // 참가자 목록 문자열로 만들기
+        String userList = meeting.getParticipants().stream()
+                .map(p -> "\"" + p.getUser().getName() + "\"")
+                .collect(Collectors.joining(", "));
         String now = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        StringBuilder promptBuilder = new StringBuilder("""
-            현재 시간은 %s입니다.
+        String promptTemplate = """
+    현재 시간은 %s입니다.
 
-            아래는 회의에서 최근에 있었던 대화입니다.
-            할 일을 요청한 내용이 있다면 JSON 배열로 추출해주세요.
-            마감일은 반드시 ISO 8601 형식인 yyyy-MM-dd'T'HH:mm:ss 형태로 작성해 주세요. \s
-            형식:
-            [
-              {
-                "speaker": "이름",
-                "task": "할 일 내용",
-                "dueDate" : "2025-05-20T23:59:59"
-              }
-            ]
+    아래는 회의에서 최근에 있었던 대화입니다.
+    이 회의에는 다음 참가자들이 있습니다: %s
+    발화자가 "%s"인 내용만 기반으로,
+    할 일을 요청한 내용이 있다면 JSON 배열로 추출해주세요.
+    Whisper가 STT한 로그이므로 발화와 가장 유사한 참가자 명을 'name'에 그대로 작성하세요.
+    만약 일치하는 name이 없다면 발화자의 이름을 'name'에 그대로 넣으세요.
+    마감일은 반드시 ISO 8601 형식인 yyyy-MM-dd'T'HH:mm:ss 형태로 작성해 주세요. 
+    형식:
+    [
+      {
+        "name": "이름",
+        "task": "할 일 내용",
+        "dueDate" : "2025-05-20T23:59:59"
+      }
+    ]
 
-            할 일이 없다면 빈 배열을 반환하세요.
+    할 일이 없다면 빈 배열을 반환하세요.
 
-            대화:
-        """.formatted(now));
+    대화:
+""";
+
+        String promptHeader = String.format(promptTemplate, now, userList, speakerName);
+
+// 이제 StringBuilder 사용
+        StringBuilder promptBuilder = new StringBuilder(promptHeader);
+
 
         for (STTLog log : recentLogs) {
             String time = log.getTimestamp().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
@@ -84,7 +110,7 @@ public class LlmTodoService {
             log.info("✅ 파싱된 Todo 수: {}", todoList.size());
 
             for (AiTodoDto dto : todoList) {
-                String speaker = dto.getSpeaker();
+                String name = dto.getName();
                 String task = dto.getTask();
 
                 // dueDate 처리
@@ -100,14 +126,15 @@ public class LlmTodoService {
                     log.warn("⚠️ 유효하지 않은 dueDate: '{}'", dueDateStr);
                 }
 
-                Optional<User> userOpt = userRepository.findByName(speaker);
+                // ✅ 아래처럼 name 기반으로 먼저 찾고, fallback으로 speakerId
+                List<User> matchedUsers = userRepository.findAllByName(name);
+                Optional<User> userOpt = matchedUsers.stream().findFirst(); // 또는 더 정교한 필터링
                 if (userOpt.isEmpty()) {
-                    log.warn("⚠️ '{}' 사용자 이름에 해당하는 유저를 찾을 수 없습니다. Todo 건너뜀", speaker);
-                    continue;
+                    log.warn("⚠️ '{}' 이름으로 유저를 찾지 못해 speakerId로 fallback", name);
+                    userOpt = userRepository.findById(speakerId);
                 }
 
                 User user = userOpt.get();
-                Meeting meeting = recentLogs.get(0).getMeeting(); // 모든 로그는 동일 미팅
 
                 Todo todo = Todo.create(user, TodoRequestDto.builder()
                         .title(task)
@@ -118,8 +145,17 @@ public class LlmTodoService {
 
                 todoRepository.save(todo);
                 log.info("📝 저장된 Todo: {}", todo);
-            }
+                notificationService.notifyDolAi(
+                        meetingId,
+                        Type.TODO_CREATED,
+                        Map.of(
+                                "assignee", user.getName(),
+                                "todo", task
 
+                        ),
+                        null
+                );
+            }
             recentLogs.forEach(log -> log.setTodoChecked(true));
             sttLogRepository.saveAll(recentLogs);
             log.info("🆗 {}개의 로그를 todoChecked = true로 업데이트", recentLogs.size());

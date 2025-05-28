@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class AiTodoDto {
-    private String speaker;
+    private String name;
     private String task;
     private String dueDate;
 }
