@@ -345,7 +345,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if any(kw in cleaned_text.lower() for kw in TODO_KEYWORDS):
                 print("📌 투두 감지됨! 백엔드 호출")
                 try:
-                    requests.post(f"http://3.34.92.187.nip.io/llm/todo/extract/{meeting_id}", timeout=5)
+                    requests.post(f"http://3.34.92.187.nip.io/api/llm/todo/extract/{meeting_id}", timeout=5)
                 except Exception as e:
                     print(f"⚠️ TODO 요청 실패: {e}")
 
