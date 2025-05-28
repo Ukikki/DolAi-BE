@@ -439,13 +439,12 @@ connections.on('connection', async socket => {
     callback(producerList);
   });
 
-
   // 전역 캐시로 선언 (파일 상단 or connections.on 바깥)
   const informedCache = new Set(); // key: `${fromSocketId}_${toSocketId}_${producerId}`
 
 // 수정된 informConsumers 함수
   const informConsumers = (roomName, newProducerSocketId, producerId, userId, kind, mediaTag = 'camera') => {
-    const allowKinds = ['video', 'board', 'screen'];
+    const allowKinds = ['video', 'board', 'screen', 'mic', 'audio' ];
     if (!allowKinds.includes(mediaTag)) return;
 
     console.log(`🟡 informConsumers: new producer ${producerId} from ${newProducerSocketId}, mediaTag: ${mediaTag}`);
