@@ -84,9 +84,9 @@ def calculate_text_quality(text):
     """텍스트 품질 점수 계산 (0-100)"""
     if not text:
         return 0
-    
+
     quality_score = 0
-    
+
     # 1. 길이 점수 (적당한 길이가 좋음)
     length = len(text.strip())
     if 5 <= length <= 100:
@@ -95,42 +95,42 @@ def calculate_text_quality(text):
         quality_score += 20
     elif length >= 3:
         quality_score += 15
-    
+
     # 2. 의미있는 문자 비율
     korean_chars = len([c for c in text if '\uAC00' <= c <= '\uD7A3'])
     english_chars = len([c for c in text if c.isalpha() and ord(c) < 256])
     chinese_chars = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
     total_meaningful = korean_chars + english_chars + chinese_chars
-    
+
     if len(text) > 0:
         meaningful_ratio = total_meaningful / len(text)
         quality_score += meaningful_ratio * 40
-    
+
     # 3. 반복 패턴 감점
     if re.search(r'(.)\1{3,}', text):  # 같은 문자 4개 이상 반복
         quality_score -= 20
-    
+
     # 4. 일본어 문자 감점
     if contains_japanese_chars(text):
         quality_score -= 50
-    
+
     # 5. 특수문자만으로 구성 감점
     if re.match(r'^\W+$', text.strip()):
         quality_score -= 30
-    
+
     return max(0, min(100, quality_score))
 
 async def two_pass_transcribe(audio_np):
     """
     2-Pass STT: 1차 자동감지 → 일본어면 2차 한국어 강제
-    
+
     Args:
         audio_np: 오디오 데이터
-    
+
     Returns:
         tuple: (best_text, best_lang, pass_info)
     """
-    
+
     # 🎯 1차 시도: 자동 언어 감지
     print("🔄 1차 STT 시도: 자동 언어 감지")
     try:
@@ -141,25 +141,25 @@ async def two_pass_transcribe(audio_np):
             temperature=0.0,
             initial_prompt=WHISPER_PROMPT_AUTO
         )
-        
+
         first_text = ""
         for segment in segments_1st:
             if segment.text.strip():
                 first_text = segment.text.strip()
                 break
-        
+
         detected_lang_1st = info_1st.language
         quality_1st = calculate_text_quality(first_text)
-        
+
         print(f"   📊 1차 결과: '{first_text}' (언어: {detected_lang_1st}, 품질: {quality_1st})")
-        
+
         # 🚨 일본어 감지 또는 일본어 문자 포함 시 2차 시도
-        if (detected_lang_1st in ["ja", "japanese"] or 
+        if (detected_lang_1st in ["ja", "japanese"] or
             contains_japanese_chars(first_text) or
             quality_1st < 30):  # 품질이 너무 낮아도 재시도
-            
+
             print("🔄 2차 STT 시도: 한국어 강제 지정")
-            
+
             try:
                 segments_2nd, info_2nd = model.transcribe(
                     audio_np,
@@ -169,31 +169,31 @@ async def two_pass_transcribe(audio_np):
                     language="ko",  # 🔒 한국어 강제
                     initial_prompt=WHISPER_PROMPT_KO
                 )
-                
+
                 second_text = ""
                 for segment in segments_2nd:
                     if segment.text.strip():
                         second_text = segment.text.strip()
                         break
-                
+
                 detected_lang_2nd = info_2nd.language
                 quality_2nd = calculate_text_quality(second_text)
-                
+
                 print(f"   📊 2차 결과: '{second_text}' (언어: {detected_lang_2nd}, 품질: {quality_2nd})")
-                
+
                 # 🎯 더 좋은 결과 선택
                 if quality_2nd > quality_1st and not contains_japanese_chars(second_text):
                     print(f"   ✅ 2차 결과 채택 (품질 향상: {quality_1st} → {quality_2nd})")
                     return second_text, detected_lang_2nd, "2nd-pass-korean"
                 else:
                     print(f"   ⚠️ 2차 결과도 불만족, 1차 결과 유지")
-                    
+
             except Exception as e:
                 print(f"   ❌ 2차 STT 실패: {e}")
-        
+
         # 1차 결과 사용
         return first_text, detected_lang_1st, "1st-pass-auto"
-        
+
     except Exception as e:
         print(f"❌ 1차 STT 실패: {e}")
         return "", "unknown", "failed"
@@ -202,29 +202,29 @@ def detect_language_from_text(text):
     """텍스트 기반 언어 감지"""
     if not text:
         return "unknown"
-    
+
     if contains_japanese_chars(text):
         return "ja"
-    
+
     korean_chars = len([c for c in text if '\uAC00' <= c <= '\uD7A3' or '\u3131' <= c <= '\u318E'])
     english_chars = len([c for c in text if c.isalpha() and ord(c) < 256])
     chinese_chars = len([c for c in text if '\u4e00' <= c <= '\u9fff'])
-    
+
     total_chars = korean_chars + english_chars + chinese_chars
-    
+
     if total_chars == 0:
         return "unknown"
-    
+
     korean_ratio = korean_chars / total_chars
-    english_ratio = english_chars / total_chars  
+    english_ratio = english_chars / total_chars
     chinese_ratio = chinese_chars / total_chars
-    
+
     threshold = 0.3
-    
+
     if korean_ratio >= threshold:
         return "ko"
     elif english_ratio >= threshold:
-        return "en"  
+        return "en"
     elif chinese_ratio >= threshold:
         return "zh"
     else:
@@ -233,38 +233,38 @@ def detect_language_from_text(text):
 def check_language_validity(detected_lang, text):
     """언어 유효성 검사 - 일본어는 무조건 차단"""
     text_based_lang = detect_language_from_text(text)
-    
+
     print(f"🔍 언어 분석: STT감지={detected_lang}, 텍스트분석={text_based_lang}")
-    
+
     # 🚨 일본어는 무조건 차단
     if text_based_lang == "ja":
         print(f"🚫 일본어 텍스트 감지 → 완전 차단")
         return False, None
-    
+
     if detected_lang == "ja" or detected_lang == "japanese":
         print(f"🚫 STT에서 일본어 감지 → 완전 차단")
         return False, None
-    
+
     # 허용된 언어 처리
     if text_based_lang in ["ko", "en", "zh"]:
         return True, text_based_lang
-    
+
     allowed_stt_languages = ["ko", "korean", "en", "english", "zh", "chinese", "zh-Hans"]
     if detected_lang in allowed_stt_languages:
         lang_mapping = {"korean": "ko", "english": "en", "chinese": "zh", "zh-Hans": "zh"}
         final_lang = lang_mapping.get(detected_lang, detected_lang)
         return True, final_lang
-    
+
     return False, None
 
 def is_valid_content(text):
     """유효한 자막 내용인지 검증"""
     if not text or len(text.strip()) < 2:
         return False
-    
+
     if contains_japanese_chars(text):
         return False
-    
+
     # 기본 유효성 검사들...
     quality = calculate_text_quality(text)
     return quality >= 30
@@ -292,12 +292,12 @@ async def websocket_endpoint(websocket: WebSocket):
             # 묵음 체크
             if not is_speech(audio_bytes):
                 continue
-                
+
             audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-            
+
             # 🎯 2-Pass STT 실행
             text, detected_lang, pass_info = await two_pass_transcribe(audio_np)
-            
+
             if not text:
                 print("🚫 STT 결과 없음")
                 continue
@@ -311,11 +311,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # 언어 유효성 검사
             is_valid_lang, adjusted_lang = check_language_validity(detected_lang, text)
-            
+
             if not is_valid_lang:
                 print("🚫 허용되지 않은 언어 → 전송 차단!")
                 continue
-            
+
             # 환각 제거
             cleaned_text = remover.remove_hallucinations(text)
             if not cleaned_text:
@@ -345,7 +345,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if any(kw in cleaned_text.lower() for kw in TODO_KEYWORDS):
                 print("📌 투두 감지됨! 백엔드 호출")
                 try:
-                    requests.post(f"http://3.34.92.187.nip.io/api/llm/todo/extract/{meeting_id}", timeout=5)
+                    requests.post(f"https://3.34.92.187.nip.io/api/llm/todo/extract/{meeting_id}", timeout=5)
                 except Exception as e:
                     print(f"⚠️ TODO 요청 실패: {e}")
 
@@ -400,10 +400,10 @@ async def translate_and_resend(text, lang, speaker, meeting_id, utterance_id, ti
 
         payload = {
             "meetingId": meeting_id, "speaker": speaker, "text": text,
-            "textKo": result.get("ko", ""), "textEn": result.get("en", ""), 
+            "textKo": result.get("ko", ""), "textEn": result.get("en", ""),
             "textZh": result.get("zh", ""), "timestamp": timestamp
         }
-        
+
         print("📤 Spring 전송:", {k: v[:30] + "..." if len(str(v)) > 30 else v for k, v in payload.items()})
         requests.post(SPRING_URL, json=payload, timeout=10)
         print("✅ 번역 및 스프링 전송 완료")
