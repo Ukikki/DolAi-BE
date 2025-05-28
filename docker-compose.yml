@@ -55,59 +55,6 @@ services:
       backend_network:
         ipv4_address: 172.28.0.5  # ArangoDB 고정 IP
 
-  backend:
-    build: ./backend # 백엔드 애플리케이션 빌드 위치
-    container_name: backend-container
-#    expose:
-#      - "8080"     # 내부에서만 접근 가능
-    ports:
-      - "8080:8080"  # Spring Boot 포트 매핑(임시)
-    env_file:
-      - .env
-    volumes:
-      - ./.env:/app/.env
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/dolai  # MySQL 컨테이너의 호스트 이름
-    depends_on:
-      - mysql
-      - arangodb
-      - redis
-    networks:
-      backend_network:
-        ipv4_address: 172.28.0.8  # Backend 고정 IP
-
-  mediasoup-server:
-    build:
-      context: ./mediasoup-sfu
-      dockerfile: Dockerfile
-    restart: always
-#    expose:
-#      - "3000"
-    container_name: mediasoup-server
-    ports:
-      - "4443:4443"           # Mediasoup signaling
-      - "3478:3478/udp"       # TURN server
-      - "11000-11050:11000-11050/udp"  # 50개의 UDP 포트만 노출
-    networks:
-      backend_network:
-        ipv4_address: 172.28.0.4  # MediaSoup Server 고정 IP
-
-  mediasoup-app:
-    build:
-      context: .
-      dockerfile: Dockerfile.mediasoup
-    container_name: mediasoup-app
-    working_dir: /app
-    volumes:
-      - ./mediasoup-sfu:/app
-    command: bash -c "npm install && node app.js"
-    ports:
-      - "3000:3000"
-    networks:
-      backend_network:
-        ipv4_address: 172.28.0.6  # MediaSoup App 고정 IP
-
   whisper:
     build:
       context: ./whisper-server
@@ -127,21 +74,6 @@ services:
     env_file:
       - ./.env
 
-  nginx:
-    build:
-      context: ./nginx
-    ports:
-#      - "8080:80" # EC2 외부 8080 → nginx 컨테이너 내부 80 포트 # nginx만 외부로 노출
-      - "80:80" # 임시 
-      #- "443:443" # 선택
-    depends_on:
-      - backend
-      - mediasoup-app
-      - whisper
-    networks:
-      backend_network:
-        ipv4_address: 172.28.0.9  # Nginx 고정 IP
-
 networks:
   backend_network:
     name: backend_network
@@ -151,7 +83,6 @@ networks:
       config:
         - subnet: 172.28.0.0/16
           gateway: 172.28.0.1
-
 
 volumes:
   mysql_data:

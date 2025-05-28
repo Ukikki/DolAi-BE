@@ -44,7 +44,7 @@ public class GraphService {
             saveUtterance(
                     log.getMeeting().getId(),
                     log.getSpeakerName(),
-                    log.getText(),
+                    log.getTextKo(), // getText_ko()로 한국어 문장만 읽어오기
                     log.getTimestamp().atZone(ZoneId.systemDefault()).toInstant()
             );
         }
