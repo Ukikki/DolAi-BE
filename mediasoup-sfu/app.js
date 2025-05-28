@@ -281,6 +281,40 @@ connections.on('connection', async socket => {
         callback({ rtpCapabilities: router.rtpCapabilities });
       }
   );
+  socket.on("end-meeting", ({ meetingId }) => {
+    console.log("🔥 end-meeting 수신", meetingId);
+    const peer = peers[socket.id];
+    if (!peer) {
+      console.warn(`❌ end-meeting: Peer not found for socket ${socket.id}`);
+      return;
+    }
+
+    const { roomName, userId } = peer;
+
+    // ✅ 동일한 userId 가진 이전 socket 제거
+    for (const [oldSocketId, peerInfo] of Object.entries(rooms[roomName].peers)) {
+      if (peerInfo.userId === userId && oldSocketId !== socket.id) {
+        console.log("♻️ 동일 userId의 이전 socket 제거:", oldSocketId);
+        delete rooms[roomName].peers[oldSocketId];
+      }
+    }
+
+    console.log("📡 force-leave broadcast →", roomName);
+    console.log(`🛑 회의 종료 요청 수신 → meetingId: ${meetingId}, room: ${roomName}`);
+    console.log("현재 방에 있는 소켓 목록:", connections.adapter.rooms.get(roomName));
+
+    // 브로드캐스트
+    connections.to(roomName).emit("force-leave", {
+      reason: "호스트가 회의를 종료했습니다.",
+    });
+
+    // ✅ rooms cleanup (필요에 따라 peers만 비우거나 전체 삭제 가능)
+    rooms[roomName] = {
+      ...rooms[roomName],
+      peers: [],
+    };
+  });
+	
 
   const createRoom = async (roomName, socketId) => {
     let router1
