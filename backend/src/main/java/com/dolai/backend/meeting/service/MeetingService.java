@@ -17,6 +17,7 @@ import com.dolai.backend.notification.model.enums.Type;
 import com.dolai.backend.notification.service.NotificationService;
 import com.dolai.backend.document.service.DocumentService;
 import com.dolai.backend.s3.S3Service;
+import com.dolai.backend.stt_log.repository.STTLogRepository;
 import com.dolai.backend.stt_log.service.STTLogService;
 import com.dolai.backend.user.model.User;
 import com.dolai.backend.user.repository.UserRepository;
@@ -59,6 +60,7 @@ public class MeetingService {
     private final Dotenv dotenv;
     private final S3Service s3Service;
     private final Map<String, String> graphImageMap = new ConcurrentHashMap<>();
+    private final STTLogRepository sttLogRepository;
 
     //    @PostConstruct
 //    private void init() {
@@ -66,6 +68,7 @@ public class MeetingService {
 //    }
 
     // 1. 새 화상회의 생성
+    @Transactional
     public MeetingResponseDto createMeeting(MeetingCreateRequestDto request, String userId, Status status) {
         if (request.getTitle() == null || request.getTitle().isBlank() || request.getStartTime() == null) {
             throw new IllegalArgumentException("회의 제목(title)과 시작 시간(startTime)은 필수 입력값입니다.");
@@ -91,7 +94,7 @@ public class MeetingService {
         meetingRepository.save(meeting);
 
         log.info("회의 생성 완료: {}", meeting);
-        // ✅ 호스트를 참가자로 등록 (자동으로)
+        // 호스트를 참가자로 등록 (자동으로)
         User hostUser = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -102,6 +105,14 @@ public class MeetingService {
                 .build();
 
         participantsRepository.save(hostParticipant);
+
+        // 데모 버전~~~~~~~~~~~~~~~~~~~~~~!!!!! 발표 후 지울 것입니다.
+        // 방 title이 '캡스톤'이면 샘플 데이터 미팅 id 변경, synced 0
+        if ("캡스톤".equals(request.getTitle())) {
+            sttLogRepository.updateDemoLogs(meeting.getId());
+            sttLogRepository.resetDemoLogsSynced();
+        }
+
         return new MeetingResponseDto(meeting.getId(), meeting.getTitle(), meeting.getStartTime(), inviteUrl);
     }
 
@@ -210,6 +221,12 @@ public class MeetingService {
             createMeetingAssets(meeting, user);
         } catch (Exception e) {
             log.error("❌ 생성 중 오류 발생", e);
+        }
+
+        if ("캡스톤".equals(meeting.getTitle())) {
+            sttLogRepository.deleteDemoLogsAfterEnd();
+            sttLogRepository.resetDemoTodos();
+            log.info("🧹 데모 STT 로그 정리 완료 (id > 24 삭제 + synced, todo 체크 초기화)");
         }
     }
 
