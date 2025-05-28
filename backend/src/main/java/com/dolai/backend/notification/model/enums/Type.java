@@ -18,7 +18,7 @@ public enum Type {
     MEETING_CANCELLED("회의", "‘{{meetingTitle}}’ 회의가 취소되었습니다. (호스트: ‘{{host}}’)"),
 
     // 일정
-    TODO_CREATED("일정","‘{{todo}}’ To Do 일정이 추가되었습니다.");
+    TODO_CREATED("일정","{{assignee}}님에게 ‘{{todo}}’ To Do 일정이 추가되었습니다.");
 
     private final String category;
     private final String template;

@@ -51,8 +51,25 @@ public class LlmController {
     }
 
     @PostMapping("/todo/extract/{meetingId}")
-    public ResponseEntity<?> extractTodos(@PathVariable String meetingId) {
-        llmTodoService.extractAndSaveTodos(meetingId);
-        return ResponseEntity.ok(new SuccessMessageResponse("할 일 추출 시도 완료"));
+    public ResponseEntity<?> extractAndSaveTodos(
+            @PathVariable String meetingId,
+            @RequestBody Map<String, String> body
+    ) {
+        String speakerId = body.get("speakerId");
+        if (speakerId == null || speakerId.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", "speakerId가 누락되었습니다."
+            ));        }
+
+        try {
+            llmTodoService.extractAndSaveTodos(meetingId, speakerId);
+            return ResponseEntity.ok(new SuccessMessageResponse("✅ 할 일 추출 시도 완료"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", "speakerId가 누락되었습니다."
+            ));        }
     }
+
 }
