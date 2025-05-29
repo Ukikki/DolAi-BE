@@ -43,10 +43,10 @@ public class CalendarService {
     private final ParticipantsRepository participantsRepository;
     private final NotificationService notificationService;
 
-    @PostConstruct
+    /*@PostConstruct
     private void init() {
         this.publicIp = dotenv.get("3.34.92.187");
-    } // 하드 코딩
+    } // 하드 코딩*/
 
     public List<CalendarDto> getMeetingsByDate(LocalDate date, String userId) {
         List<Meeting> meetings = meetingRepository.findMeetingsByParticipant(date, userId);
@@ -71,6 +71,9 @@ public class CalendarService {
     public MeetingResponseDto reserveMeetingWithParticipants(CalendarCreateRequestDto request, User hostUser) {
         LocalDateTime startTime = LocalDateTime.parse(request.getStartDateTime());
 
+        // 초대 링크 생성
+        String publicIp = "3.34.92.187"; // dotenv.get("PUBLIC_IP"); // 환경 변수에서 가져오는 것이 좋음: 지금 env 못 읽어오는 문제 있음
+
         // 초대 URL 생성
         String roomId = System.currentTimeMillis() + "_" + hostUser.getId();
         String inviteUrl = "https://" + publicIp + ":3000/sfu/" + roomId;
@@ -79,7 +82,7 @@ public class CalendarService {
         Meeting meeting = Meeting.create(request.getTitle(), startTime, hostUser.getId(), inviteUrl, Status.SCHEDULED);
         meetingRepository.save(meeting);
 
-        // ✅ 호스트도 참가자로 저장 (단 한 번만!)
+        // 호스트도 참가자로 저장 (단 한 번만!)
         Participant hostParticipant = Participant.builder()
                 .meeting(meeting)
                 .user(hostUser)
