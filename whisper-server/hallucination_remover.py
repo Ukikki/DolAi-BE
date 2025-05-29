@@ -286,7 +286,20 @@ class HallucinationRemover:
         ending_phrases = [
             r'시청해주셔서 감사합니다\.?',
             r'Thank you for\.?',
+            r'Thank you\.?',
+            r'감사합니다.\.?',
+            r'Thank you\.?',
+            r'Thank you very much\.?',
+            r'Bye bye\.?',
             r'Gracias\.?',
+            r'한국어의한국\.?'
+            r'Gracias\.?',
+            r'고맙습니다\.?'
+            r'한국의 한국의 한국인의\.?'
+            r'한국어의\.?'
+            r'Thank you, thank you\.?'
+            r'thank you\.?'
+            r'한국인의\.?'
             r'ご視聴ありがとうございました\.?',
             r'お疲れ様でした\.?',
             r'おやすみなさい\.?',
@@ -297,6 +310,7 @@ class HallucinationRemover:
             r'Dzień dobry\.?',
             r'다음 주에 만나요\.?',
             r'다음주에 만나요\.?',
+            r"Of course, I'll be back\.?"
             r'이 시각 세계였습니다\.?',
             r'자막 제공 .{1,15}',
             r'字幕提供\.?',

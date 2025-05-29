@@ -35,10 +35,13 @@ remover = HallucinationRemover(
 )
 
 TODO_KEYWORDS = [
-    "해줘", "해주세요", "해야 해", "완료해", "처리해", "해볼게", "할게요",
+    "해줘", "해주세요", "해 주세요", "주세요", "오세요", "해 주삼", "해 줘", "해야 해", "완료해", "처리해", "해볼게", "할게요",
     "할 필요가 있어", "필요합니다", "조치", "진행", "정리해", "확인해", "해야겠어",
     "해야겠다", "일정", "마감", "하세요", "추가해", "등록해", "남겨", "정리",
     "assign", "need to", "must", "should", "complete", "submit", "handle", "todo"
+]
+BLOCK_PATTERNS = [
+    "구독", "좋아요", "알림설정", "채널",
 ]
 
 app = FastAPI()
@@ -70,14 +73,14 @@ def contains_japanese_chars(text):
     """일본어 문자 포함 여부 강력 검증"""
     if not text:
         return False
-    
+
     for char in text:
         char_code = ord(char)
         if ((0x3040 <= char_code <= 0x309F) or  # 히라가나
             (0x30A0 <= char_code <= 0x30FF) or  # 가타카나
             (0xFF66 <= char_code <= 0xFF9F)):   # 반각 가타카나
             return True
-    
+
     return False
 
 def calculate_text_quality(text):
@@ -329,6 +332,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 print(f"🚫 환각 제거 후에도 일본어 문자 감지 → 차단: '{cleaned_text}'")
                 continue
 
+            if any(re.search(pattern, cleaned_text, re.IGNORECASE) for pattern in BLOCK_PATTERNS):
+                print(f"🚫 금지된 단어 포함 → 자막 차단: '{cleaned_text}'")
+                continue
+
             # 중복 체크
             if cleaned_text == last_text:
                 print(f"🚫 중복 텍스트 스킵: '{cleaned_text}'")
@@ -341,30 +348,35 @@ async def websocket_endpoint(websocket: WebSocket):
 
             last_text = cleaned_text
 
-            # TODO 키워드 감지
-            if any(kw in cleaned_text.lower() for kw in TODO_KEYWORDS):
-                print("📌 투두 감지됨! 백엔드 호출")
-                try:
-                    requests.post(f"https://3.34.92.187.nip.io/api/llm/todo/extract/{meeting_id}", timeout=5)
-                except Exception as e:
-                    print(f"⚠️ TODO 요청 실패: {e}")
-
             utterance_id = uuid.uuid4().hex
             segment_start = chunk_start_time
             timestamp = datetime.fromtimestamp(segment_start).strftime('%Y-%m-%dT%H:%M:%S')
 
             # 웹소켓 전송
             print(f"📱 웹소켓 전송: '{cleaned_text}' (방식: {pass_info})")
+            # 자막 먼저 전송
             await websocket.send_json({"text": cleaned_text})
 
-            # 번역 후 스프링 전송
-            print(f"🌐 번역 시작: '{cleaned_text}' (언어: {adjusted_lang})")
+            # 번역 및 Spring 전송은 비동기로
             asyncio.create_task(translate_and_resend(
                 cleaned_text, adjusted_lang, speaker, meeting_id, utterance_id, timestamp
             ))
 
+            # 투두 감지도 비동기로 분리!
+            if any(kw in cleaned_text.lower() for kw in TODO_KEYWORDS):
+                print("📌 투두 감지됨! 백엔드 호출 예정")
+                asyncio.create_task(send_todo_request(meeting_id))
+
     except Exception as e:
         print("❌ 연결 종료:", e)
+
+async def send_todo_request(meeting_id):
+    try:
+        await asyncio.to_thread(requests.post, f"https://3.34.92.187.nip.io/api/llm/todo/extract/{meeting_id}", timeout=5)
+        print("✅ 투두 요청 전송 완료")
+    except Exception as e:
+        print(f"⚠️ TODO 요청 실패: {e}")
+
 
 async def translate_and_resend(text, lang, speaker, meeting_id, utterance_id, timestamp):
     """번역 및 Spring Boot 전송"""
