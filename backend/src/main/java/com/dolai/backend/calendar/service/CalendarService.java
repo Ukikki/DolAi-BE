@@ -45,8 +45,8 @@ public class CalendarService {
 
     @PostConstruct
     private void init() {
-        this.publicIp = dotenv.get("PUBLIC_IP");
-    }
+        this.publicIp = dotenv.get("3.34.92.187");
+    } // 하드 코딩
 
     public List<CalendarDto> getMeetingsByDate(LocalDate date, String userId) {
         List<Meeting> meetings = meetingRepository.findMeetingsByParticipant(date, userId);

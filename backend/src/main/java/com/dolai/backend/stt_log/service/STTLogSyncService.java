@@ -1,6 +1,7 @@
 package com.dolai.backend.stt_log.service;
 
 import com.dolai.backend.graph.service.GraphService;
+import com.dolai.backend.meeting.model.enums.Status;
 import com.dolai.backend.stt_log.model.STTLog;
 import com.dolai.backend.stt_log.repository.STTLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,11 @@ public class STTLogSyncService {
                 String meetingId = sttLog.getMeeting().getId().toString();
                 String speaker = sttLog.getSpeakerName();
                 String text = sttLog.getText();
+
+                // 회의가 ONGOING 상태인 경우에만 동기화
+                if (sttLog.getMeeting().getStatus() != Status.ONGOING) {
+                    continue;
+                }
 
                 //log.info("Syncing to ArangoDB → [{}] {}: {}", meetingId, speaker, text);
 
