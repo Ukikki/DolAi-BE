@@ -107,12 +107,6 @@ public class MeetingService {
 
         participantsRepository.save(hostParticipant);
 
-        // 데모 버전~~~~~~~~~~~~~~~~~~~~~~!!!!! 발표 후 지울 것입니다.
-        // 방 title이 '캡스톤'이면 샘플 데이터 미팅 id 변경, synced 0
-        if ("캡스톤".equals(request.getTitle())) {
-            demoLogAsyncService.assignDemoLogsAsync(meeting.getId());
-        }
-
         return new MeetingResponseDto(meeting.getId(), meeting.getTitle(), meeting.getStartTime(), inviteUrl);
     }
 

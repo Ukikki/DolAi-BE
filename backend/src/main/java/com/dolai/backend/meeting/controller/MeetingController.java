@@ -4,6 +4,7 @@ import com.dolai.backend.common.success.SuccessDataResponse;
 import com.dolai.backend.common.success.SuccessMessageResponse;
 import com.dolai.backend.meeting.model.*;
 import com.dolai.backend.meeting.model.enums.Status;
+import com.dolai.backend.meeting.service.DemoLogAsyncService;
 import com.dolai.backend.meeting.service.MeetingService;
 import com.dolai.backend.user.model.User;
 import jakarta.validation.Valid;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class MeetingController {
 
     private final MeetingService meetingService;
+    private final DemoLogAsyncService demoLogAsyncService; // 데모 버전에서만 사용
 
     // 1. 새 화상회의 생성
     @PostMapping("/meetings")
@@ -30,6 +32,9 @@ public class MeetingController {
             @RequestBody @Valid MeetingCreateRequestDto request,
             @AuthenticationPrincipal User user) {
         MeetingResponseDto response = meetingService.createMeeting(request, user.getId(), Status.ONGOING);
+
+        handleDemoMeeting(request, response); // 헬퍼 메서드 호출(데모)
+
         return ResponseEntity.ok(response);
     }
 
@@ -93,5 +98,13 @@ public class MeetingController {
     ) {
         meetingService.saveGraphImageUrl(id, imageFile);
         return ResponseEntity.ok(Map.of("status", "success"));
+    }
+
+    // 헬퍼 메서드(데모)
+    private void handleDemoMeeting(MeetingCreateRequestDto request, MeetingResponseDto response) {
+        // 데모 버전~~~~~~~~~~~~~~~~~~~~~~!!!!! 발표 후 지울 것입니다.
+        if ("캡스톤".equals(request.getTitle())) {
+            demoLogAsyncService.assignDemoLogsAsync(response.getId());
+        }
     }
 }
