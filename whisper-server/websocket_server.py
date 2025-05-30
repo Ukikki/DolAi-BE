@@ -41,7 +41,7 @@ TODO_KEYWORDS = [
     "assign", "need to", "must", "should", "complete", "submit", "handle", "todo"
 ]
 BLOCK_PATTERNS = [
-    "구독", "좋아요", "알림설정", "채널",
+    "구독", "좋아요", "알림설정", "채널", "Thank", "시청",
 ]
 
 app = FastAPI()
